@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-spring/go-spring-parent/spring-trace"
+	"github.com/go-spring/go-spring-parent/spring-logger"
 )
 
 //
@@ -140,7 +140,7 @@ type WebContext interface {
 	/////////////////////////////////////////
 	// 通用能力部分
 
-	SpringTrace.TraceContext
+	SpringLogger.LoggerContext
 
 	// 获取封装的底层上下文对象
 	NativeContext() interface{}

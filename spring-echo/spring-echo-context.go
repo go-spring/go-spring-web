@@ -25,17 +25,17 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/go-spring/go-spring-parent/spring-trace"
 	"github.com/labstack/echo"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-parent/spring-const"
+	"github.com/go-spring/go-spring-parent/spring-logger"
 )
 
 //
 // 适配 echo 的 Web 上下文
 //
 type Context struct {
-	*SpringTrace.DefaultTraceContext
+	*SpringLogger.DefaultLoggerContext
 
 	// echo 上下文对象
 	EchoContext echo.Context
