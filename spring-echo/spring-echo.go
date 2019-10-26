@@ -19,6 +19,7 @@ package SpringEcho
 import (
 	"context"
 
+	"github.com/go-spring/go-spring-parent/spring-const"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -91,6 +92,10 @@ func (c *Container) HEAD(path string, fn SpringWeb.Handler, filters ...SpringWeb
 
 func (c *Container) OPTIONS(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
 	c.EchoServer.OPTIONS(path, HandlerWrapper(fn, filters...))
+}
+
+func (c *Container) Filters(s ...string) []SpringWeb.Filter {
+	panic(SpringConst.UNIMPLEMENTED_METHOD)
 }
 
 //

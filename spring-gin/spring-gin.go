@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-spring/go-spring-parent/spring-const"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
 
@@ -91,6 +92,10 @@ func (c *Container) HEAD(path string, fn SpringWeb.Handler, filters ...SpringWeb
 
 func (c *Container) OPTIONS(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
 	c.GinEngine.OPTIONS(path, HandlerWrapper(path, fn, filters...))
+}
+
+func (c *Container) Filters(s ...string) []SpringWeb.Filter {
+	panic(SpringConst.UNIMPLEMENTED_METHOD)
 }
 
 //

@@ -129,6 +129,9 @@ type WebContainer interface {
 
 	// 注册 OPTIONS 方法处理函数
 	OPTIONS(path string, fn Handler, filters ...Filter)
+
+	// 获取 IoC 容器里面注册的 Filter 对象
+	Filters(s ...string) []Filter
 }
 
 //
