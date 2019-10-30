@@ -22,6 +22,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-spring/go-spring-parent/spring-const"
+	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
 
@@ -104,10 +105,14 @@ func (c *Container) Filters(s ...string) []SpringWeb.Filter {
 func HandlerWrapper(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) func(*gin.Context) {
 	return func(ginCtx *gin.Context) {
 
+		ctx := ginCtx.Request.Context()
+		logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
+
 		webCtx := &Context{
-			GinContext:  ginCtx,
-			HandlerPath: path,
-			HandlerFunc: fn,
+			DefaultLoggerContext: logCtx,
+			GinContext:           ginCtx,
+			HandlerPath:          path,
+			HandlerFunc:          fn,
 		}
 
 		SpringWeb.InvokeHandler(webCtx, fn, filters)

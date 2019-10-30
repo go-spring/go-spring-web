@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/go-spring/go-spring-parent/spring-const"
+	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -104,9 +105,13 @@ func (c *Container) Filters(s ...string) []SpringWeb.Filter {
 func HandlerWrapper(fn SpringWeb.Handler, filters ...SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
 
+		ctx := echoCtx.Request().Context()
+		logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
+
 		webCtx := &Context{
-			EchoContext: echoCtx,
-			HandlerFunc: fn,
+			DefaultLoggerContext: logCtx,
+			EchoContext:          echoCtx,
+			HandlerFunc:          fn,
 		}
 
 		SpringWeb.InvokeHandler(webCtx, fn, filters)
