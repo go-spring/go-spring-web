@@ -124,20 +124,22 @@ func TestContainer(t *testing.T) {
 
 		c.GET("/get", s.Get, f2, f5)
 
-		if false { // 流式风格
+		if false {
+			// 流式风格
 			c.Route("", f2, f7).
 				POST("/set", s.Set).
 				GET("/panic", s.Panic)
 		}
 
-		// 障眼法，显得更整齐
+		// 障眼法
 		r := c.Route("", f2, f7)
 		{
 			r.POST("/set", s.Set)
 			r.GET("/panic", s.Panic)
 		}
 
-		if false { // 回调风格
+		if false {
+			// 回调风格
 			c.Group("", func(r *SpringWeb.Route) {
 				r.GET("/panic", s.Panic)
 				r.POST("/set", s.Set)
