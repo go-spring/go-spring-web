@@ -179,6 +179,10 @@ func (ctx *Context) Bind(i interface{}) error {
 	return ctx.EchoContext.Bind(i)
 }
 
+func (ctx *Context) Writer() http.ResponseWriter {
+	return ctx.EchoContext.Response().Writer
+}
+
 func (ctx *Context) Status(code int) {
 	ctx.EchoContext.Response().WriteHeader(code)
 }
