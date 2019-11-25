@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-spring/go-spring-parent/spring-trace"
+	SpringLogger "github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
 
@@ -64,7 +64,8 @@ const (
 // 适配 gin 的 Web 上下文
 //
 type Context struct {
-	*SpringTrace.DefaultTraceContext
+	//*SpringTrace.DefaultTraceContext
+	*SpringLogger.DefaultLoggerContext
 
 	// gin 上下文对象
 	GinContext *gin.Context
