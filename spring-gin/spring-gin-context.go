@@ -237,6 +237,10 @@ func (ctx *Context) Bind(i interface{}) error {
 	return ctx.GinContext.Bind(i)
 }
 
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
+	return ctx.GinContext.Writer
+}
+
 func (ctx *Context) Status(code int) {
 	ctx.GinContext.Status(code)
 }

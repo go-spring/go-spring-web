@@ -236,6 +236,9 @@ type WebContext interface {
 	/////////////////////////////////////////
 	// Response Part
 
+	// ResponseWriter returns `http.ResponseWriter`.
+	ResponseWriter() http.ResponseWriter
+
 	// Status sets the HTTP response code.
 	Status(code int)
 
