@@ -183,6 +183,10 @@ func (ctx *Context) Status(code int) {
 	ctx.EchoContext.Response().WriteHeader(code)
 }
 
+func (ctx *Context) ResponseWriter() http.ResponseWriter {
+	return ctx.EchoContext.Response().Writer
+}
+
 func (ctx *Context) Header(key, value string) {
 	ctx.EchoContext.Response().Header().Set(key, value)
 }
