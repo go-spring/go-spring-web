@@ -18,6 +18,7 @@ package testcases_test
 
 import (
 	"container/list"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -52,52 +53,58 @@ func (s *RpcService) Panic(ctx SpringWeb.WebContext) interface{} {
 
 func TestRpc(t *testing.T) {
 
-	testRun := func(c SpringWeb.WebContainer) {
+	rc := new(RpcService)
 
-		rc := new(RpcService)
+	l := list.New()
+	f2 := NewNumberFilter(2, l)
+	f5 := NewNumberFilter(5, l)
+	f7 := NewNumberFilter(7, l)
 
-		l := list.New()
-		f2 := NewNumberFilter(2, l)
-		f5 := NewNumberFilter(5, l)
-		f7 := NewNumberFilter(7, l)
+	server := SpringWeb.NewWebServer()
 
-		c.GET("/ok", SpringWeb.RPC(rc.OK), f2, f5)
+	// 添加第一个 web 容器
+	{
+		c1 := SpringGin.NewContainer()
+		c1.SetPort(8080)
+		c1.GET("/ok", SpringWeb.RPC(rc.OK), f2, f5)
+		server.AddWebContainer(c1)
+	}
 
-		r := c.Route("", f2, f7)
+	// 添加第二个 web 容器
+	{
+		c2 := SpringEcho.NewContainer()
+		c2.SetPort(9090)
+		r := c2.Route("", f2, f7)
 		{
 			r.GET("/err", SpringWeb.RPC(rc.Err))
 			r.GET("/panic", SpringWeb.RPC(rc.Panic))
 		}
-
-		go c.Start(":8080")
-
-		time.Sleep(time.Millisecond * 100)
-		fmt.Println()
-
-		resp, _ := http.Get("http://127.0.0.1:8080/ok")
-		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-		fmt.Println()
-
-		resp, _ = http.Get("http://127.0.0.1:8080/err")
-		body, _ = ioutil.ReadAll(resp.Body)
-		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-		fmt.Println()
-
-		resp, _ = http.Get("http://127.0.0.1:8080/panic")
-		body, _ = ioutil.ReadAll(resp.Body)
-		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-		resp, _ = http.Get("http://127.0.0.1:8080/panic?panic=1")
-		body, _ = ioutil.ReadAll(resp.Body)
-		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		server.AddWebContainer(c2)
 	}
 
-	t.Run("SpringGin", func(t *testing.T) {
-		testRun(SpringGin.NewContainer())
-	})
+	// 启动 web 服务器
+	server.Start()
 
-	t.Run("SpringEcho", func(t *testing.T) {
-		testRun(SpringEcho.NewContainer())
-	})
+	time.Sleep(time.Millisecond * 100)
+	fmt.Println()
+
+	resp, _ := http.Get("http://127.0.0.1:8080/ok")
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
+
+	resp, _ = http.Get("http://127.0.0.1:9090/err")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
+
+	resp, _ = http.Get("http://127.0.0.1:9090/panic")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	resp, _ = http.Get("http://127.0.0.1:9090/panic?panic=1")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	server.Stop(context.TODO())
 }

@@ -17,11 +17,13 @@
 package SpringWeb
 
 import (
+	"context"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 
+	"github.com/go-spring/go-spring-parent/spring-const"
 	"github.com/go-spring/go-spring-parent/spring-logger"
 )
 
@@ -31,77 +33,30 @@ import (
 type Handler func(WebContext)
 
 //
-// 定义 Web 路由分组。分组的限制：分组内路由只能共享相同的 filters。
+// 路由映射器
 //
-type Route struct {
-	basePath string
-	filters  []Filter
-	wc       WebContainer
+type Mapper struct {
+	Method  string
+	Path    string
+	Handler Handler
+	Filters []Filter
 }
 
-//
-// 工厂函数
-//
-func NewRoute(wc WebContainer, path string, filters []Filter) *Route {
-	return &Route{
-		wc:       wc,
-		basePath: path,
-		filters:  filters,
+func NewMapper(method string, path string, fn Handler, filters []Filter) Mapper {
+	return Mapper{
+		Method:  method,
+		Path:    path,
+		Handler: fn,
+		Filters: filters,
 	}
 }
 
 //
-// 定义分组处理函数
+// 路由表
 //
-type GroupHandler func(*Route)
-
-func (g *Route) GET(path string, fn Handler) *Route {
-	g.wc.GET(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-func (g *Route) POST(path string, fn Handler) *Route {
-	g.wc.POST(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-func (g *Route) PATCH(path string, fn Handler) *Route {
-	g.wc.PATCH(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-func (g *Route) PUT(path string, fn Handler) *Route {
-	g.wc.PUT(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-func (g *Route) DELETE(path string, fn Handler) *Route {
-	g.wc.DELETE(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-func (g *Route) HEAD(path string, fn Handler) *Route {
-	g.wc.HEAD(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-func (g *Route) OPTIONS(path string, fn Handler) *Route {
-	g.wc.OPTIONS(g.basePath+path, fn, g.filters...)
-	return g
-}
-
-//
-// 定义 Web 容器接口
-//
-type WebContainer interface {
-	// 停止 Web 容器
-	Stop()
-
-	// 启动 HTTP 容器
-	Start(address string) error
-
-	// 启动 HTTPS 容器
-	StartTLS(address string, certFile, keyFile string) error
+type WebMapper interface {
+	// 获取路由表
+	GetMapper() map[string]Mapper
 
 	// 通过路由分组注册 Web 处理函数
 	Route(path string, filters ...Filter) *Route
@@ -129,9 +84,201 @@ type WebContainer interface {
 
 	// 注册 OPTIONS 方法处理函数
 	OPTIONS(path string, fn Handler, filters ...Filter)
+}
+
+//
+// 定义 Web 路由分组。分组的限制：分组内路由只能共享相同的 filters。
+//
+type Route struct {
+	basePath string
+	filters  []Filter
+	mapper   WebMapper
+}
+
+//
+// 工厂函数
+//
+func NewRoute(mapper WebMapper, path string, filters []Filter) *Route {
+	return &Route{
+		mapper:   mapper,
+		basePath: path,
+		filters:  filters,
+	}
+}
+
+//
+// 定义分组处理函数
+//
+type GroupHandler func(*Route)
+
+func (g *Route) GET(path string, fn Handler) *Route {
+	g.mapper.GET(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+func (g *Route) POST(path string, fn Handler) *Route {
+	g.mapper.POST(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+func (g *Route) PATCH(path string, fn Handler) *Route {
+	g.mapper.PATCH(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+func (g *Route) PUT(path string, fn Handler) *Route {
+	g.mapper.PUT(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+func (g *Route) DELETE(path string, fn Handler) *Route {
+	g.mapper.DELETE(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+func (g *Route) HEAD(path string, fn Handler) *Route {
+	g.mapper.HEAD(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+func (g *Route) OPTIONS(path string, fn Handler) *Route {
+	g.mapper.OPTIONS(g.basePath+path, fn, g.filters...)
+	return g
+}
+
+//
+// 定义 Web 容器接口
+//
+type WebContainer interface {
+	// 监听的 IP
+	GetIP() string
+	SetIP(ip string)
+
+	// 监听的 Port
+	GetPort() []int
+	SetPort(port ...int)
+
+	// 是否启用 SSL
+	EnableSSL() bool
+	SetEnableSSL(enable bool)
+
+	// SSL 证书
+	GetKeyFile() string
+	SetKeyFile(keyFile string)
+	GetCertFile() string
+	SetCertFile(certFile string)
+
+	// 启动 Web 容器，非阻塞
+	Start()
+
+	// 停止 Web 容器
+	Stop(ctx context.Context)
+
+	// 继承路由表的方法
+	WebMapper
 
 	// 获取 IoC 容器里面注册的 Filter 对象
 	Filters(s ...string) []Filter
+}
+
+//
+// WebContainer 基本实现
+//
+type BaseWebContainer struct {
+	ip        string
+	port      []int
+	enableSSL bool
+	keyFile   string
+	certFile  string
+	mapper    map[string]Mapper
+}
+
+func (c *BaseWebContainer) Init() {
+	c.mapper = make(map[string]Mapper)
+}
+
+func (c *BaseWebContainer) GetIP() string {
+	return c.ip
+}
+
+func (c *BaseWebContainer) SetIP(ip string) {
+	c.ip = ip
+}
+
+func (c *BaseWebContainer) GetPort() []int {
+	return c.port
+}
+
+func (c *BaseWebContainer) SetPort(port ...int) {
+	c.port = port
+}
+
+func (c *BaseWebContainer) EnableSSL() bool {
+	return c.enableSSL
+}
+
+func (c *BaseWebContainer) SetEnableSSL(enable bool) {
+	c.enableSSL = enable
+}
+
+func (c *BaseWebContainer) GetKeyFile() string {
+	return c.keyFile
+}
+
+func (c *BaseWebContainer) SetKeyFile(keyFile string) {
+	c.keyFile = keyFile
+}
+
+func (c *BaseWebContainer) GetCertFile() string {
+	return c.certFile
+}
+
+func (c *BaseWebContainer) SetCertFile(certFile string) {
+	c.certFile = certFile
+}
+
+func (c *BaseWebContainer) GetMapper() map[string]Mapper {
+	return c.mapper
+}
+
+func (c *BaseWebContainer) Route(path string, filters ...Filter) *Route {
+	return NewRoute(c, path, filters)
+}
+
+func (c *BaseWebContainer) Group(path string, fn GroupHandler, filters ...Filter) {
+	fn(NewRoute(c, path, filters))
+}
+
+func (c *BaseWebContainer) GET(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("GET", path, fn, filters)
+}
+
+func (c *BaseWebContainer) PATCH(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("PATCH", path, fn, filters)
+}
+
+func (c *BaseWebContainer) PUT(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("PUT", path, fn, filters)
+}
+
+func (c *BaseWebContainer) POST(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("POST", path, fn, filters)
+}
+
+func (c *BaseWebContainer) DELETE(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("DELETE", path, fn, filters)
+}
+
+func (c *BaseWebContainer) HEAD(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("HEAD", path, fn, filters)
+}
+
+func (c *BaseWebContainer) OPTIONS(path string, fn Handler, filters ...Filter) {
+	c.mapper[path] = NewMapper("OPTIONS", path, fn, filters)
+}
+
+func (c *BaseWebContainer) Filters(s ...string) []Filter {
+	panic(SpringConst.UNIMPLEMENTED_METHOD)
 }
 
 //
@@ -400,6 +547,6 @@ var WebContainerFactory Factory
 //
 // 注册 WebContainer 的工厂函数
 //
-func RegisterWebContainer(fn Factory) {
+func RegisterWebContainerFactory(fn Factory) {
 	WebContainerFactory = fn
 }

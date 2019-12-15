@@ -18,91 +18,105 @@ package SpringGin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-spring/go-spring-parent/spring-const"
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
+
+func init() {
+	gin.SetMode(gin.ReleaseMode)
+}
 
 //
 // 适配 gin 的 Web 容器
 //
 type Container struct {
-	HttpServer *http.Server
-	GinEngine  *gin.Engine
+	SpringWeb.BaseWebContainer
+	HttpServers []*http.Server
 }
 
 //
-// 工厂函数
+// 构造函数
 //
 func NewContainer() *Container {
-	gin.SetMode(gin.ReleaseMode)
-	e := gin.Default()
-	return &Container{
-		GinEngine: e,
+	c := &Container{
+		HttpServers: make([]*http.Server, 0),
+	}
+	c.Init()
+	return c
+}
+
+//
+// 启动 Web 容器
+//
+func (c *Container) Start() {
+	for _, port := range c.GetPort() {
+		address := fmt.Sprintf("%s:%d", c.GetIP(), port)
+
+		ginEngine := gin.New()
+		ginEngine.Use(gin.Logger(), gin.Recovery())
+
+		for _, mapper := range c.GetMapper() {
+			h := HandlerWrapper(mapper.Path, mapper.Handler, mapper.Filters)
+			switch mapper.Method {
+			case "GET":
+				ginEngine.GET(mapper.Path, h)
+			case "PATCH":
+				ginEngine.PATCH(mapper.Path, h)
+			case "PUT":
+				ginEngine.PUT(mapper.Path, h)
+			case "POST":
+				ginEngine.POST(mapper.Path, h)
+			case "DELETE":
+				ginEngine.DELETE(mapper.Path, h)
+			case "HEAD":
+				ginEngine.HEAD(mapper.Path, h)
+			case "OPTIONS":
+				ginEngine.OPTIONS(mapper.Path, h)
+			}
+		}
+
+		httpServer := &http.Server{
+			Addr:    address,
+			Handler: ginEngine,
+		}
+
+		c.HttpServers = append(c.HttpServers, httpServer)
+
+		go func() {
+			fmt.Printf("⇨ http server started on %s\n", address)
+
+			var err error
+
+			if c.EnableSSL() {
+				err = httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
+			} else {
+				err = httpServer.ListenAndServe()
+			}
+
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
 	}
 }
 
-func (c *Container) Stop() {
-	c.HttpServer.Shutdown(context.TODO())
-}
-
-func (c *Container) Start(address string) error {
-	c.HttpServer = &http.Server{Addr: address, Handler: c.GinEngine}
-	return c.HttpServer.ListenAndServe()
-}
-
-func (c *Container) StartTLS(address string, certFile, keyFile string) error {
-	c.HttpServer = &http.Server{Addr: address, Handler: c.GinEngine}
-	return c.HttpServer.ListenAndServeTLS(certFile, keyFile)
-}
-
-func (c *Container) Route(path string, filters ...SpringWeb.Filter) *SpringWeb.Route {
-	return SpringWeb.NewRoute(c, path, filters)
-}
-
-func (c *Container) Group(path string, fn SpringWeb.GroupHandler, filters ...SpringWeb.Filter) {
-	fn(SpringWeb.NewRoute(c, path, filters))
-}
-
-func (c *Container) GET(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.GET(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) POST(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.POST(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) PATCH(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.PATCH(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) PUT(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.PUT(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) DELETE(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.DELETE(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) HEAD(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.HEAD(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) OPTIONS(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) {
-	c.GinEngine.OPTIONS(path, HandlerWrapper(path, fn, filters...))
-}
-
-func (c *Container) Filters(s ...string) []SpringWeb.Filter {
-	panic(SpringConst.UNIMPLEMENTED_METHOD)
+//
+// 停止 Web 容器
+//
+func (c *Container) Stop(ctx context.Context) {
+	for _, s := range c.HttpServers {
+		s.Shutdown(ctx)
+	}
 }
 
 //
 // Web 处理函数包装器
 //
-func HandlerWrapper(path string, fn SpringWeb.Handler, filters ...SpringWeb.Filter) func(*gin.Context) {
+func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filter) func(*gin.Context) {
 	return func(ginCtx *gin.Context) {
 
 		ctx := ginCtx.Request.Context()

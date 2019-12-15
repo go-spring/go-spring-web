@@ -18,6 +18,7 @@ package testcases_test
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -114,6 +115,7 @@ func (s *Service) Panic(ctx SpringWeb.WebContext) {
 func TestContainer(t *testing.T) {
 
 	testRun := func(c SpringWeb.WebContainer) {
+		c.SetPort(8080, 9090)
 
 		s := NewService()
 
@@ -146,7 +148,8 @@ func TestContainer(t *testing.T) {
 			}, f2, f7)
 		}
 
-		go c.Start(":8080")
+		// 启动 web 服务器
+		c.Start()
 
 		time.Sleep(time.Millisecond * 100)
 		fmt.Println()
@@ -156,7 +159,7 @@ func TestContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		http.PostForm("http://127.0.0.1:8080/set", url.Values{
+		http.PostForm("http://127.0.0.1:9090/set", url.Values{
 			"a": []string{"1"},
 		})
 
@@ -167,9 +170,11 @@ func TestContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		resp, _ = http.Get("http://127.0.0.1:8080/panic")
+		resp, _ = http.Get("http://127.0.0.1:9090/panic")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+		c.Stop(context.TODO())
 	}
 
 	t.Run("SpringGin", func(t *testing.T) {
@@ -183,36 +188,49 @@ func TestContainer(t *testing.T) {
 
 func TestSwagger(t *testing.T) {
 
-	testRun := func(c SpringWeb.WebContainer) {
+	l := list.New()
+	f2 := NewNumberFilter(2, l)
+	f5 := NewNumberFilter(5, l)
+	f7 := NewNumberFilter(7, l)
 
-		l := list.New()
-		f2 := NewNumberFilter(2, l)
-		f5 := NewNumberFilter(5, l)
-		f7 := NewNumberFilter(7, l)
-
-		get := func(ctx SpringWeb.WebContext) {
-			fmt.Println("invoke get()")
-			ctx.String(http.StatusOK, "1")
-		}
-
-		c.GET(SpringSwagger.GET("/get", get, f2, f5, f7).Doc("get doc").Build())
-
-		go c.Start(":8080")
-
-		time.Sleep(time.Millisecond * 100)
-		fmt.Println()
-
-		resp, _ := http.Get("http://127.0.0.1:8080/get?key=a")
-		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-		fmt.Println()
+	get := func(ctx SpringWeb.WebContext) {
+		fmt.Println("invoke get()")
+		ctx.String(http.StatusOK, "1")
 	}
 
-	t.Run("SpringGin", func(t *testing.T) {
-		testRun(SpringGin.NewContainer())
-	})
+	server := SpringWeb.NewWebServer()
 
-	t.Run("SpringEcho", func(t *testing.T) {
-		testRun(SpringEcho.NewContainer())
-	})
+	// 添加第一个 web 容器
+	{
+		c1 := SpringGin.NewContainer()
+		c1.SetPort(8080)
+		c1.GET(SpringSwagger.GET("/get", get, f2, f5, f7).Doc("get doc").Build())
+		server.AddWebContainer(c1)
+	}
+
+	// 添加第二个 web 容器
+	{
+		c2 := SpringEcho.NewContainer()
+		c2.SetPort(9090)
+		c2.GET(SpringSwagger.GET("/get", get, f2, f5, f7).Doc("get doc").Build())
+		server.AddWebContainer(c2)
+	}
+
+	// 启动 web 服务器
+	server.Start()
+
+	time.Sleep(time.Millisecond * 100)
+	fmt.Println()
+
+	resp, _ := http.Get("http://127.0.0.1:8080/get?key=a")
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
+
+	resp, _ = http.Get("http://127.0.0.1:9090/get?key=a")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
+
+	server.Stop(context.TODO())
 }
