@@ -101,7 +101,9 @@ func (s *Service) Set(ctx SpringWeb.WebContext) {
 		A string `form:"a" json:"a"`
 	}
 
-	ctx.Bind(&param)
+	if err := ctx.Bind(&param); err != nil {
+		panic(err)
+	}
 
 	ctx.LogInfo("/set", "param="+SpringUtils.ToJson(param))
 
@@ -142,7 +144,7 @@ func TestContainer(t *testing.T) {
 
 		if false {
 			// 回调风格
-			c.Group("", func(r *SpringWeb.Route) {
+			c.Group("", func(r *SpringWeb.Router) {
 				r.GET("/panic", s.Panic)
 				r.POST("/set", s.Set)
 			}, f2, f7)
@@ -159,7 +161,7 @@ func TestContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		http.PostForm("http://127.0.0.1:9090/set", url.Values{
+		_, _ = http.PostForm("http://127.0.0.1:9090/set", url.Values{
 			"a": []string{"1"},
 		})
 

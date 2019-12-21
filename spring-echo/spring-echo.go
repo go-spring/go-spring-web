@@ -56,23 +56,8 @@ func (c *Container) Start() {
 		e.Use(middleware.Recover())
 
 		for _, mapper := range c.GetMapper() {
-			h := HandlerWrapper(mapper.Handler, mapper.Filters)
-			switch mapper.Method {
-			case "GET":
-				e.GET(mapper.Path, h)
-			case "PATCH":
-				e.PATCH(mapper.Path, h)
-			case "PUT":
-				e.PUT(mapper.Path, h)
-			case "POST":
-				e.POST(mapper.Path, h)
-			case "DELETE":
-				e.DELETE(mapper.Path, h)
-			case "HEAD":
-				e.HEAD(mapper.Path, h)
-			case "OPTIONS":
-				e.OPTIONS(mapper.Path, h)
-			}
+			h := HandlerWrapper(mapper.Handler(), mapper.Filters())
+			e.Add(mapper.Method(), mapper.Path(), h)
 		}
 
 		c.EchoServers = append(c.EchoServers, e)
@@ -98,7 +83,9 @@ func (c *Container) Start() {
 //
 func (c *Container) Stop(ctx context.Context) {
 	for _, s := range c.EchoServers {
-		s.Shutdown(ctx)
+		if err := s.Shutdown(ctx); err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 

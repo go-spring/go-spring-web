@@ -36,19 +36,57 @@ type Handler func(WebContext)
 // 路由映射器
 //
 type Mapper struct {
-	Method  string
-	Path    string
-	Handler Handler
-	Filters []Filter
+	method  string
+	path    string
+	handler Handler
+	filters []Filter
 }
 
+//
+// 构造函数
+//
 func NewMapper(method string, path string, fn Handler, filters []Filter) Mapper {
 	return Mapper{
-		Method:  method,
-		Path:    path,
-		Handler: fn,
-		Filters: filters,
+		method:  method,
+		path:    path,
+		handler: fn,
+		filters: filters,
 	}
+}
+
+//
+// Method
+//
+func (m *Mapper) Method() string {
+	return m.method
+}
+
+//
+// Path
+//
+func (m *Mapper) Path() string {
+	return m.path
+}
+
+//
+// Handler
+//
+func (m *Mapper) Handler() Handler {
+	return m.handler
+}
+
+//
+// Filters
+//
+func (m *Mapper) Filters() []Filter {
+	return m.filters
+}
+
+//
+// Filters
+//
+func (m *Mapper) SetFilters(filters []Filter) {
+	m.filters = filters
 }
 
 //
@@ -59,10 +97,13 @@ type WebMapper interface {
 	GetMapper() map[string]Mapper
 
 	// 通过路由分组注册 Web 处理函数
-	Route(path string, filters ...Filter) *Route
+	Route(path string, filters ...Filter) *Router
 
 	// 通过路由分组注册 Web 处理函数
 	Group(path string, fn GroupHandler, filters ...Filter)
+
+	// 注册任意 HTTP 方法处理函数
+	Mapping(method string, path string, fn Handler, filters ...Filter)
 
 	// 注册 GET 方法处理函数
 	GET(path string, fn Handler, filters ...Filter)
@@ -89,7 +130,7 @@ type WebMapper interface {
 //
 // 定义 Web 路由分组。分组的限制：分组内路由只能共享相同的 filters。
 //
-type Route struct {
+type Router struct {
 	basePath string
 	filters  []Filter
 	mapper   WebMapper
@@ -98,8 +139,8 @@ type Route struct {
 //
 // 工厂函数
 //
-func NewRoute(mapper WebMapper, path string, filters []Filter) *Route {
-	return &Route{
+func NewRouter(mapper WebMapper, path string, filters []Filter) *Router {
+	return &Router{
 		mapper:   mapper,
 		basePath: path,
 		filters:  filters,
@@ -109,39 +150,39 @@ func NewRoute(mapper WebMapper, path string, filters []Filter) *Route {
 //
 // 定义分组处理函数
 //
-type GroupHandler func(*Route)
+type GroupHandler func(*Router)
 
-func (g *Route) GET(path string, fn Handler) *Route {
+func (g *Router) GET(path string, fn Handler) *Router {
 	g.mapper.GET(g.basePath+path, fn, g.filters...)
 	return g
 }
 
-func (g *Route) POST(path string, fn Handler) *Route {
+func (g *Router) POST(path string, fn Handler) *Router {
 	g.mapper.POST(g.basePath+path, fn, g.filters...)
 	return g
 }
 
-func (g *Route) PATCH(path string, fn Handler) *Route {
+func (g *Router) PATCH(path string, fn Handler) *Router {
 	g.mapper.PATCH(g.basePath+path, fn, g.filters...)
 	return g
 }
 
-func (g *Route) PUT(path string, fn Handler) *Route {
+func (g *Router) PUT(path string, fn Handler) *Router {
 	g.mapper.PUT(g.basePath+path, fn, g.filters...)
 	return g
 }
 
-func (g *Route) DELETE(path string, fn Handler) *Route {
+func (g *Router) DELETE(path string, fn Handler) *Router {
 	g.mapper.DELETE(g.basePath+path, fn, g.filters...)
 	return g
 }
 
-func (g *Route) HEAD(path string, fn Handler) *Route {
+func (g *Router) HEAD(path string, fn Handler) *Router {
 	g.mapper.HEAD(g.basePath+path, fn, g.filters...)
 	return g
 }
 
-func (g *Route) OPTIONS(path string, fn Handler) *Route {
+func (g *Router) OPTIONS(path string, fn Handler) *Router {
 	g.mapper.OPTIONS(g.basePath+path, fn, g.filters...)
 	return g
 }
@@ -241,40 +282,44 @@ func (c *BaseWebContainer) GetMapper() map[string]Mapper {
 	return c.mapper
 }
 
-func (c *BaseWebContainer) Route(path string, filters ...Filter) *Route {
-	return NewRoute(c, path, filters)
+func (c *BaseWebContainer) Route(path string, filters ...Filter) *Router {
+	return NewRouter(c, path, filters)
 }
 
 func (c *BaseWebContainer) Group(path string, fn GroupHandler, filters ...Filter) {
-	fn(NewRoute(c, path, filters))
+	fn(NewRouter(c, path, filters))
+}
+
+func (c *BaseWebContainer) Mapping(method string, path string, fn Handler, filters ...Filter) {
+	c.mapper[path+method] = NewMapper(method, path, fn, filters)
 }
 
 func (c *BaseWebContainer) GET(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("GET", path, fn, filters)
+	c.Mapping("GET", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) PATCH(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("PATCH", path, fn, filters)
+	c.Mapping("PATCH", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) PUT(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("PUT", path, fn, filters)
+	c.Mapping("PUT", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) POST(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("POST", path, fn, filters)
+	c.Mapping("POST", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) DELETE(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("DELETE", path, fn, filters)
+	c.Mapping("DELETE", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) HEAD(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("HEAD", path, fn, filters)
+	c.Mapping("HEAD", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) OPTIONS(path string, fn Handler, filters ...Filter) {
-	c.mapper[path] = NewMapper("OPTIONS", path, fn, filters)
+	c.Mapping("OPTIONS", path, fn, filters...)
 }
 
 func (c *BaseWebContainer) Filters(s ...string) []Filter {

@@ -60,23 +60,8 @@ func (c *Container) Start() {
 		ginEngine.Use(gin.Logger(), gin.Recovery())
 
 		for _, mapper := range c.GetMapper() {
-			h := HandlerWrapper(mapper.Path, mapper.Handler, mapper.Filters)
-			switch mapper.Method {
-			case "GET":
-				ginEngine.GET(mapper.Path, h)
-			case "PATCH":
-				ginEngine.PATCH(mapper.Path, h)
-			case "PUT":
-				ginEngine.PUT(mapper.Path, h)
-			case "POST":
-				ginEngine.POST(mapper.Path, h)
-			case "DELETE":
-				ginEngine.DELETE(mapper.Path, h)
-			case "HEAD":
-				ginEngine.HEAD(mapper.Path, h)
-			case "OPTIONS":
-				ginEngine.OPTIONS(mapper.Path, h)
-			}
+			h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
+			ginEngine.Handle(mapper.Method(), mapper.Path(), h)
 		}
 
 		httpServer := &http.Server{
@@ -109,7 +94,9 @@ func (c *Container) Start() {
 //
 func (c *Container) Stop(ctx context.Context) {
 	for _, s := range c.HttpServers {
-		s.Shutdown(ctx)
+		if err := s.Shutdown(ctx); err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
