@@ -60,9 +60,7 @@ const (
 	MIMETextHTMLCharsetUTF8              = MIMETextHTML + "; " + charsetUTF8
 )
 
-//
 // 适配 gin 的 Web 上下文
-//
 type Context struct {
 	*SpringLogger.DefaultLoggerContext
 

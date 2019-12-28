@@ -26,72 +26,54 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
-//
-// 适配 echo 的 Web 容器
-//
+// Container 适配 echo 的 Web 容器
 type Container struct {
-	SpringWeb.BaseWebContainer
-	EchoServers []*echo.Echo
+	*SpringWeb.BaseWebContainer
+	echoServer *echo.Echo
 }
 
-//
-// 构造函数
-//
+// NewContainer Container 的构造函数
 func NewContainer() *Container {
 	c := &Container{
-		EchoServers: make([]*echo.Echo, 0),
+		BaseWebContainer: SpringWeb.NewBaseWebContainer(),
 	}
-	c.Init()
 	return c
 }
 
-//
-// 启动 web 容器
-//
+// Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
-	for _, port := range c.GetPort() {
-		address := fmt.Sprintf("%s:%d", c.GetIP(), port)
+	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 
-		e := echo.New()
-		e.Use(middleware.Recover())
+	e := echo.New()
+	e.HideBanner = true
+	e.Use(middleware.Recover())
 
-		for _, mapper := range c.GetMapper() {
-			h := HandlerWrapper(mapper.Handler(), mapper.Filters())
-			e.Add(mapper.Method(), mapper.Path(), h)
-		}
-
-		c.EchoServers = append(c.EchoServers, e)
-
-		go func() {
-			var err error
-
-			if c.EnableSSL() {
-				err = e.StartTLS(address, c.GetCertFile(), c.GetKeyFile())
-			} else {
-				err = e.Start(address)
-			}
-
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
+	for _, mapper := range c.Mappers() {
+		h := HandlerWrapper(mapper.Handler(), mapper.Filters())
+		e.Add(mapper.Method(), mapper.Path(), h)
 	}
+
+	c.echoServer = e
+
+	go func() {
+		var err error
+		if c.EnableSSL() {
+			err = e.StartTLS(address, c.GetCertFile(), c.GetKeyFile())
+		} else {
+			err = e.Start(address)
+		}
+		fmt.Println("exit http server on", address, "return", err)
+	}()
 }
 
-//
-// 停止 Web 容器
-//
+// Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
-	for _, s := range c.EchoServers {
-		if err := s.Shutdown(ctx); err != nil {
-			fmt.Println(err)
-		}
+	if err := c.echoServer.Shutdown(ctx); err != nil {
+		fmt.Println(err)
 	}
 }
 
-//
-// Web 处理函数包装器
-//
+// HandlerWrapper Web 处理函数包装器
 func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
 

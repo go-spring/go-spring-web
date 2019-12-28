@@ -20,40 +20,33 @@ import (
 	"context"
 )
 
-//
-// 一个 WebServer 包含多个 WebContainer
-//
+// WebServer 一个 WebServer 包含多个 WebContainer
 type WebServer struct {
-	Containers []WebContainer
+	containers []WebContainer
 }
 
+// NewWebServer WebServer 的构造函数
 func NewWebServer() *WebServer {
 	return &WebServer{
-		Containers: make([]WebContainer, 0),
+		containers: make([]WebContainer, 0),
 	}
 }
 
-//
-// 启动 Web 容器，非阻塞
-//
+// Start 启动 Web 容器，非阻塞
 func (s *WebServer) Start() {
-	for _, c := range s.Containers {
+	for _, c := range s.containers {
 		c.Start()
 	}
 }
 
-//
-// 停止 Web 容器
-//
+// Stop 停止 Web 容器，阻塞
 func (s *WebServer) Stop(ctx context.Context) {
-	for _, c := range s.Containers {
+	for _, c := range s.containers {
 		c.Stop(ctx)
 	}
 }
 
-//
-// 添加 WebContainer 实例
-//
+// AddWebContainer 添加 WebContainer 实例
 func (s *WebServer) AddWebContainer(container WebContainer) {
-	s.Containers = append(s.Containers, container)
+	s.containers = append(s.containers, container)
 }

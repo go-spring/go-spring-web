@@ -30,79 +30,58 @@ func init() {
 	gin.SetMode(gin.ReleaseMode)
 }
 
-//
-// 适配 gin 的 Web 容器
-//
+// Container 适配 gin 的 Web 容器
 type Container struct {
-	SpringWeb.BaseWebContainer
-	HttpServers []*http.Server
+	*SpringWeb.BaseWebContainer
+	httpServer *http.Server
 }
 
-//
-// 构造函数
-//
+// NewContainer Container 的构造函数
 func NewContainer() *Container {
 	c := &Container{
-		HttpServers: make([]*http.Server, 0),
+		BaseWebContainer: SpringWeb.NewBaseWebContainer(),
 	}
-	c.Init()
 	return c
 }
 
-//
-// 启动 Web 容器
-//
+// Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
-	for _, port := range c.GetPort() {
-		address := fmt.Sprintf("%s:%d", c.GetIP(), port)
+	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 
-		ginEngine := gin.New()
-		ginEngine.Use(gin.Logger(), gin.Recovery())
+	ginEngine := gin.New()
+	ginEngine.Use(gin.Logger(), gin.Recovery())
 
-		for _, mapper := range c.GetMapper() {
-			h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
-			ginEngine.Handle(mapper.Method(), mapper.Path(), h)
-		}
-
-		httpServer := &http.Server{
-			Addr:    address,
-			Handler: ginEngine,
-		}
-
-		c.HttpServers = append(c.HttpServers, httpServer)
-
-		go func() {
-			fmt.Printf("⇨ http server started on %s\n", address)
-
-			var err error
-
-			if c.EnableSSL() {
-				err = httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
-			} else {
-				err = httpServer.ListenAndServe()
-			}
-
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
+	for _, mapper := range c.Mappers() {
+		h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
+		ginEngine.Handle(mapper.Method(), mapper.Path(), h)
 	}
+
+	c.httpServer = &http.Server{
+		Addr:    address,
+		Handler: ginEngine,
+	}
+
+	go func() {
+		fmt.Printf("⇨ http server started on %s\n", address)
+
+		var err error
+		if c.EnableSSL() {
+			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
+		} else {
+			err = c.httpServer.ListenAndServe()
+		}
+		fmt.Println("exit http server on", address, "return", err)
+	}()
 }
 
-//
-// 停止 Web 容器
-//
+// Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
-	for _, s := range c.HttpServers {
-		if err := s.Shutdown(ctx); err != nil {
-			fmt.Println(err)
-		}
+	if err := c.httpServer.Shutdown(ctx); err != nil {
+		fmt.Println(err)
 	}
 }
 
-//
-// Web 处理函数包装器
-//
+// HandlerWrapper Web 处理函数包装器
 func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filter) func(*gin.Context) {
 	return func(ginCtx *gin.Context) {
 

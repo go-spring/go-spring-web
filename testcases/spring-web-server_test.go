@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -31,36 +32,35 @@ import (
 	"github.com/go-spring/go-spring-web/testcases"
 )
 
-func TestRpc(t *testing.T) {
-
-	rc := new(testcases.RpcService)
+func TestWebServer(t *testing.T) {
+	server := SpringWeb.NewWebServer()
 
 	l := list.New()
 	f2 := testcases.NewNumberFilter(2, l)
 	f5 := testcases.NewNumberFilter(5, l)
 	f7 := testcases.NewNumberFilter(7, l)
 
-	server := SpringWeb.NewWebServer()
+	s := testcases.NewService()
 
-	// 添加第一个 web 容器
+	// 添加第一个 Web 容器
 	{
-		c1 := SpringGin.NewContainer()
-		server.AddWebContainer(c1)
-		c1.SetPort(8080)
+		g := SpringGin.NewContainer()
+		server.AddWebContainer(g)
+		g.SetPort(8080)
 
-		c1.GET("/ok", SpringWeb.RPC(rc.OK), f2, f5)
+		g.GET("/get", s.Get, f5)
 	}
 
-	// 添加第二个 web 容器
+	// 添加第二个 Web 容器
 	{
-		c2 := SpringEcho.NewContainer()
-		server.AddWebContainer(c2)
-		c2.SetPort(9090)
+		e := SpringEcho.NewContainer()
+		server.AddWebContainer(e)
+		e.SetPort(9090)
 
-		r := c2.Route("", f2, f7)
+		r := e.Route("", f2, f7)
 		{
-			r.GET("/err", SpringWeb.RPC(rc.Err))
-			r.GET("/panic", SpringWeb.RPC(rc.Panic))
+			r.POST("/set", s.Set)
+			r.GET("/panic", s.Panic)
 		}
 	}
 
@@ -70,12 +70,18 @@ func TestRpc(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 	fmt.Println()
 
-	resp, _ := http.Get("http://127.0.0.1:8080/ok")
+	resp, _ := http.Get("http://127.0.0.1:8080/get?key=a")
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 	fmt.Println()
 
-	resp, _ = http.Get("http://127.0.0.1:9090/err")
+	_, _ = http.PostForm("http://127.0.0.1:9090/set", url.Values{
+		"a": []string{"1"},
+	})
+
+	fmt.Println()
+
+	resp, _ = http.Get("http://127.0.0.1:8080/get?key=a")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 	fmt.Println()
@@ -84,11 +90,7 @@ func TestRpc(t *testing.T) {
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
-	resp, _ = http.Get("http://127.0.0.1:9090/panic?panic=1")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
 	server.Stop(context.TODO())
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(time.Millisecond * 50)
 }

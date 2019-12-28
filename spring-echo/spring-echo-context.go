@@ -31,9 +31,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-//
 // 适配 echo 的 Web 上下文
-//
 type Context struct {
 	*SpringLogger.DefaultLoggerContext
 

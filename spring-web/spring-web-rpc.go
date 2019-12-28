@@ -23,14 +23,10 @@ import (
 	"github.com/go-spring/go-spring-parent/spring-error"
 )
 
-//
 // 定义 Web RPC 处理函数
-//
 type RpcHandler func(WebContext) interface{}
 
-//
 // 定义 Web RPC 适配函数
-//
 func RPC(fn RpcHandler) Handler {
 	return func(webCtx WebContext) {
 

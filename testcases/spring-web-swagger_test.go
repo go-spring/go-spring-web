@@ -27,18 +27,22 @@ import (
 
 	"github.com/go-spring/go-spring-web/spring-echo"
 	"github.com/go-spring/go-spring-web/spring-gin"
+	"github.com/go-spring/go-spring-web/spring-swagger"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
 )
 
-func TestRpc(t *testing.T) {
-
-	rc := new(testcases.RpcService)
+func TestSwagger(t *testing.T) {
 
 	l := list.New()
 	f2 := testcases.NewNumberFilter(2, l)
 	f5 := testcases.NewNumberFilter(5, l)
 	f7 := testcases.NewNumberFilter(7, l)
+
+	get := func(ctx SpringWeb.WebContext) {
+		fmt.Println("invoke get()")
+		ctx.String(http.StatusOK, "1")
+	}
 
 	server := SpringWeb.NewWebServer()
 
@@ -48,7 +52,7 @@ func TestRpc(t *testing.T) {
 		server.AddWebContainer(c1)
 		c1.SetPort(8080)
 
-		c1.GET("/ok", SpringWeb.RPC(rc.OK), f2, f5)
+		c1.GET(SpringSwagger.GET("/get", get, f2, f5, f7).Doc("get doc").Build())
 	}
 
 	// 添加第二个 web 容器
@@ -57,11 +61,7 @@ func TestRpc(t *testing.T) {
 		server.AddWebContainer(c2)
 		c2.SetPort(9090)
 
-		r := c2.Route("", f2, f7)
-		{
-			r.GET("/err", SpringWeb.RPC(rc.Err))
-			r.GET("/panic", SpringWeb.RPC(rc.Panic))
-		}
+		c2.GET(SpringSwagger.GET("/get", get, f2, f5, f7).Doc("get doc").Build())
 	}
 
 	// 启动 web 服务器
@@ -70,25 +70,17 @@ func TestRpc(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 	fmt.Println()
 
-	resp, _ := http.Get("http://127.0.0.1:8080/ok")
+	resp, _ := http.Get("http://127.0.0.1:8080/get?key=a")
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 	fmt.Println()
 
-	resp, _ = http.Get("http://127.0.0.1:9090/err")
+	resp, _ = http.Get("http://127.0.0.1:9090/get?key=a")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 	fmt.Println()
 
-	resp, _ = http.Get("http://127.0.0.1:9090/panic")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/panic?panic=1")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
 	server.Stop(context.TODO())
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(time.Millisecond * 50)
 }
