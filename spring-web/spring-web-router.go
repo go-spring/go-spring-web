@@ -16,6 +16,10 @@
 
 package SpringWeb
 
+import (
+	"net/http"
+)
+
 // Router 路由分组
 type Router struct {
 	mapping  WebMapping
@@ -40,35 +44,35 @@ func (g *Router) Request(method string, path string, fn Handler) *Router {
 
 // GET 注册 GET 方法处理函数
 func (g *Router) GET(path string, fn Handler) *Router {
-	return g.Request("GET", path, fn)
+	return g.Request(http.MethodGet, path, fn)
 }
 
 // POST 注册 POST 方法处理函数
 func (g *Router) POST(path string, fn Handler) *Router {
-	return g.Request("POST", path, fn)
+	return g.Request(http.MethodPost, path, fn)
 }
 
 // PATCH 注册 PATCH 方法处理函数
 func (g *Router) PATCH(path string, fn Handler) *Router {
-	return g.Request("PATCH", path, fn)
+	return g.Request(http.MethodPatch, path, fn)
 }
 
 // PUT 注册 PUT 方法处理函数
 func (g *Router) PUT(path string, fn Handler) *Router {
-	return g.Request("PUT", path, fn)
+	return g.Request(http.MethodPut, path, fn)
 }
 
 // DELETE 注册 DELETE 方法处理函数
 func (g *Router) DELETE(path string, fn Handler) *Router {
-	return g.Request("DELETE", path, fn)
+	return g.Request(http.MethodDelete, path, fn)
 }
 
 // HEAD 注册 HEAD 方法处理函数
 func (g *Router) HEAD(path string, fn Handler) *Router {
-	return g.Request("HEAD", path, fn)
+	return g.Request(http.MethodHead, path, fn)
 }
 
 // OPTIONS 注册 OPTIONS 方法处理函数
 func (g *Router) OPTIONS(path string, fn Handler) *Router {
-	return g.Request("OPTIONS", path, fn)
+	return g.Request(http.MethodOptions, path, fn)
 }

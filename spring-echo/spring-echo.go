@@ -40,27 +40,36 @@ func NewContainer() *Container {
 	return c
 }
 
+// SetEchoServer 设置 echo 容器
+func (c *Container) SetEchoServer(e *echo.Echo) {
+	c.echoServer = e
+}
+
 // Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
-	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 
-	e := echo.New()
-	e.HideBanner = true
-	e.Use(middleware.Recover())
-
-	for _, mapper := range c.Mappers() {
-		h := HandlerWrapper(mapper.Handler(), mapper.Filters())
-		e.Add(mapper.Method(), mapper.Path(), h)
+	// 使用默认的 echo 容器
+	if c.echoServer == nil {
+		e := echo.New()
+		c.echoServer = e
+		e.HideBanner = true
+		e.Use(middleware.Recover())
 	}
 
-	c.echoServer = e
+	// 映射 Web 处理函数
+	for _, mapper := range c.Mappers() {
+		h := HandlerWrapper(mapper.Handler(), mapper.Filters())
+		c.echoServer.Add(mapper.Method(), mapper.Path(), h)
+	}
 
+	// 启动 echo 容器
 	go func() {
+		address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 		var err error
 		if c.EnableSSL() {
-			err = e.StartTLS(address, c.GetCertFile(), c.GetKeyFile())
+			err = c.echoServer.StartTLS(address, c.GetCertFile(), c.GetKeyFile())
 		} else {
-			err = e.Start(address)
+			err = c.echoServer.Start(address)
 		}
 		fmt.Println("exit http server on", address, "return", err)
 	}()

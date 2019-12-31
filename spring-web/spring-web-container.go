@@ -134,7 +134,7 @@ func (c *BaseWebContainer) SetCertFile(certFile string) {
 	c.certFile = certFile
 }
 
-/////////////////////////////////////////////////////////
+/////////////////// Invoke Handler //////////////////////
 
 // InvokeHandler 执行 Web 处理函数
 func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
@@ -145,17 +145,4 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 	} else {
 		fn(ctx)
 	}
-}
-
-/////////////////////////////////////////////////////////
-
-// 定义 WebContainer 的工厂函数
-type Factory func() WebContainer
-
-// 保存 WebContainer 的工厂函数
-var WebContainerFactory Factory
-
-// 注册 WebContainer 的工厂函数
-func RegisterWebContainerFactory(fn Factory) {
-	WebContainerFactory = fn
 }

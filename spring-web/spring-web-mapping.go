@@ -16,6 +16,10 @@
 
 package SpringWeb
 
+import (
+	"net/http"
+)
+
 // WebMapping 路由表
 type WebMapping interface {
 	// Mappers 返回映射器列表
@@ -79,35 +83,35 @@ func (w *defaultWebMapping) Request(method string, path string, fn Handler, filt
 
 // GET 注册 GET 方法处理函数
 func (w *defaultWebMapping) GET(path string, fn Handler, filters ...Filter) {
-	w.Request("GET", path, fn, filters...)
+	w.Request(http.MethodGet, path, fn, filters...)
 }
 
 // POST 注册 POST 方法处理函数
 func (w *defaultWebMapping) POST(path string, fn Handler, filters ...Filter) {
-	w.Request("POST", path, fn, filters...)
+	w.Request(http.MethodPost, path, fn, filters...)
 }
 
 // PATCH 注册 PATCH 方法处理函数
 func (w *defaultWebMapping) PATCH(path string, fn Handler, filters ...Filter) {
-	w.Request("PATCH", path, fn, filters...)
+	w.Request(http.MethodPatch, path, fn, filters...)
 }
 
 // PUT 注册 PUT 方法处理函数
 func (w *defaultWebMapping) PUT(path string, fn Handler, filters ...Filter) {
-	w.Request("PUT", path, fn, filters...)
+	w.Request(http.MethodPut, path, fn, filters...)
 }
 
 // DELETE 注册 DELETE 方法处理函数
 func (w *defaultWebMapping) DELETE(path string, fn Handler, filters ...Filter) {
-	w.Request("DELETE", path, fn, filters...)
+	w.Request(http.MethodDelete, path, fn, filters...)
 }
 
 // HEAD 注册 HEAD 方法处理函数
 func (w *defaultWebMapping) HEAD(path string, fn Handler, filters ...Filter) {
-	w.Request("HEAD", path, fn, filters...)
+	w.Request(http.MethodHead, path, fn, filters...)
 }
 
 // OPTIONS 注册 OPTIONS 方法处理函数
 func (w *defaultWebMapping) OPTIONS(path string, fn Handler, filters ...Filter) {
-	w.Request("OPTIONS", path, fn, filters...)
+	w.Request(http.MethodOptions, path, fn, filters...)
 }

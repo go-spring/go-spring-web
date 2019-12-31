@@ -34,6 +34,7 @@ func init() {
 type Container struct {
 	*SpringWeb.BaseWebContainer
 	httpServer *http.Server
+	ginEngine  *gin.Engine
 }
 
 // NewContainer Container 的构造函数
@@ -44,26 +45,34 @@ func NewContainer() *Container {
 	return c
 }
 
+// SetGinEngine 设置 gin 引擎
+func (c *Container) SetGinEngine(e *gin.Engine) {
+	c.ginEngine = e
+}
+
 // Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
 	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 
-	ginEngine := gin.New()
-	ginEngine.Use(gin.Logger(), gin.Recovery())
+	// 使用默认的 gin 引擎
+	if c.ginEngine == nil {
+		e := gin.New()
+		c.ginEngine = e
+		e.Use(gin.Logger(), gin.Recovery())
+	}
 
 	for _, mapper := range c.Mappers() {
 		h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
-		ginEngine.Handle(mapper.Method(), mapper.Path(), h)
+		c.ginEngine.Handle(mapper.Method(), mapper.Path(), h)
 	}
 
 	c.httpServer = &http.Server{
 		Addr:    address,
-		Handler: ginEngine,
+		Handler: c.ginEngine,
 	}
 
 	go func() {
 		fmt.Printf("⇨ http server started on %s\n", address)
-
 		var err error
 		if c.EnableSSL() {
 			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
