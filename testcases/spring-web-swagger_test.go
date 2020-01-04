@@ -40,7 +40,7 @@ func TestSwagger(t *testing.T) {
 	f7 := testcases.NewNumberFilter(7, l)
 
 	get := func(ctx SpringWeb.WebContext) {
-		fmt.Println("invoke get()")
+		ctx.LogInfo("invoke get()")
 		ctx.String(http.StatusOK, "1")
 	}
 

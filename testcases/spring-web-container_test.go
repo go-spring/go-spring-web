@@ -26,10 +26,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-spring/go-spring-web/spring-echo"
 	"github.com/go-spring/go-spring-web/spring-gin"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
+	"github.com/labstack/echo"
 )
 
 func TestWebContainer(t *testing.T) {
@@ -92,4 +94,81 @@ func TestWebContainer(t *testing.T) {
 	t.Run("SpringEcho", func(t *testing.T) {
 		testRun(SpringEcho.NewContainer())
 	})
+}
+
+func TestEchoServer(t *testing.T) {
+	e := echo.New()
+	e.HideBanner = true
+
+	// 配合 echo 框架使用
+	e.GET("/", SpringEcho.HandlerWrapper(func(webCtx SpringWeb.WebContext) {
+		webCtx.JSON(http.StatusOK, map[string]string{
+			"a": "1",
+		})
+	}, nil))
+
+	go func() {
+		address := ":8080"
+		err := e.Start(address)
+		fmt.Println("exit http server on", address, "return", err)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	resp, _ := http.Get("http://127.0.0.1:8080/")
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	e.Shutdown(context.Background())
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestGinServer(t *testing.T) {
+	g := gin.New()
+
+	// 配合 gin 框架使用
+	g.GET("/", SpringGin.HandlerWrapper("/", func(webCtx SpringWeb.WebContext) {
+		webCtx.JSON(http.StatusOK, map[string]string{
+			"a": "1",
+		})
+	}, nil))
+
+	go func() {
+		address := ":8080"
+		err := g.Run(address)
+		fmt.Println("exit http server on", address, "return", err)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	resp, _ := http.Get("http://127.0.0.1:8080/")
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	//g.Shutdown(context.Background())
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestHttpServer(t *testing.T) {
+	var server *http.Server
+
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		// 暂未实现
+	})
+
+	go func() {
+		address := ":8080"
+		server = &http.Server{Addr: address}
+		err := server.ListenAndServe()
+		fmt.Println("exit http server on", address, "return", err)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	resp, _ := http.Get("http://127.0.0.1:8080/")
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	server.Shutdown(context.Background())
+	time.Sleep(100 * time.Millisecond)
 }

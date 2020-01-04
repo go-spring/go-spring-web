@@ -18,15 +18,24 @@ package testcases_test
 
 import (
 	"container/list"
+	"context"
 	"testing"
 
+	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-spring/go-spring-web/spring-echo"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFilterChain(t *testing.T) {
+
+	logCtx := SpringLogger.NewDefaultLoggerContext(context.Background())
+	webCtx := &SpringEcho.Context{
+		LoggerContext: logCtx,
+	}
+
 	l := list.New()
 
 	filters := []SpringWeb.Filter{
@@ -35,7 +44,7 @@ func TestFilterChain(t *testing.T) {
 	}
 
 	chain := SpringWeb.NewFilterChain(filters)
-	chain.Next(nil)
+	chain.Next(webCtx)
 
 	assert.Equal(t, SpringUtils.NewList(2, 5, 5, 2), l)
 }

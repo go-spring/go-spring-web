@@ -70,22 +70,22 @@ func (c *Container) Start() {
 	}
 
 	go func() {
-		fmt.Printf("⇨ http server started on %s\n", address)
+		SpringLogger.Info("⇨ http server started on %s", address)
 		var err error
 		if c.EnableSSL() {
 			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
 		} else {
 			err = c.httpServer.ListenAndServe()
 		}
-		fmt.Println("exit http server on", address, "return", err)
+		SpringLogger.Info("exit http server on", address, "return", err)
 	}()
 }
 
 // Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
-	if err := c.httpServer.Shutdown(ctx); err != nil {
-		fmt.Println(err)
-	}
+	err := c.httpServer.Shutdown(ctx)
+	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
+	SpringLogger.Info("shutdown http server on", address, "return", err)
 }
 
 // HandlerWrapper Web 处理函数包装器

@@ -19,7 +19,6 @@ package testcases
 import (
 	"container/list"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/go-spring/go-spring-parent/spring-error"
@@ -44,11 +43,11 @@ func NewNumberFilter(n int, l *list.List) *NumberFilter {
 func (f *NumberFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
 
 	defer func() {
-		fmt.Println("::after", f.n)
+		ctx.LogInfo("::after", f.n)
 		f.l.PushBack(f.n)
 	}()
 
-	fmt.Println("::before", f.n)
+	ctx.LogInfo("::before", f.n)
 	f.l.PushBack(f.n)
 
 	chain.Next(ctx)

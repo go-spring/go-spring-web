@@ -69,15 +69,15 @@ func (c *Container) Start() {
 		} else {
 			err = c.echoServer.Start(address)
 		}
-		fmt.Println("exit http server on", address, "return", err)
+		SpringLogger.Info("exit http server on", address, "return", err)
 	}()
 }
 
 // Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
-	if err := c.echoServer.Shutdown(ctx); err != nil {
-		fmt.Println(err)
-	}
+	err := c.echoServer.Shutdown(ctx)
+	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
+	SpringLogger.Info("shutdown http server on", address, "return", err)
 }
 
 // HandlerWrapper Web 处理函数包装器

@@ -18,7 +18,6 @@ package SpringWeb
 
 import (
 	"context"
-	"fmt"
 )
 
 // Handler Web 处理函数
@@ -141,7 +140,7 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println(err)
+			ctx.LogError(err)
 		}
 	}()
 
