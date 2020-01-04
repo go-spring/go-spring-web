@@ -26,7 +26,7 @@ type WebMapping interface {
 	Mappers() map[string]*Mapper
 
 	// Route 返回和 Mapping 绑定的路由分组
-	Route(path string, filters ...Filter) *Router
+	Route(basePath string, filters ...Filter) *Router
 
 	// Request 注册任意 HTTP 方法处理函数
 	Request(method string, path string, fn Handler, filters ...Filter) *Mapper
@@ -71,8 +71,8 @@ func (w *defaultWebMapping) Mappers() map[string]*Mapper {
 }
 
 // Route 返回和 Mapping 绑定的路由分组
-func (w *defaultWebMapping) Route(path string, filters ...Filter) *Router {
-	return NewRouter(w, path, filters)
+func (w *defaultWebMapping) Route(basePath string, filters ...Filter) *Router {
+	return NewRouter(w, basePath, filters)
 }
 
 // Request 注册任意 HTTP 方法处理函数
