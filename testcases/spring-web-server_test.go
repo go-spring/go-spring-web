@@ -89,6 +89,7 @@ func TestWebServer(t *testing.T) {
 	resp, _ = http.Get("http://127.0.0.1:9090/panic")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
 
 	server.Stop(context.TODO())
 

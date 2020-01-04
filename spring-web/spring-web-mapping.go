@@ -29,28 +29,28 @@ type WebMapping interface {
 	Route(path string, filters ...Filter) *Router
 
 	// Request 注册任意 HTTP 方法处理函数
-	Request(method string, path string, fn Handler, filters ...Filter)
+	Request(method string, path string, fn Handler, filters ...Filter) *Mapper
 
 	// GET 注册 GET 方法处理函数
-	GET(path string, fn Handler, filters ...Filter)
+	GET(path string, fn Handler, filters ...Filter) *Mapper
 
 	// POST 注册 POST 方法处理函数
-	POST(path string, fn Handler, filters ...Filter)
+	POST(path string, fn Handler, filters ...Filter) *Mapper
 
 	// PATCH 注册 PATCH 方法处理函数
-	PATCH(path string, fn Handler, filters ...Filter)
+	PATCH(path string, fn Handler, filters ...Filter) *Mapper
 
 	// PUT 注册 PUT 方法处理函数
-	PUT(path string, fn Handler, filters ...Filter)
+	PUT(path string, fn Handler, filters ...Filter) *Mapper
 
 	// DELETE 注册 DELETE 方法处理函数
-	DELETE(path string, fn Handler, filters ...Filter)
+	DELETE(path string, fn Handler, filters ...Filter) *Mapper
 
 	// HEAD 注册 HEAD 方法处理函数
-	HEAD(path string, fn Handler, filters ...Filter)
+	HEAD(path string, fn Handler, filters ...Filter) *Mapper
 
 	// OPTIONS 注册 OPTIONS 方法处理函数
-	OPTIONS(path string, fn Handler, filters ...Filter)
+	OPTIONS(path string, fn Handler, filters ...Filter) *Mapper
 }
 
 // defaultWebMapping 路由表的默认实现
@@ -76,42 +76,43 @@ func (w *defaultWebMapping) Route(path string, filters ...Filter) *Router {
 }
 
 // Request 注册任意 HTTP 方法处理函数
-func (w *defaultWebMapping) Request(method string, path string, fn Handler, filters ...Filter) {
+func (w *defaultWebMapping) Request(method string, path string, fn Handler, filters ...Filter) *Mapper {
 	m := NewMapper(method, path, fn, filters)
 	w.mappers[m.Key()] = m
+	return m
 }
 
 // GET 注册 GET 方法处理函数
-func (w *defaultWebMapping) GET(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodGet, path, fn, filters...)
+func (w *defaultWebMapping) GET(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodGet, path, fn, filters...)
 }
 
 // POST 注册 POST 方法处理函数
-func (w *defaultWebMapping) POST(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodPost, path, fn, filters...)
+func (w *defaultWebMapping) POST(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodPost, path, fn, filters...)
 }
 
 // PATCH 注册 PATCH 方法处理函数
-func (w *defaultWebMapping) PATCH(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodPatch, path, fn, filters...)
+func (w *defaultWebMapping) PATCH(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodPatch, path, fn, filters...)
 }
 
 // PUT 注册 PUT 方法处理函数
-func (w *defaultWebMapping) PUT(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodPut, path, fn, filters...)
+func (w *defaultWebMapping) PUT(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodPut, path, fn, filters...)
 }
 
 // DELETE 注册 DELETE 方法处理函数
-func (w *defaultWebMapping) DELETE(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodDelete, path, fn, filters...)
+func (w *defaultWebMapping) DELETE(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodDelete, path, fn, filters...)
 }
 
 // HEAD 注册 HEAD 方法处理函数
-func (w *defaultWebMapping) HEAD(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodHead, path, fn, filters...)
+func (w *defaultWebMapping) HEAD(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodHead, path, fn, filters...)
 }
 
 // OPTIONS 注册 OPTIONS 方法处理函数
-func (w *defaultWebMapping) OPTIONS(path string, fn Handler, filters ...Filter) {
-	w.Request(http.MethodOptions, path, fn, filters...)
+func (w *defaultWebMapping) OPTIONS(path string, fn Handler, filters ...Filter) *Mapper {
+	return w.Request(http.MethodOptions, path, fn, filters...)
 }

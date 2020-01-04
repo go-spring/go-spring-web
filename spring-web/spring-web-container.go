@@ -18,6 +18,7 @@ package SpringWeb
 
 import (
 	"context"
+	"fmt"
 )
 
 // Handler Web 处理函数
@@ -69,10 +70,9 @@ type WebContainer interface {
 type BaseWebContainer struct {
 	WebMapping
 
-	ip   string // 监听的 IP
-	port int    // 监听的端口
-
-	enableSSL bool
+	ip        string // 监听 IP
+	port      int    // 监听端口
+	enableSSL bool   // 使用 SSL
 	keyFile   string
 	certFile  string
 }
@@ -138,6 +138,13 @@ func (c *BaseWebContainer) SetCertFile(certFile string) {
 
 // InvokeHandler 执行 Web 处理函数
 func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
 	if len(filters) > 0 {
 		filters = append(filters, HandlerFilter(fn))
 		chain := NewFilterChain(filters)

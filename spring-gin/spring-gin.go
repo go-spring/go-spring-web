@@ -45,7 +45,7 @@ func NewContainer() *Container {
 	return c
 }
 
-// SetGinEngine 设置 gin 引擎
+// SetGinEngine 设置自定义 gin 引擎
 func (c *Container) SetGinEngine(e *gin.Engine) {
 	c.ginEngine = e
 }
@@ -56,9 +56,7 @@ func (c *Container) Start() {
 
 	// 使用默认的 gin 引擎
 	if c.ginEngine == nil {
-		e := gin.New()
-		c.ginEngine = e
-		e.Use(gin.Logger(), gin.Recovery())
+		c.ginEngine = gin.New()
 	}
 
 	for _, mapper := range c.Mappers() {

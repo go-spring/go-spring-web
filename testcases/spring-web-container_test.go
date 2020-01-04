@@ -78,6 +78,7 @@ func TestWebContainer(t *testing.T) {
 		resp, _ = http.Get("http://127.0.0.1:8080/panic")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
 
 		c.Stop(context.TODO())
 

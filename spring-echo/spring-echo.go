@@ -23,7 +23,6 @@ import (
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
 // Container 适配 echo 的 Web 容器
@@ -40,7 +39,7 @@ func NewContainer() *Container {
 	return c
 }
 
-// SetEchoServer 设置 echo 容器
+// SetEchoServer 设置自定义 echo 容器
 func (c *Container) SetEchoServer(e *echo.Echo) {
 	c.echoServer = e
 }
@@ -53,7 +52,6 @@ func (c *Container) Start() {
 		e := echo.New()
 		c.echoServer = e
 		e.HideBanner = true
-		e.Use(middleware.Recover())
 	}
 
 	// 映射 Web 处理函数

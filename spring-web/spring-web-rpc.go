@@ -23,14 +23,14 @@ import (
 	"github.com/go-spring/go-spring-parent/spring-error"
 )
 
-// 定义 Web RPC 处理函数
+// RpcHandler Web RPC 处理函数
 type RpcHandler func(WebContext) interface{}
 
-// 定义 Web RPC 适配函数
+// RPC Web RPC 适配函数
 func RPC(fn RpcHandler) Handler {
 	return func(webCtx WebContext) {
 
-		// HTTP RPC 只能返回 json 格式的数据
+		// 目前 HTTP RPC 只能返回 json 格式的数据
 		webCtx.Header("Content-Type", "application/json")
 
 		defer func() {
