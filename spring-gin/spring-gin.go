@@ -98,10 +98,10 @@ func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filte
 		logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
 
 		webCtx := &Context{
-			DefaultLoggerContext: logCtx,
-			GinContext:           ginCtx,
-			HandlerPath:          path,
-			HandlerFunc:          fn,
+			LoggerContext: logCtx,
+			ginContext:    ginCtx,
+			handlerPath:   path,
+			handlerFunc:   fn,
 		}
 
 		SpringWeb.InvokeHandler(webCtx, fn, filters)

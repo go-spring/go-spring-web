@@ -90,9 +90,9 @@ func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.Handl
 		logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
 
 		webCtx := &Context{
-			DefaultLoggerContext: logCtx,
-			EchoContext:          echoCtx,
-			HandlerFunc:          fn,
+			LoggerContext: logCtx,
+			echoContext:   echoCtx,
+			handlerFunc:   fn,
 		}
 
 		SpringWeb.InvokeHandler(webCtx, fn, filters)

@@ -28,6 +28,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-spring/go-spring-parent/spring-logger"
+	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
 
@@ -35,76 +36,58 @@ const (
 	defaultMemory = 32 << 20 // 32 MB
 )
 
-const (
-	HeaderContentType        = "Content-Type"
-	HeaderContentDisposition = "Content-Disposition"
-	HeaderXForwardedProto    = "X-Forwarded-Proto"
-	HeaderXForwardedProtocol = "X-Forwarded-Protocol"
-	HeaderXForwardedSsl      = "X-Forwarded-Ssl"
-	HeaderXUrlScheme         = "X-Url-Scheme"
-)
-
-const (
-	charsetUTF8 = "charset=UTF-8"
-)
-
-const (
-	MIMEApplicationJSON                  = "application/json"
-	MIMEApplicationJSONCharsetUTF8       = MIMEApplicationJSON + "; " + charsetUTF8
-	MIMEApplicationXML                   = "application/xml"
-	MIMEApplicationXMLCharsetUTF8        = MIMEApplicationXML + "; " + charsetUTF8
-	MIMEApplicationJavaScript            = "application/javascript"
-	MIMEApplicationJavaScriptCharsetUTF8 = MIMEApplicationJavaScript + "; " + charsetUTF8
-	MIMEMultipartForm                    = "multipart/form-data"
-	MIMETextHTML                         = "text/html"
-	MIMETextHTMLCharsetUTF8              = MIMETextHTML + "; " + charsetUTF8
-)
-
-// 适配 gin 的 Web 上下文
+// Context 适配 gin 的 Web 上下文
 type Context struct {
-	*SpringLogger.DefaultLoggerContext
+	// LoggerContext 日志接口上下文
+	SpringLogger.LoggerContext
 
-	// gin 上下文对象
-	GinContext *gin.Context
+	// ginContext gin 上下文对象
+	ginContext *gin.Context
 
-	// 处理器 Path
-	HandlerPath string
+	// handlerPath 处理器 Path
+	handlerPath string
 
-	// Web 处理函数
-	HandlerFunc SpringWeb.Handler
+	// handlerFunc Web 处理函数
+	handlerFunc SpringWeb.Handler
 
-	paramNames  []string
-	paramValues []string
+	pathParamNames  []string
+	pathParamValues []string
 }
 
+// NativeContext 返回封装的底层上下文对象
 func (ctx *Context) NativeContext() interface{} {
-	return ctx.GinContext
+	return ctx.ginContext
 }
 
+// Get retrieves data from the context.
 func (ctx *Context) Get(key string) interface{} {
-	val, _ := ctx.GinContext.Get(key)
+	val, _ := ctx.ginContext.Get(key)
 	return val
 }
 
+// Set saves data in the context.
 func (ctx *Context) Set(key string, val interface{}) {
-	ctx.GinContext.Set(key, val)
+	ctx.ginContext.Set(key, val)
 }
 
+// Request returns `*http.Request`.
 func (ctx *Context) Request() *http.Request {
-	return ctx.GinContext.Request
+	return ctx.ginContext.Request
 }
 
+// IsTLS returns true if HTTP connection is TLS otherwise false.
 func (ctx *Context) IsTLS() bool {
-	return ctx.GinContext.Request.TLS != nil
+	return ctx.ginContext.Request.TLS != nil
 }
 
+// IsWebSocket returns true if HTTP connection is WebSocket otherwise false.
 func (ctx *Context) IsWebSocket() bool {
-	return ctx.GinContext.IsWebsocket()
+	return ctx.ginContext.IsWebsocket()
 }
 
+// Scheme returns the HTTP protocol scheme, `http` or `https`.
 func (ctx *Context) Scheme() string {
 	// NOTE: 这一段逻辑使用 echo 的实现
-
 	r := ctx.Request()
 
 	// Can't use `r.Request.URL.Scheme`
@@ -114,185 +97,215 @@ func (ctx *Context) Scheme() string {
 		return "https"
 	}
 
-	if scheme := r.Header.Get(HeaderXForwardedProto); scheme != "" {
+	if scheme := r.Header.Get(SpringWeb.HeaderXForwardedProto); scheme != "" {
 		return scheme
 	}
 
-	if scheme := r.Header.Get(HeaderXForwardedProtocol); scheme != "" {
+	if scheme := r.Header.Get(SpringWeb.HeaderXForwardedProtocol); scheme != "" {
 		return scheme
 	}
 
-	if ssl := r.Header.Get(HeaderXForwardedSsl); ssl == "on" {
+	if ssl := r.Header.Get(SpringWeb.HeaderXForwardedSsl); ssl == "on" {
 		return "https"
 	}
 
-	if scheme := r.Header.Get(HeaderXUrlScheme); scheme != "" {
+	if scheme := r.Header.Get(SpringWeb.HeaderXUrlScheme); scheme != "" {
 		return scheme
 	}
 	return "http"
 }
 
+// ClientIP implements a best effort algorithm to return the real client IP
 func (ctx *Context) ClientIP() string {
-	return ctx.GinContext.ClientIP()
+	return ctx.ginContext.ClientIP()
 }
 
+// Path returns the registered path for the handler.
 func (ctx *Context) Path() string {
-	return ctx.HandlerPath
+	return ctx.handlerPath
 }
 
+// Handler returns the matched handler by router.
 func (ctx *Context) Handler() SpringWeb.Handler {
-	return ctx.HandlerFunc
+	return ctx.handlerFunc
 }
 
+// ContentType returns the Content-Type header of the request.
 func (ctx *Context) ContentType() string {
-	return ctx.GinContext.ContentType()
+	return ctx.ginContext.ContentType()
 }
 
+// GetHeader returns value from request headers.
 func (ctx *Context) GetHeader(key string) string {
-	return ctx.GinContext.GetHeader(key)
+	return ctx.ginContext.GetHeader(key)
 }
 
+// GetRawData return stream data.
 func (ctx *Context) GetRawData() ([]byte, error) {
-	return ctx.GinContext.GetRawData()
+	return ctx.ginContext.GetRawData()
 }
 
+// PathParam returns path parameter by name.
 func (ctx *Context) PathParam(name string) string {
-	return ctx.GinContext.Param(name)
+	return ctx.ginContext.Param(name)
 }
 
+// PathParamNames returns path parameter names.
 func (ctx *Context) PathParamNames() []string {
-	if ctx.paramNames == nil {
-		ctx.paramNames = make([]string, 0)
-		for _, entry := range ctx.GinContext.Params {
-			ctx.paramNames = append(ctx.paramNames, entry.Key)
+	if ctx.pathParamNames == nil {
+		ctx.pathParamNames = make([]string, 0)
+		for _, entry := range ctx.ginContext.Params {
+			ctx.pathParamNames = append(ctx.pathParamNames, entry.Key)
 		}
 	}
-	return ctx.paramNames
+	return ctx.pathParamNames
 }
 
+// PathParamValues returns path parameter values.
 func (ctx *Context) PathParamValues() []string {
-	if ctx.paramValues == nil {
-		ctx.paramValues = make([]string, 0)
-		for _, entry := range ctx.GinContext.Params {
-			ctx.paramValues = append(ctx.paramValues, entry.Value)
+	if ctx.pathParamValues == nil {
+		ctx.pathParamValues = make([]string, 0)
+		for _, entry := range ctx.ginContext.Params {
+			ctx.pathParamValues = append(ctx.pathParamValues, entry.Value)
 		}
 	}
-	return ctx.paramValues
+	return ctx.pathParamValues
 }
 
+// QueryParam returns the query param for the provided name.
 func (ctx *Context) QueryParam(name string) string {
-	return ctx.GinContext.Query(name)
+	return ctx.ginContext.Query(name)
 }
 
+// QueryParams returns the query parameters as `url.Values`.
 func (ctx *Context) QueryParams() url.Values {
-	return ctx.GinContext.Request.URL.Query()
+	return ctx.ginContext.Request.URL.Query()
 }
 
+// QueryString returns the URL query string.
 func (ctx *Context) QueryString() string {
-	return ctx.GinContext.Request.URL.RawQuery
+	return ctx.ginContext.Request.URL.RawQuery
 }
 
+// FormValue returns the form field value for the provided name.
 func (ctx *Context) FormValue(name string) string {
-	return ctx.GinContext.Request.FormValue(name)
+	return ctx.ginContext.Request.FormValue(name)
 }
 
+// FormParams returns the form parameters as `url.Values`.
 func (ctx *Context) FormParams() (url.Values, error) {
 	// NOTE: 这一段逻辑使用 echo 的实现
 
-	if strings.HasPrefix(ctx.GetHeader(HeaderContentType), MIMEMultipartForm) {
-		if err := ctx.GinContext.Request.ParseMultipartForm(defaultMemory); err != nil {
+	r := ctx.ginContext.Request
+
+	if strings.HasPrefix(ctx.ContentType(), SpringWeb.MIMEMultipartForm) {
+		if err := r.ParseMultipartForm(defaultMemory); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := ctx.GinContext.Request.ParseForm(); err != nil {
+		if err := r.ParseForm(); err != nil {
 			return nil, err
 		}
 	}
-	return ctx.GinContext.Request.Form, nil
+	return ctx.ginContext.Request.Form, nil
 }
 
+// FormFile returns the multipart form file for the provided name.
 func (ctx *Context) FormFile(name string) (*multipart.FileHeader, error) {
-	return ctx.GinContext.FormFile(name)
+	return ctx.ginContext.FormFile(name)
 }
 
+// SaveUploadedFile uploads the form file to specific dst.
 func (ctx *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error {
-	return ctx.GinContext.SaveUploadedFile(file, dst)
+	return ctx.ginContext.SaveUploadedFile(file, dst)
 }
 
+// MultipartForm returns the multipart form.
 func (ctx *Context) MultipartForm() (*multipart.Form, error) {
-	return ctx.GinContext.MultipartForm()
+	return ctx.ginContext.MultipartForm()
 }
 
+// Cookie returns the named cookie provided in the request.
 func (ctx *Context) Cookie(name string) (*http.Cookie, error) {
-	return ctx.GinContext.Request.Cookie(name)
+	return ctx.ginContext.Request.Cookie(name)
 }
 
+// Cookies returns the HTTP cookies sent with the request.
 func (ctx *Context) Cookies() []*http.Cookie {
-	return ctx.GinContext.Request.Cookies()
+	return ctx.ginContext.Request.Cookies()
 }
 
+// Bind binds the request body into provided type `i`.
 func (ctx *Context) Bind(i interface{}) error {
-	return ctx.GinContext.Bind(i)
+	return ctx.ginContext.Bind(i)
 }
 
+// ResponseWriter returns `http.ResponseWriter`.
 func (ctx *Context) ResponseWriter() http.ResponseWriter {
-	return ctx.GinContext.Writer
+	return ctx.ginContext.Writer
 }
 
+// Status sets the HTTP response code.
 func (ctx *Context) Status(code int) {
-	ctx.GinContext.Status(code)
+	ctx.ginContext.Status(code)
 }
 
+// Header is a intelligent shortcut for c.Writer.Header().Set(key, value).
 func (ctx *Context) Header(key, value string) {
-	ctx.GinContext.Header(key, value)
+	ctx.ginContext.Header(key, value)
 }
 
+// SetCookie adds a `Set-Cookie` header in HTTP response.
 func (ctx *Context) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(ctx.GinContext.Writer, cookie)
+	http.SetCookie(ctx.ginContext.Writer, cookie)
 }
 
+// NoContent sends a response with no body and a status code.
 func (ctx *Context) NoContent(code int) {
 	ctx.Status(code)
 }
 
+// String writes the given string into the response body.
 func (ctx *Context) String(code int, format string, values ...interface{}) {
-	ctx.GinContext.String(code, fmt.Sprintf(format, values...))
+	ctx.ginContext.String(code, fmt.Sprintf(format, values...))
 }
 
+// HTML sends an HTTP response with status code.
 func (ctx *Context) HTML(code int, html string) {
-	ctx.Blob(code, MIMETextHTMLCharsetUTF8, []byte(html))
+	ctx.Blob(code, SpringWeb.MIMETextHTMLCharsetUTF8, []byte(html))
 }
 
+// HTMLBlob sends an HTTP blob response with status code.
 func (ctx *Context) HTMLBlob(code int, b []byte) {
-	ctx.Blob(code, MIMETextHTMLCharsetUTF8, b)
+	ctx.Blob(code, SpringWeb.MIMETextHTMLCharsetUTF8, b)
 }
 
+// JSON sends a JSON response with status code.
 func (ctx *Context) JSON(code int, i interface{}) {
-	ctx.GinContext.JSON(code, i)
+	ctx.ginContext.JSON(code, i)
 }
 
+// JSONPretty sends a pretty-print JSON with status code.
 func (ctx *Context) JSONPretty(code int, i interface{}, indent string) {
 
 	b, err := json.MarshalIndent(i, "", indent)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
+	SpringUtils.Panic(err).When(err != nil)
 
-	ctx.Blob(code, MIMEApplicationJSONCharsetUTF8, b)
+	ctx.Blob(code, SpringWeb.MIMEApplicationJSONCharsetUTF8, b)
 }
 
+// JSONBlob sends a JSON blob response with status code.
 func (ctx *Context) JSONBlob(code int, b []byte) {
-	ctx.Blob(code, MIMEApplicationJSONCharsetUTF8, b)
+	ctx.Blob(code, SpringWeb.MIMEApplicationJSONCharsetUTF8, b)
 }
 
 func (ctx *Context) jsonPBlob(code int, callback string, data func(http.ResponseWriter) error) error {
 	// NOTE: 这一段逻辑使用了 echo 的实现
 
-	ctx.Header(HeaderContentType, MIMEApplicationJavaScriptCharsetUTF8)
+	ctx.Header(SpringWeb.HeaderContentType, SpringWeb.MIMEApplicationJavaScriptCharsetUTF8)
 	ctx.Status(code)
 
-	response := ctx.GinContext.Writer
+	response := ctx.ginContext.Writer
 
 	if _, err := response.Write([]byte(callback + "(")); err != nil {
 		return err
@@ -308,6 +321,7 @@ func (ctx *Context) jsonPBlob(code int, callback string, data func(http.Response
 	return nil
 }
 
+// JSONP sends a JSONP response with status code.
 func (ctx *Context) JSONP(code int, callback string, i interface{}) {
 
 	err := ctx.jsonPBlob(code, callback, func(response http.ResponseWriter) error {
@@ -325,11 +339,10 @@ func (ctx *Context) JSONP(code int, callback string, i interface{}) {
 		return nil
 	})
 
-	if err != nil {
-		ctx.Error(err)
-	}
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// JSONPBlob sends a JSONP blob response with status code.
 func (ctx *Context) JSONPBlob(code int, callback string, b []byte) {
 
 	err := ctx.jsonPBlob(code, callback, func(response http.ResponseWriter) error {
@@ -339,22 +352,21 @@ func (ctx *Context) JSONPBlob(code int, callback string, b []byte) {
 		return nil
 	})
 
-	if err != nil {
-		ctx.Error(err)
-	}
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// XML sends an XML response with status code.
 func (ctx *Context) XML(code int, i interface{}) {
-	ctx.GinContext.XML(code, i)
+	ctx.ginContext.XML(code, i)
 }
 
 func (ctx *Context) xmlBlob(code int, data func(http.ResponseWriter) error) error {
 	// NOTE: 这一段逻辑使用了 echo 的实现
 
-	ctx.Header(HeaderContentType, MIMEApplicationJavaScriptCharsetUTF8)
+	ctx.Header(SpringWeb.HeaderContentType, SpringWeb.MIMEApplicationJavaScriptCharsetUTF8)
 	ctx.Status(code)
 
-	response := ctx.GinContext.Writer
+	response := ctx.ginContext.Writer
 
 	if _, err := response.Write([]byte(xml.Header)); err != nil {
 		return err
@@ -363,6 +375,7 @@ func (ctx *Context) xmlBlob(code int, data func(http.ResponseWriter) error) erro
 	return data(response)
 }
 
+// XMLPretty sends a pretty-print XML with status code.
 func (ctx *Context) XMLPretty(code int, i interface{}, indent string) {
 
 	err := ctx.xmlBlob(code, func(response http.ResponseWriter) error {
@@ -375,11 +388,10 @@ func (ctx *Context) XMLPretty(code int, i interface{}, indent string) {
 		return enc.Encode(i)
 	})
 
-	if err != nil {
-		ctx.Error(err)
-	}
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// XMLBlob sends an XML blob response with status code.
 func (ctx *Context) XMLBlob(code int, b []byte) {
 
 	err := ctx.xmlBlob(code, func(response http.ResponseWriter) error {
@@ -387,63 +399,62 @@ func (ctx *Context) XMLBlob(code int, b []byte) {
 		return err
 	})
 
-	if err != nil {
-		ctx.Error(err)
-	}
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Blob sends a blob response with status code and content type.
 func (ctx *Context) Blob(code int, contentType string, b []byte) {
 	// NOTE: 这一段逻辑使用了 echo 的实现
 
-	ctx.Header(HeaderContentType, contentType)
+	ctx.Header(SpringWeb.HeaderContentType, contentType)
 	ctx.Status(code)
 
-	response := ctx.GinContext.Writer
+	response := ctx.ginContext.Writer
 
-	if _, err := response.Write(b); err != nil {
-		ctx.Error(err)
-	}
+	_, err := response.Write(b)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Stream sends a streaming response with status code and content type.
 func (ctx *Context) Stream(code int, contentType string, r io.Reader) {
 	// NOTE: 这一段逻辑使用了 echo 的实现
 
-	ctx.Header(HeaderContentType, contentType)
+	ctx.Header(SpringWeb.HeaderContentType, contentType)
 	ctx.Status(code)
 
-	if _, err := io.Copy(ctx.GinContext.Writer, r); err != nil {
-		ctx.Error(err)
-	}
+	_, err := io.Copy(ctx.ginContext.Writer, r)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
 func (ctx *Context) contentDisposition(file, name, dispositionType string) {
 	// NOTE: 这一段逻辑使用了 echo 的实现
 
 	s := fmt.Sprintf("%s; filename=%q", dispositionType, name)
-	ctx.Header(HeaderContentDisposition, s)
+	ctx.Header(SpringWeb.HeaderContentDisposition, s)
 	ctx.File(file)
 }
 
+// File sends a response with the content of the file.
 func (ctx *Context) File(file string) {
-	ctx.GinContext.File(file)
+	ctx.ginContext.File(file)
 }
 
+// Attachment sends a response as attachment.
 func (ctx *Context) Attachment(file string, name string) {
 	ctx.contentDisposition(file, name, "attachment")
 }
 
+// Inline sends a response as inline.
 func (ctx *Context) Inline(file string, name string) {
 	ctx.contentDisposition(file, name, "inline")
 }
 
+// Redirect redirects the request to a provided URL with status code.
 func (ctx *Context) Redirect(code int, url string) {
-	ctx.GinContext.Redirect(code, url)
+	ctx.ginContext.Redirect(code, url)
 }
 
+// SSEvent writes a Server-Sent Event into the body stream.
 func (ctx *Context) SSEvent(name string, message interface{}) {
-	ctx.GinContext.SSEvent(name, message)
-}
-
-func (ctx *Context) Error(err error) {
-	panic(err)
+	ctx.ginContext.SSEvent(name, message)
 }

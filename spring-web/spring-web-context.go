@@ -32,6 +32,7 @@ type WebContext interface {
 	/////////////////////////////////////////
 	// 通用能力部分
 
+	// LoggerContext 日志接口上下文
 	SpringLogger.LoggerContext
 
 	// NativeContext 返回封装的底层上下文对象
@@ -79,13 +80,13 @@ type WebContext interface {
 	// GetRawData return stream data.
 	GetRawData() ([]byte, error)
 
-	// Param returns path parameter by name.
+	// PathParam returns path parameter by name.
 	PathParam(name string) string
 
-	// ParamNames returns path parameter names.
+	// PathParamNames returns path parameter names.
 	PathParamNames() []string
 
-	// ParamValues returns path parameter values.
+	// PathParamValues returns path parameter values.
 	PathParamValues() []string
 
 	// QueryParam returns the query param for the provided name.
@@ -198,10 +199,4 @@ type WebContext interface {
 
 	// SSEvent writes a Server-Sent Event into the body stream.
 	SSEvent(name string, message interface{})
-
-	/////////////////////////////////////////
-	// 错误处理部分
-
-	// Error invokes the registered HTTP error handler.
-	Error(err error)
 }

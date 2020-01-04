@@ -27,59 +27,71 @@ import (
 
 	"github.com/go-spring/go-spring-parent/spring-const"
 	"github.com/go-spring/go-spring-parent/spring-logger"
+	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/labstack/echo"
 )
 
-// 适配 echo 的 Web 上下文
+// Context 适配 echo 的 Web 上下文
 type Context struct {
-	*SpringLogger.DefaultLoggerContext
+	// LoggerContext 日志接口上下文
+	SpringLogger.LoggerContext
 
-	// echo 上下文对象
-	EchoContext echo.Context
+	// echoContext echo 上下文对象
+	echoContext echo.Context
 
-	// Web 处理函数
-	HandlerFunc SpringWeb.Handler
+	// handlerFunc Web 处理函数
+	handlerFunc SpringWeb.Handler
 }
 
+// NativeContext 返回封装的底层上下文对象
 func (ctx *Context) NativeContext() interface{} {
-	return ctx.EchoContext
+	return ctx.echoContext
 }
 
+// Get retrieves data from the context.
 func (ctx *Context) Get(key string) interface{} {
-	return ctx.EchoContext.Get(key)
+	return ctx.echoContext.Get(key)
 }
 
+// Set saves data in the context.
 func (ctx *Context) Set(key string, val interface{}) {
-	ctx.EchoContext.Set(key, val)
+	ctx.echoContext.Set(key, val)
 }
 
+// Request returns `*http.Request`.
 func (ctx *Context) Request() *http.Request {
-	return ctx.EchoContext.Request()
+	return ctx.echoContext.Request()
 }
 
+// IsTLS returns true if HTTP connection is TLS otherwise false.
 func (ctx *Context) IsTLS() bool {
-	return ctx.EchoContext.IsTLS()
+	return ctx.echoContext.IsTLS()
 }
 
+// IsWebSocket returns true if HTTP connection is WebSocket otherwise false.
 func (ctx *Context) IsWebSocket() bool {
-	return ctx.EchoContext.IsWebSocket()
+	return ctx.echoContext.IsWebSocket()
 }
 
+// Scheme returns the HTTP protocol scheme, `http` or `https`.
 func (ctx *Context) Scheme() string {
-	return ctx.EchoContext.Scheme()
+	return ctx.echoContext.Scheme()
 }
 
+// ClientIP implements a best effort algorithm to return the real client IP.
 func (ctx *Context) ClientIP() string {
-	return ctx.EchoContext.RealIP()
+	return ctx.echoContext.RealIP()
 }
 
+// Path returns the registered path for the handler.
 func (ctx *Context) Path() string {
-	return ctx.EchoContext.Path()
+	return ctx.echoContext.Path()
 }
 
+// Handler returns the matched handler by router.
 func (ctx *Context) Handler() SpringWeb.Handler {
-	return ctx.HandlerFunc
+	return ctx.handlerFunc
 }
 
 func filterFlags(content string) string {
@@ -91,6 +103,7 @@ func filterFlags(content string) string {
 	return content
 }
 
+// ContentType returns the Content-Type header of the request.
 func (ctx *Context) ContentType() string {
 	// NOTE: 这一段逻辑使用 gin 的实现
 
@@ -98,50 +111,62 @@ func (ctx *Context) ContentType() string {
 	return filterFlags(s)
 }
 
+// GetHeader returns value from request headers.
 func (ctx *Context) GetHeader(key string) string {
 	return ctx.Request().Header.Get(key)
 }
 
+// GetRawData return stream data.
 func (ctx *Context) GetRawData() ([]byte, error) {
 	return ioutil.ReadAll(ctx.Request().Body)
 }
 
+// PathParam returns path parameter by name.
 func (ctx *Context) PathParam(name string) string {
-	return ctx.EchoContext.Param(name)
+	return ctx.echoContext.Param(name)
 }
 
+// PathParamNames returns path parameter names.
 func (ctx *Context) PathParamNames() []string {
-	return ctx.EchoContext.ParamNames()
+	return ctx.echoContext.ParamNames()
 }
 
+// PathParamValues returns path parameter values.
 func (ctx *Context) PathParamValues() []string {
-	return ctx.EchoContext.ParamValues()
+	return ctx.echoContext.ParamValues()
 }
 
+// QueryParam returns the query param for the provided name.
 func (ctx *Context) QueryParam(name string) string {
-	return ctx.EchoContext.QueryParam(name)
+	return ctx.echoContext.QueryParam(name)
 }
 
+// QueryParams returns the query parameters as `url.Values`.
 func (ctx *Context) QueryParams() url.Values {
-	return ctx.EchoContext.QueryParams()
+	return ctx.echoContext.QueryParams()
 }
 
+// QueryString returns the URL query string.
 func (ctx *Context) QueryString() string {
-	return ctx.EchoContext.QueryString()
+	return ctx.echoContext.QueryString()
 }
 
+// FormValue returns the form field value for the provided name.
 func (ctx *Context) FormValue(name string) string {
-	return ctx.EchoContext.FormValue(name)
+	return ctx.echoContext.FormValue(name)
 }
 
+// FormParams returns the form parameters as `url.Values`.
 func (ctx *Context) FormParams() (url.Values, error) {
-	return ctx.EchoContext.FormParams()
+	return ctx.echoContext.FormParams()
 }
 
+// FormFile returns the multipart form file for the provided name.
 func (ctx *Context) FormFile(name string) (*multipart.FileHeader, error) {
-	return ctx.EchoContext.FormFile(name)
+	return ctx.echoContext.FormFile(name)
 }
 
+// SaveUploadedFile uploads the form file to specific dst.
 func (ctx *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error {
 	// NOTE: 这一段逻辑使用 gin 的实现
 
@@ -161,168 +186,155 @@ func (ctx *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) err
 	return err
 }
 
+// MultipartForm returns the multipart form.
 func (ctx *Context) MultipartForm() (*multipart.Form, error) {
-	return ctx.EchoContext.MultipartForm()
+	return ctx.echoContext.MultipartForm()
 }
 
+// Cookie returns the named cookie provided in the request.
 func (ctx *Context) Cookie(name string) (*http.Cookie, error) {
-	return ctx.EchoContext.Cookie(name)
+	return ctx.echoContext.Cookie(name)
 }
 
+// Cookies returns the HTTP cookies sent with the request.
 func (ctx *Context) Cookies() []*http.Cookie {
-	return ctx.EchoContext.Cookies()
+	return ctx.echoContext.Cookies()
 }
 
+// Bind binds the request body into provided type `i`.
 func (ctx *Context) Bind(i interface{}) error {
-	return ctx.EchoContext.Bind(i)
+	return ctx.echoContext.Bind(i)
 }
 
-func (ctx *Context) Status(code int) {
-	ctx.EchoContext.Response().WriteHeader(code)
-}
-
+// ResponseWriter returns `http.ResponseWriter`.
 func (ctx *Context) ResponseWriter() http.ResponseWriter {
-	return ctx.EchoContext.Response().Writer
+	return ctx.echoContext.Response().Writer
 }
 
+// Status sets the HTTP response code.
+func (ctx *Context) Status(code int) {
+	ctx.echoContext.Response().WriteHeader(code)
+}
+
+// Header is a intelligent shortcut for c.Writer.Header().Set(key, value).
 func (ctx *Context) Header(key, value string) {
-	ctx.EchoContext.Response().Header().Set(key, value)
+	ctx.echoContext.Response().Header().Set(key, value)
 }
 
+// SetCookie adds a `Set-Cookie` header in HTTP response.
 func (ctx *Context) SetCookie(cookie *http.Cookie) {
-	ctx.EchoContext.SetCookie(cookie)
+	ctx.echoContext.SetCookie(cookie)
 }
 
+// NoContent sends a response with no body and a status code.
 func (ctx *Context) NoContent(code int) {
-	err := ctx.EchoContext.NoContent(code)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.NoContent(code)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// String writes the given string into the response body.
 func (ctx *Context) String(code int, format string, values ...interface{}) {
-	err := ctx.EchoContext.String(code, fmt.Sprintf(format, values...))
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.String(code, fmt.Sprintf(format, values...))
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// HTML sends an HTTP response with status code.
 func (ctx *Context) HTML(code int, html string) {
-	err := ctx.EchoContext.HTML(code, html)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.HTML(code, html)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// HTMLBlob sends an HTTP blob response with status code.
 func (ctx *Context) HTMLBlob(code int, b []byte) {
-	err := ctx.EchoContext.HTMLBlob(code, b)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.HTMLBlob(code, b)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// JSON sends a JSON response with status code.
 func (ctx *Context) JSON(code int, i interface{}) {
-	err := ctx.EchoContext.JSON(code, i)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.JSON(code, i)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// JSONPretty sends a pretty-print JSON with status code.
 func (ctx *Context) JSONPretty(code int, i interface{}, indent string) {
-	err := ctx.EchoContext.JSONPretty(code, i, indent)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.JSONPretty(code, i, indent)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// JSONBlob sends a JSON blob response with status code.
 func (ctx *Context) JSONBlob(code int, b []byte) {
-	err := ctx.EchoContext.JSONBlob(code, b)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.JSONBlob(code, b)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// JSONP sends a JSONP response with status code.
 func (ctx *Context) JSONP(code int, callback string, i interface{}) {
-	err := ctx.EchoContext.JSONP(code, callback, i)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.JSONP(code, callback, i)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// JSONPBlob sends a JSONP blob response with status code.
 func (ctx *Context) JSONPBlob(code int, callback string, b []byte) {
-	err := ctx.EchoContext.JSONPBlob(code, callback, b)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.JSONPBlob(code, callback, b)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// XML sends an XML response with status code.
 func (ctx *Context) XML(code int, i interface{}) {
-	err := ctx.EchoContext.XML(code, i)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.XML(code, i)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// XMLPretty sends a pretty-print XML with status code.
 func (ctx *Context) XMLPretty(code int, i interface{}, indent string) {
-	err := ctx.EchoContext.XMLPretty(code, i, indent)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.XMLPretty(code, i, indent)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// XMLBlob sends an XML blob response with status code.
 func (ctx *Context) XMLBlob(code int, b []byte) {
-	err := ctx.EchoContext.XMLBlob(code, b)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.XMLBlob(code, b)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Blob sends a blob response with status code and content type.
 func (ctx *Context) Blob(code int, contentType string, b []byte) {
-	err := ctx.EchoContext.Blob(code, contentType, b)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.Blob(code, contentType, b)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Stream sends a streaming response with status code and content type.
 func (ctx *Context) Stream(code int, contentType string, r io.Reader) {
-	err := ctx.EchoContext.Stream(code, contentType, r)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.Stream(code, contentType, r)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// File sends a response with the content of the file.
 func (ctx *Context) File(file string) {
-	err := ctx.EchoContext.File(file)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.File(file)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Attachment sends a response as attachment
 func (ctx *Context) Attachment(file string, name string) {
-	err := ctx.EchoContext.Attachment(file, name)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.Attachment(file, name)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Inline sends a response as inline
 func (ctx *Context) Inline(file string, name string) {
-	err := ctx.EchoContext.Inline(file, name)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.Inline(file, name)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// Redirect redirects the request to a provided URL with status code.
 func (ctx *Context) Redirect(code int, url string) {
-	err := ctx.EchoContext.Redirect(code, url)
-	if err != nil {
-		ctx.Error(err)
-	}
+	err := ctx.echoContext.Redirect(code, url)
+	SpringUtils.Panic(err).When(err != nil)
 }
 
+// SSEvent writes a Server-Sent Event into the body stream.
 func (ctx *Context) SSEvent(name string, message interface{}) {
 	panic(SpringConst.UNIMPLEMENTED_METHOD)
-}
-
-func (ctx *Context) Error(err error) {
-	panic(err)
 }
