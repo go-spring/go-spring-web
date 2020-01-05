@@ -70,7 +70,7 @@ func (c *Container) Start() {
 	}
 
 	go func() {
-		SpringLogger.Info("⇨ http server started on %s", address)
+		SpringLogger.Info("⇨ http server started on", address)
 		var err error
 		if c.EnableSSL() {
 			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
