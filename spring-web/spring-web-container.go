@@ -154,3 +154,10 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 		fn(ctx)
 	}
 }
+
+// HTTP Web HTTP 适配函数
+func HTTP(fn http.HandlerFunc) Handler {
+	return func(webCtx WebContext) {
+		fn(webCtx.ResponseWriter(), webCtx.Request())
+	}
+}

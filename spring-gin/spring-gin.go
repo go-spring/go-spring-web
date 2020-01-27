@@ -105,3 +105,10 @@ func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filte
 		SpringWeb.InvokeHandler(webCtx, fn, filters)
 	}
 }
+
+// Gin Web Gin 适配函数
+func Gin(fn gin.HandlerFunc) SpringWeb.Handler {
+	return func(webCtx SpringWeb.WebContext) {
+		fn(webCtx.NativeContext().(*gin.Context))
+	}
+}
