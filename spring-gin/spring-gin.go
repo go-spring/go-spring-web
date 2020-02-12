@@ -77,7 +77,7 @@ func (c *Container) Start() {
 		} else {
 			err = c.httpServer.ListenAndServe()
 		}
-		SpringLogger.Info("exit http server on", address, "return", err)
+		SpringLogger.Infof("exit http server on %s return %v", address, err)
 	}()
 }
 
@@ -85,7 +85,7 @@ func (c *Container) Start() {
 func (c *Container) Stop(ctx context.Context) {
 	err := c.httpServer.Shutdown(ctx)
 	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
-	SpringLogger.Info("shutdown http server on", address, "return", err)
+	SpringLogger.Infof("shutdown http server on %s return %v", address, err)
 }
 
 // HandlerWrapper Web 处理函数包装器

@@ -66,10 +66,10 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		_, _ = http.PostForm("http://127.0.0.1:8080/set", url.Values{
+		resp, _ = http.PostForm("http://127.0.0.1:8080/set", url.Values{
 			"a": []string{"1"},
 		})
-
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
 		resp, _ = http.Get("http://127.0.0.1:8080/get?key=a")
