@@ -101,6 +101,9 @@ func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.Handl
 // Echo Web Echo 适配函数
 func Echo(fn echo.HandlerFunc) SpringWeb.Handler {
 	return func(webCtx SpringWeb.WebContext) {
-		fn(webCtx.NativeContext().(echo.Context))
+		ctx := webCtx.NativeContext().(echo.Context)
+		if err := fn(ctx); err != nil {
+			panic(err)
+		}
 	}
 }

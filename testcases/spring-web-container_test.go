@@ -119,7 +119,7 @@ func TestEchoServer(t *testing.T) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
-	e.Shutdown(context.Background())
+	_ = e.Shutdown(context.Background())
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -169,6 +169,6 @@ func TestHttpServer(t *testing.T) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
-	server.Shutdown(context.Background())
+	_ = server.Shutdown(context.Background())
 	time.Sleep(100 * time.Millisecond)
 }

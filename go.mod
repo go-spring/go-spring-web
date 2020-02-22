@@ -3,10 +3,9 @@ module github.com/go-spring/go-spring-web
 go 1.12
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/gin-gonic/gin v1.4.0
-	github.com/go-spring/go-spring-parent v1.0.0-rc.0.20200212062707-cb7b3715b8ae
+	github.com/gin-gonic/gin v1.5.0
+	github.com/go-spring/go-spring-parent v1.0.0
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/stretchr/testify v1.4.0
-	github.com/valyala/fasttemplate v1.1.0 // indirect
+	github.com/stretchr/testify v1.5.1
+	golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d // indirect
 )

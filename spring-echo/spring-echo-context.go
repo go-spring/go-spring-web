@@ -336,5 +336,5 @@ func (ctx *Context) Redirect(code int, url string) {
 
 // SSEvent writes a Server-Sent Event into the body stream.
 func (ctx *Context) SSEvent(name string, message interface{}) {
-	panic(SpringConst.UNIMPLEMENTED_METHOD)
+	panic(SpringConst.UnimplementedMethod)
 }
