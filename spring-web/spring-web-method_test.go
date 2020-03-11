@@ -51,95 +51,85 @@ var cacheMethods = map[uint32][]string{
 	SpringWeb.MethodAny:     {http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace},
 }
 
-func getMethod(method uint32) []string {
-	var r []string
-	for k, v := range methods {
-		if method&k == k {
-			r = append(r, v)
-		}
-	}
-	return r
-}
-
-func getMethodViaCache(method uint32) []string {
+func GetMethodViaCache(method uint32) []string {
 	if r, ok := cacheMethods[method]; ok {
 		return r
 	}
-	return getMethod(method)
+	return SpringWeb.GetMethod(method)
 }
 
 func BenchmarkGetMethod(b *testing.B) {
 	// 事实证明通过缓存不一定能提高效率
 
 	b.Run("1", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet)
+		SpringWeb.GetMethod(SpringWeb.MethodGet)
 	})
 
 	b.Run("cache-1", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet)
+		GetMethodViaCache(SpringWeb.MethodGet)
 	})
 
 	b.Run("2", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead)
 	})
 
 	b.Run("cache-2", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead)
 	})
 
 	b.Run("3", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost)
 	})
 
 	b.Run("cache-3", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost)
 	})
 
 	b.Run("4", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut)
 	})
 
 	b.Run("cache-4", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut)
 	})
 
 	b.Run("5", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch)
 	})
 
 	b.Run("cache-5", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch)
 	})
 
 	b.Run("6", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete)
 	})
 
 	b.Run("cache-6", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete)
 	})
 
 	b.Run("7", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect)
 	})
 
 	b.Run("cache-7", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect)
 	})
 
 	b.Run("8", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions)
 	})
 
 	b.Run("cache-8", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions)
 	})
 
 	b.Run("9", func(b *testing.B) {
-		getMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions | SpringWeb.MethodTrace)
+		SpringWeb.GetMethod(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions | SpringWeb.MethodTrace)
 	})
 
 	b.Run("cache-9", func(b *testing.B) {
-		getMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions | SpringWeb.MethodTrace)
+		GetMethodViaCache(SpringWeb.MethodGet | SpringWeb.MethodHead | SpringWeb.MethodPost | SpringWeb.MethodPut | SpringWeb.MethodPatch | SpringWeb.MethodDelete | SpringWeb.MethodConnect | SpringWeb.MethodOptions | SpringWeb.MethodTrace)
 	})
 }

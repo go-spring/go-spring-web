@@ -46,3 +46,14 @@ var methods = map[uint32]string{
 	MethodOptions: http.MethodOptions,
 	MethodTrace:   http.MethodTrace,
 }
+
+// GetMethod 返回 method 对应的 HTTP 方法
+func GetMethod(method uint32) []string {
+	var r []string
+	for k, v := range methods {
+		if method&k == k {
+			r = append(r, v)
+		}
+	}
+	return r
+}

@@ -61,7 +61,7 @@ func (c *Container) Start() {
 
 	for _, mapper := range c.Mappers() {
 		h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
-		for _, method := range mapper.Method() {
+		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			c.ginEngine.Handle(method, mapper.Path(), h)
 		}
 	}

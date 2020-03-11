@@ -44,14 +44,8 @@ func (m *Mapper) Key() string {
 }
 
 // Method 返回 Mapper 的方法
-func (m *Mapper) Method() []string {
-	var r []string
-	for k, v := range methods {
-		if m.method&k == k {
-			r = append(r, v)
-		}
-	}
-	return r
+func (m *Mapper) Method() uint32 {
+	return m.method
 }
 
 // Path 返回 Mapper 的路径
