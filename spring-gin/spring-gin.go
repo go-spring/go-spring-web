@@ -61,7 +61,9 @@ func (c *Container) Start() {
 
 	for _, mapper := range c.Mappers() {
 		h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
-		c.ginEngine.Handle(mapper.Method(), mapper.Path(), h)
+		for _, method := range mapper.Method() {
+			c.ginEngine.Handle(method, mapper.Path(), h)
+		}
 	}
 
 	c.httpServer = &http.Server{

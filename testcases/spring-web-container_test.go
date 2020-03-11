@@ -52,7 +52,7 @@ func TestWebContainer(t *testing.T) {
 		r := c.Route("", f2, f7)
 		{
 			r.POST("/set", s.Set)
-			r.GET("/panic", s.Panic)
+			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
 		}
 
 		// 启动 web 服务器
@@ -78,6 +78,11 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println()
 
 		resp, _ = http.Get("http://127.0.0.1:8080/panic")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.PostForm("http://127.0.0.1:8080/panic", nil)
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()

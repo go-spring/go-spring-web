@@ -57,7 +57,9 @@ func (c *Container) Start() {
 	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
 		h := HandlerWrapper(mapper.Handler(), mapper.Filters())
-		c.echoServer.Add(mapper.Method(), mapper.Path(), h)
+		for _, method := range mapper.Method() {
+			c.echoServer.Add(method, mapper.Path(), h)
+		}
 	}
 
 	// 启动 echo 容器

@@ -16,16 +16,20 @@
 
 package SpringWeb
 
+import (
+	"fmt"
+)
+
 // Mapper 路由映射器
 type Mapper struct {
-	method  string   // 方法
+	method  uint32   // 方法
 	path    string   // 路径
 	handler Handler  // 处理函数
 	filters []Filter // 过滤器列表
 }
 
 // NewMapper Mapper 的构造函数
-func NewMapper(method string, path string, fn Handler, filters []Filter) *Mapper {
+func NewMapper(method uint32, path string, fn Handler, filters []Filter) *Mapper {
 	return &Mapper{
 		method:  method,
 		path:    path,
@@ -36,12 +40,18 @@ func NewMapper(method string, path string, fn Handler, filters []Filter) *Mapper
 
 // Key 返回 Mapper 的标识符
 func (m *Mapper) Key() string {
-	return m.method + m.path
+	return fmt.Sprintf("0x%.4x@%s", m.method, m.path)
 }
 
 // Method 返回 Mapper 的方法
-func (m *Mapper) Method() string {
-	return m.method
+func (m *Mapper) Method() []string {
+	var r []string
+	for k, v := range methods {
+		if m.method&k == k {
+			r = append(r, v)
+		}
+	}
+	return r
 }
 
 // Path 返回 Mapper 的路径

@@ -16,10 +16,6 @@
 
 package SpringWeb
 
-import (
-	"net/http"
-)
-
 // Router 路由分组
 type Router struct {
 	mapping  WebMapping
@@ -37,41 +33,41 @@ func NewRouter(mapping WebMapping, basePath string, filters []Filter) *Router {
 }
 
 // Request 注册任意 HTTP 方法处理函数
-func (r *Router) Request(method string, path string, fn Handler) *Mapper {
+func (r *Router) Request(method uint32, path string, fn Handler) *Mapper {
 	return r.mapping.Request(method, r.basePath+path, fn, r.filters...)
 }
 
 // GET 注册 GET 方法处理函数
 func (r *Router) GET(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodGet, path, fn)
+	return r.Request(MethodGet, path, fn)
 }
 
 // POST 注册 POST 方法处理函数
 func (r *Router) POST(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodPost, path, fn)
+	return r.Request(MethodPost, path, fn)
 }
 
 // PATCH 注册 PATCH 方法处理函数
 func (r *Router) PATCH(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodPatch, path, fn)
+	return r.Request(MethodPatch, path, fn)
 }
 
 // PUT 注册 PUT 方法处理函数
 func (r *Router) PUT(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodPut, path, fn)
+	return r.Request(MethodPut, path, fn)
 }
 
 // DELETE 注册 DELETE 方法处理函数
 func (r *Router) DELETE(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodDelete, path, fn)
+	return r.Request(MethodDelete, path, fn)
 }
 
 // HEAD 注册 HEAD 方法处理函数
 func (r *Router) HEAD(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodHead, path, fn)
+	return r.Request(MethodHead, path, fn)
 }
 
 // OPTIONS 注册 OPTIONS 方法处理函数
 func (r *Router) OPTIONS(path string, fn Handler) *Mapper {
-	return r.Request(http.MethodOptions, path, fn)
+	return r.Request(MethodOptions, path, fn)
 }
