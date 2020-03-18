@@ -60,9 +60,10 @@ func (c *Container) Start() {
 	}
 
 	for _, mapper := range c.Mappers() {
-		h := HandlerWrapper(mapper.Path(), mapper.Handler(), mapper.Filters())
+		filters := append(c.GetFilters(), mapper.Filters()...)
+		handler := HandlerWrapper(mapper.Path(), mapper.Handler(), filters)
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
-			c.ginEngine.Handle(method, mapper.Path(), h)
+			c.ginEngine.Handle(method, mapper.Path(), handler)
 		}
 	}
 

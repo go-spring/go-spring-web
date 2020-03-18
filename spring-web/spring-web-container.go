@@ -59,6 +59,12 @@ type WebContainer interface {
 	// SetCertFile 设置 CertFile 的路径
 	SetCertFile(certFile string)
 
+	// GetFilters 返回过滤器列表
+	GetFilters() []Filter
+
+	// SetFilters 设置过滤器列表
+	SetFilters(filters ...Filter)
+
 	// Start 启动 Web 容器，非阻塞
 	Start()
 
@@ -75,6 +81,7 @@ type BaseWebContainer struct {
 	enableSSL bool   // 使用 SSL
 	keyFile   string
 	certFile  string
+	filters   []Filter
 }
 
 // NewBaseWebContainer BaseWebContainer 的构造函数
@@ -132,6 +139,16 @@ func (c *BaseWebContainer) GetCertFile() string {
 // SetCertFile 设置 CertFile 的路径
 func (c *BaseWebContainer) SetCertFile(certFile string) {
 	c.certFile = certFile
+}
+
+// GetFilters 返回过滤器列表
+func (c *BaseWebContainer) GetFilters() []Filter {
+	return c.filters
+}
+
+// SetFilters 设置过滤器列表
+func (c *BaseWebContainer) SetFilters(filters ...Filter) {
+	c.filters = filters
 }
 
 /////////////////// Invoke Handler //////////////////////

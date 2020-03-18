@@ -44,9 +44,12 @@ func TestWebContainer(t *testing.T) {
 		f5 := testcases.NewNumberFilter(5, l)
 		f7 := testcases.NewNumberFilter(7, l)
 
+		c.SetFilters(&testcases.LogFilter{}, &testcases.GlobalInterruptFilter{})
+
 		s := testcases.NewService()
 
 		c.GET("/get", s.Get, f5)
+		c.GET("/global_interrupt", s.Get)
 		c.GET("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法
@@ -89,6 +92,11 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println()
 
 		resp, _ = http.Get("http://127.0.0.1:8080/interrupt")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.Get("http://127.0.0.1:8080/global_interrupt")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()

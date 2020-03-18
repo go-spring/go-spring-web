@@ -63,7 +63,7 @@ func (m *Mapper) Filters() []Filter {
 	return m.filters
 }
 
-// Filters 设置 Mapper 的过滤器列表
+// SetFilters 设置 Mapper 的过滤器列表
 func (m *Mapper) SetFilters(filters []Filter) *Mapper {
 	m.filters = filters
 	return m

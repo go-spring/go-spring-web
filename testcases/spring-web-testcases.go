@@ -19,6 +19,7 @@ package testcases
 import (
 	"container/list"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-spring/go-spring-parent/spring-error"
@@ -28,10 +29,27 @@ import (
 
 ///////////////////// filter ////////////////////////
 
+type LogFilter struct{}
+
+func (f *LogFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+	fmt.Println(ctx.Path())
+	chain.Next(ctx)
+}
+
 type InterruptFilter struct{}
 
 func (f *InterruptFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
-	ctx.LogInfo("::interrupt")
+	ctx.LogInfo("interrupt")
+}
+
+type GlobalInterruptFilter struct{}
+
+func (f *GlobalInterruptFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+	if ctx.Path() == "/global_interrupt" {
+		ctx.LogInfo("global interrupt")
+	} else {
+		chain.Next(ctx)
+	}
 }
 
 type NumberFilter struct {
@@ -49,11 +67,11 @@ func NewNumberFilter(n int, l *list.List) *NumberFilter {
 func (f *NumberFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
 
 	defer func() {
-		ctx.LogInfo("::after ", f.n)
+		ctx.LogInfo("after ", f.n)
 		f.l.PushBack(f.n)
 	}()
 
-	ctx.LogInfo("::before ", f.n)
+	ctx.LogInfo("before ", f.n)
 	f.l.PushBack(f.n)
 
 	chain.Next(ctx)
