@@ -47,6 +47,7 @@ func TestWebContainer(t *testing.T) {
 		s := testcases.NewService()
 
 		c.GET("/get", s.Get, f5)
+		c.GET("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法
 		r := c.Route("", f2, f7)
@@ -83,6 +84,11 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println()
 
 		resp, _ = http.PostForm("http://127.0.0.1:8080/panic", nil)
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.Get("http://127.0.0.1:8080/interrupt")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
