@@ -101,17 +101,34 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
+		resp, _ = http.Get("http://127.0.0.1:8080/native")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
 		c.Stop(context.TODO())
 
 		time.Sleep(time.Millisecond * 50)
 	}
 
 	t.Run("SpringGin", func(t *testing.T) {
-		testRun(SpringGin.NewContainer())
+		c := SpringGin.NewContainer()
+
+		c.GET("/native", SpringGin.Gin(func(ctx *gin.Context) {
+			ctx.String(http.StatusOK, "gin")
+		}))
+
+		testRun(c)
 	})
 
 	t.Run("SpringEcho", func(t *testing.T) {
-		testRun(SpringEcho.NewContainer())
+		c := SpringEcho.NewContainer()
+
+		c.GET("/native", SpringEcho.Echo(func(ctx echo.Context) error {
+			return ctx.String(http.StatusOK, "echo")
+		}))
+
+		testRun(c)
 	})
 }
 
