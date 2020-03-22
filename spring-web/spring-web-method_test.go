@@ -23,19 +23,6 @@ import (
 	"github.com/go-spring/go-spring-web/spring-web"
 )
 
-// methods
-var methods = map[uint32]string{
-	SpringWeb.MethodGet:     http.MethodGet,
-	SpringWeb.MethodHead:    http.MethodHead,
-	SpringWeb.MethodPost:    http.MethodPost,
-	SpringWeb.MethodPut:     http.MethodPut,
-	SpringWeb.MethodPatch:   http.MethodPatch,
-	SpringWeb.MethodDelete:  http.MethodDelete,
-	SpringWeb.MethodConnect: http.MethodConnect,
-	SpringWeb.MethodOptions: http.MethodOptions,
-	SpringWeb.MethodTrace:   http.MethodTrace,
-}
-
 // cacheMethods
 var cacheMethods = map[uint32][]string{
 	SpringWeb.MethodGet:     {http.MethodGet},

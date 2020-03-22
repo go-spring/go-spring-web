@@ -17,8 +17,10 @@
 package SpringWeb
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/go-spring/go-spring-parent/spring-error"
 )
@@ -29,22 +31,55 @@ type RpcHandler func(WebContext) interface{}
 // RPC Web RPC 适配函数
 func RPC(fn RpcHandler) Handler {
 	return func(webCtx WebContext) {
-
-		// 目前 HTTP RPC 只能返回 json 格式的数据
-		webCtx.Header("Content-Type", "application/json")
-
-		defer func() {
-			if r := recover(); r != nil {
-				result, ok := r.(*SpringError.RpcResult)
-				if !ok {
-					e := fmt.Sprint(r)
-					result = SpringError.ERROR.Error(e)
-				}
-				webCtx.JSON(http.StatusOK, result)
-			}
-		}()
-
-		result := SpringError.SUCCESS.Data(fn(webCtx))
-		webCtx.JSON(http.StatusOK, result)
+		rpcInvoke(webCtx, func() interface{} {
+			return fn(webCtx)
+		})
 	}
+}
+
+// BIND 封装 Bind 操作的 Web RPC 适配函数
+func BIND(fn interface{}) Handler {
+
+	fnTyp := reflect.TypeOf(fn)
+
+	// 检查 fn 的类型，必须是 func(req:struct)resp:anything 这样的格式
+	if fnTyp.Kind() != reflect.Func || fnTyp.NumIn() != 1 || fnTyp.NumOut() != 1 {
+		panic("fn must be func(req:struct)resp:anything")
+	}
+
+	inTyp := fnTyp.In(0)
+	fnVal := reflect.ValueOf(fn)
+
+	return func(webCtx WebContext) {
+		rpcInvoke(webCtx, func() interface{} {
+			inVal := reflect.New(inTyp)
+			err := webCtx.Bind(inVal.Interface())
+			SpringError.ERROR.Panic(err).When(err != nil)
+			outVal := fnVal.Call([]reflect.Value{inVal.Elem()})
+			return outVal[0].Interface()
+		})
+	}
+}
+
+func rpcInvoke(webCtx WebContext, fn func() interface{}) {
+
+	// 目前 HTTP RPC 只能返回 json 格式的数据
+	webCtx.Header("Content-Type", "application/json")
+
+	defer func() {
+		if r := recover(); r != nil {
+			result, ok := r.(*SpringError.RpcResult)
+			if !ok {
+				var err error
+				if err, ok = r.(error); !ok {
+					err = errors.New(fmt.Sprint(r))
+				}
+				result = SpringError.ERROR.Error(err)
+			}
+			webCtx.JSON(http.StatusOK, result)
+		}
+	}()
+
+	result := SpringError.SUCCESS.Data(fn())
+	webCtx.JSON(http.StatusOK, result)
 }

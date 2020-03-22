@@ -123,6 +123,18 @@ func (s *Service) Panic(ctx SpringWeb.WebContext) {
 
 type RpcService struct{}
 
+type EchoRequest struct {
+	Str string `query:"str"`
+}
+
+type EchoResponse struct {
+	Echo string `json:"echo"`
+}
+
+func (s *RpcService) Echo(request EchoRequest) *EchoResponse {
+	return &EchoResponse{"echo " + request.Str}
+}
+
 func (s *RpcService) OK(ctx SpringWeb.WebContext) interface{} {
 	return "123"
 }

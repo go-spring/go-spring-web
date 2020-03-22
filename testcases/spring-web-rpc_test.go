@@ -62,6 +62,8 @@ func TestRpc(t *testing.T) {
 			r.GET("/err", SpringWeb.RPC(rc.Err))
 			r.GET("/panic", SpringWeb.RPC(rc.Panic))
 		}
+
+		c2.GET("/echo", SpringWeb.BIND(rc.Echo), f5)
 	}
 
 	// 启动 web 服务器
@@ -73,18 +75,20 @@ func TestRpc(t *testing.T) {
 	resp, _ := http.Get("http://127.0.0.1:8080/ok")
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-	fmt.Println()
 
 	resp, _ = http.Get("http://127.0.0.1:9090/err")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-	fmt.Println()
 
 	resp, _ = http.Get("http://127.0.0.1:9090/panic")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
 	resp, _ = http.Get("http://127.0.0.1:9090/panic?panic=1")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	resp, _ = http.Get("http://127.0.0.1:9090/echo?str=echo")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
