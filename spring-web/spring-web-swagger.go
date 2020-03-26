@@ -60,7 +60,7 @@ type license struct {
 }
 
 // path
-type path map[string]*operation
+type path map[string]*Operation
 
 // property
 type property struct {
@@ -164,8 +164,8 @@ func (s *swagger) SetBasePath(basePath string) *swagger {
 }
 
 // Path
-func (s *swagger) Path(path string, method uint32, op *operation) *swagger {
-	pathOperation := make(map[string]*operation)
+func (s *swagger) Path(path string, method uint32, op *Operation) *swagger {
+	pathOperation := make(map[string]*Operation)
 	for _, m := range GetMethod(method) {
 		pathOperation[strings.ToLower(m)] = op
 	}
@@ -211,8 +211,8 @@ func newParameter(name string, typ string, description string, in string, requir
 	return parameter{Name: name, Type: typ, Description: description, In: in, Required: required}
 }
 
-// operation
-type operation struct {
+// Operation
+type Operation struct {
 	Summary     string               `json:"summary"`
 	Description string               `json:"description"`
 	OperationId string               `json:"operationId"`
@@ -224,61 +224,61 @@ type operation struct {
 }
 
 // NewOperation
-func NewOperation() *operation {
-	return &operation{Responses: make(map[string]*response)}
+func NewOperation() *Operation {
+	return &Operation{Responses: make(map[string]*response)}
 }
 
 // SetSummary
-func (s *operation) SetSummary(summary string) *operation {
+func (s *Operation) SetSummary(summary string) *Operation {
 	s.Summary = summary
 	return s
 }
 
 // SetDescription
-func (s *operation) SetDescription(description string) *operation {
+func (s *Operation) SetDescription(description string) *Operation {
 	s.Description = description
 	return s
 }
 
 // SetOperationId
-func (s *operation) SetOperationId(operationId string) *operation {
+func (s *Operation) SetOperationId(operationId string) *Operation {
 	s.OperationId = operationId
 	return s
 }
 
 // SetTags
-func (s *operation) SetTags(tags ...string) *operation {
+func (s *Operation) SetTags(tags ...string) *Operation {
 	s.Tags = tags
 	return s
 }
 
 // SetConsumes
-func (s *operation) SetConsumes(consumes ...string) *operation {
+func (s *Operation) SetConsumes(consumes ...string) *Operation {
 	s.Consumes = consumes
 	return s
 }
 
 // SetProduces
-func (s *operation) SetProduces(produces ...string) *operation {
+func (s *Operation) SetProduces(produces ...string) *Operation {
 	s.Produces = produces
 	return s
 }
 
 // Parameter
-func (s *operation) Parameter(name string, typ string, description string, in string, required bool) *operation {
+func (s *Operation) Parameter(name string, typ string, description string, in string, required bool) *Operation {
 	p := newParameter(name, typ, description, in, required)
 	s.Parameters = append(s.Parameters, p)
 	return s
 }
 
 // Success
-func (s *operation) Success(code int, description string, typ string, ref string) *operation {
+func (s *Operation) Success(code int, description string, typ string, ref string) *Operation {
 	s.Responses[strconv.Itoa(code)] = newResponse(description, typ, ref)
 	return s
 }
 
 // Failure
-func (s *operation) Failure(code int, description string, typ string, ref string) *operation {
+func (s *Operation) Failure(code int, description string, typ string, ref string) *Operation {
 	s.Responses[strconv.Itoa(code)] = newResponse(description, typ, ref)
 	return s
 }

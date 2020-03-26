@@ -26,7 +26,7 @@ type Mapper struct {
 	path    string   // 路径
 	handler Handler  // 处理函数
 	filters []Filter // 过滤器列表
-	swagger *operation
+	swagger *Operation
 }
 
 // NewMapper Mapper 的构造函数
@@ -71,7 +71,7 @@ func (m *Mapper) SetFilters(filters []Filter) *Mapper {
 }
 
 // Swagger 生成并返回 Swagger 操作节点
-func (m *Mapper) Swagger() *operation {
+func (m *Mapper) Swagger() *Operation {
 	m.swagger = NewOperation()
 	return m.swagger
 }
