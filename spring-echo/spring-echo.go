@@ -47,6 +47,8 @@ func (c *Container) SetEchoServer(e *echo.Echo) {
 // Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
 
+	c.PreStart()
+
 	// 使用默认的 echo 容器
 	if c.echoServer == nil {
 		e := echo.New()

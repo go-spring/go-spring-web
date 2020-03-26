@@ -36,6 +36,8 @@ import (
 
 func TestWebContainer(t *testing.T) {
 
+	SpringWeb.Swagger().SetDescription("web container test")
+
 	testRun := func(c SpringWeb.WebContainer) {
 		c.SetPort(8080)
 
@@ -48,7 +50,7 @@ func TestWebContainer(t *testing.T) {
 
 		s := testcases.NewService()
 
-		c.GET("/get", s.Get, f5)
+		c.GET("/get", s.Get, f5).Swagger().SetDescription("get")
 		c.GET("/global_interrupt", s.Get)
 		c.GET("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
@@ -102,6 +104,11 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println()
 
 		resp, _ = http.Get("http://127.0.0.1:8080/native")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.Get("http://127.0.0.1:8080/swagger/doc.json")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()

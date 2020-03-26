@@ -54,6 +54,8 @@ func (c *Container) SetGinEngine(e *gin.Engine) {
 func (c *Container) Start() {
 	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 
+	c.PreStart()
+
 	// 使用默认的 gin 引擎
 	if c.ginEngine == nil {
 		c.ginEngine = gin.New()

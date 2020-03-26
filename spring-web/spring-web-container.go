@@ -19,6 +19,8 @@ package SpringWeb
 import (
 	"context"
 	"net/http"
+
+	"github.com/swaggo/swag"
 )
 
 // Handler Web 处理函数
@@ -65,6 +67,12 @@ type WebContainer interface {
 	// SetFilters 设置过滤器列表
 	SetFilters(filters ...Filter)
 
+	// EnableSwagger 是否启用 Swagger 功能
+	EnableSwagger() bool
+
+	// SetEnableSwagger 设置是否启用 Swagger 功能
+	SetEnableSwagger(enable bool)
+
 	// Start 启动 Web 容器，非阻塞
 	Start()
 
@@ -82,12 +90,14 @@ type BaseWebContainer struct {
 	keyFile   string
 	certFile  string
 	filters   []Filter
+	enableSwg bool // 是否启用 Swagger 功能
 }
 
 // NewBaseWebContainer BaseWebContainer 的构造函数
 func NewBaseWebContainer() *BaseWebContainer {
 	return &BaseWebContainer{
 		WebMapping: NewDefaultWebMapping(),
+		enableSwg:  true,
 	}
 }
 
@@ -149,6 +159,40 @@ func (c *BaseWebContainer) GetFilters() []Filter {
 // SetFilters 设置过滤器列表
 func (c *BaseWebContainer) SetFilters(filters ...Filter) {
 	c.filters = filters
+}
+
+// EnableSwagger 是否启用 Swagger 功能
+func (c *BaseWebContainer) EnableSwagger() bool {
+	return c.enableSwg
+}
+
+// SetEnableSwagger 设置是否启用 Swagger 功能
+func (c *BaseWebContainer) SetEnableSwagger(enable bool) {
+	c.enableSwg = enable
+}
+
+// PreStart 执行 Start 之前的准备工作
+func (c *BaseWebContainer) PreStart() {
+
+	if c.enableSwg {
+
+		// 注册 path 的 Operation
+		for _, mapper := range c.Mappers() {
+			if op := mapper.swagger; op != nil {
+				doc.swagger.Path(mapper.Path(), mapper.Method(), op)
+			}
+		}
+
+		// 注册 /swagger/doc.json 接口
+		c.GET("/swagger/doc.json", func(ctx WebContext) {
+			ctx.Header("Content-Type", "application/json; charset=utf-8")
+			if doc, err := swag.ReadDoc(); err == nil {
+				ctx.String(http.StatusOK, doc)
+			} else {
+				panic(err)
+			}
+		})
+	}
 }
 
 /////////////////// Invoke Handler //////////////////////
