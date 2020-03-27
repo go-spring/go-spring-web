@@ -21,6 +21,9 @@ type WebMapping interface {
 	// Mappers 返回映射器列表
 	Mappers() map[string]*Mapper
 
+	// AddMapper 添加一个 Mapper
+	AddMapper(m *Mapper) *Mapper
+
 	// Route 返回和 Mapping 绑定的路由分组
 	Route(basePath string, filters ...Filter) *Router
 
@@ -64,6 +67,12 @@ func NewDefaultWebMapping() *defaultWebMapping {
 // Mappers 返回映射器列表
 func (w *defaultWebMapping) Mappers() map[string]*Mapper {
 	return w.mappers
+}
+
+// AddMapper 添加一个 Mapper
+func (w *defaultWebMapping) AddMapper(m *Mapper) *Mapper {
+	w.mappers[m.Key()] = m
+	return m
 }
 
 // Route 返回和 Mapping 绑定的路由分组
