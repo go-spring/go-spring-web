@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-spring/go-spring-parent/spring-error"
 	"github.com/go-spring/go-spring-parent/spring-utils"
@@ -32,7 +33,13 @@ import (
 type LogFilter struct{}
 
 func (f *LogFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
-	fmt.Println(ctx.Path())
+
+	if strings.Index(ctx.Path(), "*") > 0 {
+		fmt.Println(ctx.Path(), "->", ctx.Request().URL)
+	} else {
+		fmt.Println(ctx.Path())
+	}
+
 	chain.Next(ctx)
 }
 

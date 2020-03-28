@@ -20,7 +20,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/swaggo/swag"
+	"github.com/swaggo/http-swagger"
 )
 
 // Handler Web 处理函数
@@ -183,15 +183,10 @@ func (c *BaseWebContainer) PreStart() {
 			}
 		}
 
-		// 注册 /swagger/doc.json 接口
-		c.GET("/swagger/doc.json", func(ctx WebContext) {
-			ctx.Header("Content-Type", "application/json; charset=utf-8")
-			if doc, err := swag.ReadDoc(); err == nil {
-				ctx.String(http.StatusOK, doc)
-			} else {
-				panic(err)
-			}
-		})
+		// 注册 swagger-ui 和 doc.json 接口
+		c.GET("/swagger/*", HTTP(httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"),
+		)))
 	}
 }
 
