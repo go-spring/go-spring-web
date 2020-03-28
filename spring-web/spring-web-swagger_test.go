@@ -41,7 +41,7 @@ func TestSwagger(t *testing.T) {
 			SetProduces("application/json").
 			SetSummary("Upload file").
 			SetOperationId("file.upload").
-			Parameter("file", "file", "this is a test file", "formData", true).
+			Param("file", "file", "this is a test file", "formData", true).
 			Success(200, "ok", "string", "").
 			Failure(400, "We need ID!!", "object", "#/definitions/web.APIError").
 			Failure(404, "Can not find ID", "object", "#/definitions/web.APIError")).

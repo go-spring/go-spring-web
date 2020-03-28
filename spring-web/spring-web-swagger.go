@@ -184,13 +184,16 @@ func (s *swagger) Definition(name string, d *definition) *swagger {
 	return s
 }
 
+// schema 描述(自定义)数据类型
+type schema struct {
+	Type string `json:"type"`
+	Ref  string `json:"$ref,omitempty"`
+}
+
 // response 方法返回参数的描述
 type response struct {
 	Description string `json:"description"`
-	Schema      struct {
-		Type string `json:"type"`
-		Ref  string `json:"$ref,omitempty"`
-	} `json:"schema"`
+	Schema      schema `json:"schema"`
 }
 
 // newResponse response 的构造函数
@@ -204,16 +207,34 @@ func newResponse(description string, typ string, ref string) *response {
 
 // parameter 方法接收参数的描述
 type parameter struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	In          string `json:"in"`
-	Required    bool   `json:"required"`
+	Name        string  `json:"name"`
+	Type        string  `json:"type,omitempty"`
+	Description string  `json:"description"`
+	In          string  `json:"in"`
+	Required    bool    `json:"required"`
+	Schema      *schema `json:"schema,omitempty"`
 }
 
 // newParameter parameter 的构造函数
 func newParameter(name string, typ string, description string, in string, required bool) parameter {
-	return parameter{Name: name, Type: typ, Description: description, In: in, Required: required}
+	return parameter{
+		Name:        name,
+		Type:        typ,
+		Description: description,
+		In:          in,
+		Required:    required,
+	}
+}
+
+// newSchemaParameter parameter 的构造函数
+func newSchemaParameter(name string, typ string, ref string, description string, in string, required bool) parameter {
+	return parameter{
+		Name:        name,
+		Description: description,
+		In:          in,
+		Required:    required,
+		Schema:      &schema{Type: typ, Ref: ref},
+	}
 }
 
 // Operation 描述一个接口方法
@@ -269,8 +290,13 @@ func (s *Operation) SetProduces(produces ...string) *Operation {
 	return s
 }
 
-// Parameter 添加一个接收参数
-func (s *Operation) Parameter(name string, typ string, description string, in string, required bool) *Operation {
+// BindParam 从 bind 对象中获取接收参数
+func (s *Operation) BindParam(name string, obj interface{}) {
+
+}
+
+// Param 添加一个接收参数
+func (s *Operation) Param(name string, typ string, description string, in string, required bool) *Operation {
 	p := newParameter(name, typ, description, in, required)
 	s.Parameters = append(s.Parameters, p)
 	return s
@@ -278,27 +304,34 @@ func (s *Operation) Parameter(name string, typ string, description string, in st
 
 // Query 添加一个 query 类型的接收参数
 func (s *Operation) Query(name string, typ string, description string, required bool) *Operation {
-	return s.Parameter(name, typ, description, "query", required)
+	return s.Param(name, typ, description, "query", required)
 }
 
 // Path 添加一个 path 类型的接收参数
 func (s *Operation) Path(name string, typ string, description string, required bool) *Operation {
-	return s.Parameter(name, typ, description, "path", required)
+	return s.Param(name, typ, description, "path", required)
 }
 
 // Header 添加一个 header 类型的接收参数
 func (s *Operation) Header(name string, typ string, description string, required bool) *Operation {
-	return s.Parameter(name, typ, description, "header", required)
+	return s.Param(name, typ, description, "header", required)
 }
 
 // Body 添加一个 body 类型的接收参数
 func (s *Operation) Body(name string, typ string, description string, required bool) *Operation {
-	return s.Parameter(name, typ, description, "body", required)
+	return s.Param(name, typ, description, "body", required)
+}
+
+// Object 添加一个 body 类型的接收参数
+func (s *Operation) Object(name string, typ string, ref string, description string, required bool) *Operation {
+	p := newSchemaParameter(name, typ, ref, description, "body", required)
+	s.Parameters = append(s.Parameters, p)
+	return s
 }
 
 // FormData 添加一个 formData 类型的接收参数
 func (s *Operation) FormData(name string, typ string, description string, required bool) *Operation {
-	return s.Parameter(name, typ, description, "formData", required)
+	return s.Param(name, typ, description, "formData", required)
 }
 
 // Success 设置成功返回值
