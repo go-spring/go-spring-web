@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-spring/go-spring-parent/spring-logger"
@@ -65,7 +66,8 @@ func (c *Container) Start() {
 		filters := append(c.GetFilters(), mapper.Filters()...)
 		handler := HandlerWrapper(mapper.Path(), mapper.Handler(), filters)
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
-			c.ginEngine.Handle(method, mapper.Path(), handler)
+			path := strings.Replace(mapper.Path(), "*", "*"+WildRouteName, 1)
+			c.ginEngine.Handle(method, path, handler)
 		}
 	}
 

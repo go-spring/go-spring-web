@@ -16,7 +16,7 @@
 
 package SpringWeb
 
-// WebMapping 路由表
+// WebMapping 路由表，Spring-Web 使用的路由规则和 echo 完全相同，并对 gin 做了适配。
 type WebMapping interface {
 	// Mappers 返回映射器列表
 	Mappers() map[string]*Mapper

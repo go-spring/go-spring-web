@@ -36,6 +36,10 @@ const (
 	defaultMemory = 32 << 20 // 32 MB
 )
 
+const (
+	WildRouteName = "@_@"
+)
+
 // Context 适配 gin 的 Web 上下文
 type Context struct {
 	// LoggerContext 日志接口上下文
@@ -147,7 +151,14 @@ func (ctx *Context) GetRawData() ([]byte, error) {
 
 // PathParam returns path parameter by name.
 func (ctx *Context) PathParam(name string) string {
-	return ctx.ginContext.Param(name)
+	if name == "*" {
+		name = WildRouteName
+	}
+	v := ctx.ginContext.Param(name)
+	if len(v) > 0 {
+		return v[1:]
+	}
+	return ""
 }
 
 // PathParamNames returns path parameter names.
@@ -155,7 +166,11 @@ func (ctx *Context) PathParamNames() []string {
 	if ctx.pathParamNames == nil {
 		ctx.pathParamNames = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
-			ctx.pathParamNames = append(ctx.pathParamNames, entry.Key)
+			name := entry.Key
+			if name == WildRouteName {
+				name = "*"
+			}
+			ctx.pathParamNames = append(ctx.pathParamNames, name)
 		}
 	}
 	return ctx.pathParamNames
@@ -166,7 +181,11 @@ func (ctx *Context) PathParamValues() []string {
 	if ctx.pathParamValues == nil {
 		ctx.pathParamValues = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
-			ctx.pathParamValues = append(ctx.pathParamValues, entry.Value)
+			v := entry.Value
+			if len(v) > 0 {
+				v = v[1:]
+			}
+			ctx.pathParamValues = append(ctx.pathParamValues, v)
 		}
 	}
 	return ctx.pathParamValues

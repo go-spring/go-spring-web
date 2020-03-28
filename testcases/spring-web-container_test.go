@@ -32,6 +32,7 @@ import (
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
 	"github.com/labstack/echo"
+	"github.com/magiconair/properties/assert"
 )
 
 func TestWebContainer(t *testing.T) {
@@ -60,6 +61,13 @@ func TestWebContainer(t *testing.T) {
 			r.POST("/set", s.Set)
 			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
 		}
+
+		c.GET("/wild/*", func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "anything", webCtx.PathParam("*"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
+		})
 
 		// 启动 web 服务器
 		c.Start()
@@ -113,6 +121,11 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
+		resp, _ = http.Get("http://127.0.0.1:8080/wild/anything")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
 		c.Stop(context.TODO())
 
 		time.Sleep(time.Millisecond * 50)
@@ -144,7 +157,10 @@ func TestEchoServer(t *testing.T) {
 	e.HideBanner = true
 
 	// 配合 echo 框架使用
-	e.GET("/", SpringEcho.HandlerWrapper(func(webCtx SpringWeb.WebContext) {
+	e.GET("/*", SpringEcho.HandlerWrapper(func(webCtx SpringWeb.WebContext) {
+		assert.Equal(t, "echo", webCtx.PathParam("*"))
+		assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+		assert.Equal(t, []string{"echo"}, webCtx.PathParamValues())
 		webCtx.JSON(http.StatusOK, map[string]string{
 			"a": "1",
 		})
@@ -158,7 +174,7 @@ func TestEchoServer(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	resp, _ := http.Get("http://127.0.0.1:8080/")
+	resp, _ := http.Get("http://127.0.0.1:8080/echo")
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
@@ -169,26 +185,33 @@ func TestEchoServer(t *testing.T) {
 func TestGinServer(t *testing.T) {
 	g := gin.New()
 
+	httpServer := &http.Server{
+		Addr:    ":8080",
+		Handler: g,
+	}
+
 	// 配合 gin 框架使用
-	g.GET("/", SpringGin.HandlerWrapper("/", func(webCtx SpringWeb.WebContext) {
+	g.GET("/*"+SpringGin.WildRouteName, SpringGin.HandlerWrapper("/", func(webCtx SpringWeb.WebContext) {
+		assert.Equal(t, "gin", webCtx.PathParam("*"))
+		assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+		assert.Equal(t, []string{"gin"}, webCtx.PathParamValues())
 		webCtx.JSON(http.StatusOK, map[string]string{
 			"a": "1",
 		})
 	}, nil))
 
 	go func() {
-		address := ":8080"
-		err := g.Run(address)
-		fmt.Println("exit http server on", address, "return", err)
+		err := httpServer.ListenAndServe()
+		fmt.Println("exit http server on", httpServer.Addr, "return", err)
 	}()
 
 	time.Sleep(100 * time.Millisecond)
 
-	resp, _ := http.Get("http://127.0.0.1:8080/")
+	resp, _ := http.Get("http://127.0.0.1:8080/gin")
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
-	//g.Shutdown(context.Background())
+	_ = httpServer.Shutdown(context.Background())
 	time.Sleep(100 * time.Millisecond)
 }
 
