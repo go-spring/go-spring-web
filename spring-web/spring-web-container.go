@@ -179,7 +179,7 @@ func (c *BaseWebContainer) PreStart() {
 		// 注册 path 的 Operation
 		for _, mapper := range c.Mappers() {
 			if op := mapper.swagger; op != nil {
-				doc.swagger.Path(mapper.Path(), mapper.Method(), op)
+				doc.AddPath(mapper.Path(), mapper.Method(), op)
 			}
 		}
 

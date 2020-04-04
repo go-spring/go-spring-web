@@ -37,7 +37,7 @@ import (
 
 func TestWebContainer(t *testing.T) {
 
-	SpringWeb.Swagger().SetDescription("web container test")
+	SpringWeb.Swagger().WithDescription("web container test")
 
 	testRun := func(c SpringWeb.WebContainer) {
 		c.SetPort(8080)
@@ -51,7 +51,7 @@ func TestWebContainer(t *testing.T) {
 
 		s := testcases.NewService()
 
-		c.GET("/get", s.Get, f5).Swagger().SetDescription("get")
+		c.GET("/get", s.Get, f5).Swagger("").WithDescription("get")
 		c.GET("/global_interrupt", s.Get)
 		c.GET("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 

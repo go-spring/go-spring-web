@@ -17,14 +17,14 @@
 package SpringWeb
 
 import (
-	"strconv"
-	"strings"
+	"net/http"
 
-	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag"
 )
 
-var doc = &swaggerDoc{newSwagger()}
+// doc 全局 swagger 对象
+var doc = NewSwagger()
 
 func init() {
 	swag.Register(swag.Name, doc)
@@ -32,316 +32,303 @@ func init() {
 
 // Swagger 返回全局的 swagger 对象
 func Swagger() *swagger {
-	return doc.swagger
+	return doc
 }
 
-// swaggerDoc 实现 swag.Swagger 接口
-type swaggerDoc struct {
-	swagger *swagger
+// swagger 封装 spec.Swagger 对象，提供流式调用
+type swagger struct {
+	spec.Swagger
+}
+
+// NewSwagger swagger 的构造函数
+func NewSwagger() *swagger {
+	return &swagger{
+		Swagger: spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Swagger: "2.0",
+				Info: &spec.Info{
+					InfoProps: spec.InfoProps{
+						Contact: &spec.ContactInfo{},
+						License: &spec.License{},
+					},
+				},
+				Paths: &spec.Paths{
+					Paths: make(map[string]spec.PathItem),
+				},
+				Definitions:         make(map[string]spec.Schema),
+				SecurityDefinitions: map[string]*spec.SecurityScheme{},
+			},
+		},
+	}
 }
 
 // ReadDoc 获取应用的 Swagger 描述内容
-func (s *swaggerDoc) ReadDoc() string {
-	return SpringUtils.ToJson(s.swagger)
-}
-
-// contact 联系人信息
-type contact struct {
-	Name  string `json:"name"`
-	Url   string `json:"url"`
-	Email string `json:"email"`
-}
-
-// license 版权信息
-type license struct {
-	Name string `json:"name"` // Required.
-	Url  string `json:"url"`
-}
-
-type path map[string]*Operation
-
-// property 数据类型的属性
-type property struct {
-	Type   string `json:"type"`
-	Format string `json:"format,omitempty"`
-}
-
-// definition 数据类型定义
-type definition struct {
-	Type       string              `json:"type"`
-	Properties map[string]property `json:"properties,omitempty"`
-}
-
-// NewDefinition definition 的构造函数
-func NewDefinition(typ string) *definition {
-	return &definition{Type: typ, Properties: make(map[string]property)}
-}
-
-// SetProperty 设置数据类型的属性
-func (d *definition) SetProperty(name string, typ string, format ...string) *definition {
-	p := property{Type: typ}
-	if len(format) > 0 {
-		p.Format = format[0]
-	}
-	d.Properties[name] = p
-	return d
-}
-
-// swagger Swagger V2.0 文档
-type swagger struct {
-	Swagger string `json:"swagger"` // Swagger 版本号
-	Info    struct {
-		Description    string   `json:"description"`
-		Title          string   `json:"title"` // Required.
-		TermsOfService string   `json:"termsOfService"`
-		Contact        *contact `json:"contact,omitempty"`
-		License        *license `json:"license,omitempty"`
-		Version        string   `json:"version"` // Required.
-	} `json:"info"`
-	Schemes     []string               `json:"schemes"`
-	Host        string                 `json:"host"`
-	BasePath    string                 `json:"basePath"`
-	Paths       map[string]path        `json:"paths"`
-	Definitions map[string]*definition `json:"definitions,omitempty"`
-}
-
-// newSwagger swagger 的构造函数
-func newSwagger() *swagger {
-	return &swagger{
-		Swagger:     "2.0",
-		Paths:       make(map[string]path),
-		Definitions: make(map[string]*definition),
+func (s *swagger) ReadDoc() string {
+	if b, err := s.MarshalJSON(); err == nil {
+		return string(b)
+	} else {
+		panic(err)
 	}
 }
 
-// SetDescription 设置服务描述
-func (s *swagger) SetDescription(description string) *swagger {
-	s.Info.Description = description
+// WithID 设置应用 ID
+func (s *swagger) WithID(id string) *swagger {
+	s.ID = id
 	return s
 }
 
-// SetTitle 设置服务名称
-func (s *swagger) SetTitle(title string) *swagger {
-	s.Info.Title = title
-	return s
-}
-
-// SetTermsOfService 设置服务条款地址
-func (s *swagger) SetTermsOfService(termsOfService string) *swagger {
-	s.Info.TermsOfService = termsOfService
-	return s
-}
-
-// SetContact 设置作者的名字、主页地址、邮箱
-func (s *swagger) SetContact(name string, url string, email string) *swagger {
-	s.Info.Contact = &contact{Name: name, Url: url, Email: email}
-	return s
-}
-
-// SetLicense 设置开源协议的名称、地址
-func (s *swagger) SetLicense(name string, url string) *swagger {
-	s.Info.License = &license{Name: name, Url: url}
-	return s
-}
-
-// SetVersion 设置 API 版本号
-func (s *swagger) SetVersion(version string) *swagger {
-	s.Info.Version = version
-	return s
-}
-
-// SetSchemes 设置服务协议
-func (s *swagger) SetSchemes(schemes ...string) *swagger {
-	s.Schemes = schemes
-	return s
-}
-
-// SetHost 设置可用服务器地址
-func (s *swagger) SetHost(host string) *swagger {
-	s.Host = host
-	return s
-}
-
-// SetBasePath 设置 API 路径的前缀
-func (s *swagger) SetBasePath(basePath string) *swagger {
-	s.BasePath = basePath
-	return s
-}
-
-// Path 添加一个路由
-func (s *swagger) Path(path string, method uint32, op *Operation) *swagger {
-	pathOperation := make(map[string]*Operation)
-	for _, m := range GetMethod(method) {
-		pathOperation[strings.ToLower(m)] = op
-	}
-	s.Paths[path] = pathOperation
-	return s
-}
-
-// Definition 添加一个数据类型
-func (s *swagger) Definition(name string, d *definition) *swagger {
-	s.Definitions[name] = d
-	return s
-}
-
-// schema 描述(自定义)数据类型
-type schema struct {
-	Type string `json:"type"`
-	Ref  string `json:"$ref,omitempty"`
-}
-
-// response 方法返回参数的描述
-type response struct {
-	Description string `json:"description"`
-	Schema      schema `json:"schema"`
-}
-
-// newResponse response 的构造函数
-func newResponse(description string, typ string, ref string) *response {
-	r := &response{}
-	r.Description = description
-	r.Schema.Type = typ
-	r.Schema.Ref = ref
-	return r
-}
-
-// parameter 方法接收参数的描述
-type parameter struct {
-	Name        string  `json:"name"`
-	Type        string  `json:"type,omitempty"`
-	Description string  `json:"description"`
-	In          string  `json:"in"`
-	Required    bool    `json:"required"`
-	Schema      *schema `json:"schema,omitempty"`
-}
-
-// newParameter parameter 的构造函数
-func newParameter(name string, typ string, description string, in string, required bool) parameter {
-	return parameter{
-		Name:        name,
-		Type:        typ,
-		Description: description,
-		In:          in,
-		Required:    required,
-	}
-}
-
-// newSchemaParameter parameter 的构造函数
-func newSchemaParameter(name string, typ string, ref string, description string, in string, required bool) parameter {
-	return parameter{
-		Name:        name,
-		Description: description,
-		In:          in,
-		Required:    required,
-		Schema:      &schema{Type: typ, Ref: ref},
-	}
-}
-
-// Operation 描述一个接口方法
-type Operation struct {
-	Summary     string               `json:"summary"`
-	Description string               `json:"description"`
-	OperationId string               `json:"operationId"`
-	Consumes    []string             `json:"consumes,omitempty"`
-	Produces    []string             `json:"produces,omitempty"`
-	Parameters  []parameter          `json:"parameters,omitempty"`
-	Responses   map[string]*response `json:"responses,omitempty"`
-	Tags        []string             `json:"tags,omitempty"`
-}
-
-// NewOperation Operation 的构造函数
-func NewOperation() *Operation {
-	return &Operation{Responses: make(map[string]*response)}
-}
-
-// SetSummary 设置方法简介
-func (s *Operation) SetSummary(summary string) *Operation {
-	s.Summary = summary
-	return s
-}
-
-// SetDescription 设置方法的详细描述
-func (s *Operation) SetDescription(description string) *Operation {
-	s.Description = description
-	return s
-}
-
-// SetOperationId 设置方法的唯一ID
-func (s *Operation) SetOperationId(operationId string) *Operation {
-	s.OperationId = operationId
-	return s
-}
-
-// SetTags 设置方法的标签
-func (s *Operation) SetTags(tags ...string) *Operation {
-	s.Tags = tags
-	return s
-}
-
-// SetConsumes 设置方法接收参数的类型
-func (s *Operation) SetConsumes(consumes ...string) *Operation {
+// WithConsumes 设置消费协议
+func (s *swagger) WithConsumes(consumes ...string) *swagger {
 	s.Consumes = consumes
 	return s
 }
 
-// SetProduces 设置方法返回参数的类型
-func (s *Operation) SetProduces(produces ...string) *Operation {
+// WithProduces 设置生产协议
+func (s *swagger) WithProduces(produces ...string) *swagger {
 	s.Produces = produces
 	return s
 }
 
-// BindParam 从 bind 对象中获取接收参数
-func (s *Operation) BindParam(name string, obj interface{}) {
-
-}
-
-// Param 添加一个接收参数
-func (s *Operation) Param(name string, typ string, description string, in string, required bool) *Operation {
-	p := newParameter(name, typ, description, in, required)
-	s.Parameters = append(s.Parameters, p)
+// WithSchemes 设置服务协议
+func (s *swagger) WithSchemes(schemes ...string) *swagger {
+	s.Schemes = schemes
 	return s
 }
 
-// Query 添加一个 query 类型的接收参数
-func (s *Operation) Query(name string, typ string, description string, required bool) *Operation {
-	return s.Param(name, typ, description, "query", required)
-}
-
-// Path 添加一个 path 类型的接收参数
-func (s *Operation) Path(name string, typ string, description string, required bool) *Operation {
-	return s.Param(name, typ, description, "path", required)
-}
-
-// Header 添加一个 header 类型的接收参数
-func (s *Operation) Header(name string, typ string, description string, required bool) *Operation {
-	return s.Param(name, typ, description, "header", required)
-}
-
-// Body 添加一个 body 类型的接收参数
-func (s *Operation) Body(name string, typ string, description string, required bool) *Operation {
-	return s.Param(name, typ, description, "body", required)
-}
-
-// Object 添加一个 body 类型的接收参数
-func (s *Operation) Object(name string, typ string, ref string, description string, required bool) *Operation {
-	p := newSchemaParameter(name, typ, ref, description, "body", required)
-	s.Parameters = append(s.Parameters, p)
+// WithDescription 设置服务描述
+func (s *swagger) WithDescription(description string) *swagger {
+	s.Info.Description = description
 	return s
 }
 
-// FormData 添加一个 formData 类型的接收参数
-func (s *Operation) FormData(name string, typ string, description string, required bool) *Operation {
-	return s.Param(name, typ, description, "formData", required)
-}
-
-// Success 设置成功返回值
-func (s *Operation) Success(code int, description string, typ string, ref string) *Operation {
-	s.Responses[strconv.Itoa(code)] = newResponse(description, typ, ref)
+// WithTitle 设置服务名称
+func (s *swagger) WithTitle(title string) *swagger {
+	s.Info.Title = title
 	return s
 }
 
-// Failure 添加一个失败返回值
-func (s *Operation) Failure(code int, description string, typ string, ref string) *Operation {
-	s.Responses[strconv.Itoa(code)] = newResponse(description, typ, ref)
+// WithTermsOfService 设置服务条款地址
+func (s *swagger) WithTermsOfService(termsOfService string) *swagger {
+	s.Info.TermsOfService = termsOfService
 	return s
+}
+
+// WithContact 设置作者的名字、主页地址、邮箱
+func (s *swagger) WithContact(name string, url string, email string) *swagger {
+	s.Info.Contact = &spec.ContactInfo{Name: name, URL: url, Email: email}
+	return s
+}
+
+// WithLicense 设置开源协议的名称、地址
+func (s *swagger) WithLicense(name string, url string) *swagger {
+	s.Info.License = &spec.License{Name: name, URL: url}
+	return s
+}
+
+// WithVersion 设置 API 版本号
+func (s *swagger) WithVersion(version string) *swagger {
+	s.Info.Version = version
+	return s
+}
+
+// WithHost 设置可用服务器地址
+func (s *swagger) WithHost(host string) *swagger {
+	s.Host = host
+	return s
+}
+
+// WithBasePath 设置 API 路径的前缀
+func (s *swagger) WithBasePath(basePath string) *swagger {
+	s.BasePath = basePath
+	return s
+}
+
+// AddTag 添加一个标签
+func (s *swagger) AddTag(tag *spec.Tag) *swagger {
+	s.Swagger.Tags = append(s.Swagger.Tags, *tag)
+	return s
+}
+
+// AddPath 添加一个路由
+func (s *swagger) AddPath(path string, method uint32, op *operation,
+	parameters ...spec.Parameter) *swagger {
+
+	pathItem := spec.PathItem{
+		PathItemProps: spec.PathItemProps{
+			Parameters: parameters,
+		},
+	}
+
+	for _, m := range GetMethod(method) {
+		switch m {
+		case http.MethodGet:
+			pathItem.Get = op.operation
+		case http.MethodPost:
+			pathItem.Post = op.operation
+		case http.MethodPut:
+			pathItem.Put = op.operation
+		case http.MethodDelete:
+			pathItem.Delete = op.operation
+		case http.MethodOptions:
+			pathItem.Options = op.operation
+		case http.MethodHead:
+			pathItem.Head = op.operation
+		case http.MethodPatch:
+			pathItem.Patch = op.operation
+		}
+	}
+
+	s.Paths.Paths[path] = pathItem
+	return s
+}
+
+// AddDefinition 添加一个定义
+func (s *swagger) AddDefinition(name string, schema *spec.Schema) *swagger {
+	s.Definitions[name] = *schema
+	return s
+}
+
+// AddBasicSecurityDefinition 添加 Basic 方式认证
+func (s *swagger) AddBasicSecurityDefinition() *swagger {
+	s.Swagger.SecurityDefinitions["BasicAuth"] = spec.BasicAuth()
+	return s
+}
+
+// AddApiKeySecurityDefinition 添加 ApiKey 方式认证
+func (s *swagger) AddApiKeySecurityDefinition(name string, in string) *swagger {
+	s.Swagger.SecurityDefinitions["ApiKeyAuth"] = spec.APIKeyAuth(name, in)
+	return s
+}
+
+// AddOauth2ApplicationSecurityDefinition 添加 OAuth2 Application 方式认证
+func (s *swagger) AddOauth2ApplicationSecurityDefinition(tokenUrl string, scopes map[string]string) *swagger {
+	securityScheme := spec.OAuth2Application(tokenUrl)
+	return s.securitySchemeWithScopes("OAuth2Application", securityScheme, scopes)
+}
+
+// AddOauth2ImplicitSecurityDefinition 添加 OAuth2 Implicit 方式认证
+func (s *swagger) AddOauth2ImplicitSecurityDefinition(authorizationUrl string, scopes map[string]string) *swagger {
+	securityScheme := spec.OAuth2Implicit(authorizationUrl)
+	return s.securitySchemeWithScopes("OAuth2Implicit", securityScheme, scopes)
+}
+
+// AddOauth2PasswordSecurityDefinition 添加 OAuth2 Password 方式认证
+func (s *swagger) AddOauth2PasswordSecurityDefinition(tokenUrl string, scopes map[string]string) *swagger {
+	securityScheme := spec.OAuth2Password(tokenUrl)
+	return s.securitySchemeWithScopes("OAuth2Password", securityScheme, scopes)
+}
+
+// AddOauth2AccessCodeSecurityDefinition 添加 OAuth2 AccessCode 方式认证
+func (s *swagger) AddOauth2AccessCodeSecurityDefinition(authorizationUrl string, tokenUrl string, scopes map[string]string) *swagger {
+	securityScheme := spec.OAuth2AccessToken(authorizationUrl, tokenUrl)
+	return s.securitySchemeWithScopes("OAuth2AccessCode", securityScheme, scopes)
+}
+
+func (s *swagger) securitySchemeWithScopes(name string, scheme *spec.SecurityScheme, scopes map[string]string) *swagger {
+	securityScheme := scheme
+	for scope, description := range scopes {
+		securityScheme.AddScope(scope, description)
+	}
+	s.Swagger.SecurityDefinitions[name] = securityScheme
+	return s
+}
+
+// operation 封装 *spec.Operation 对象，提供更多功能
+type operation struct {
+	operation *spec.Operation
+}
+
+// NewOperation creates a new operation instance.
+func NewOperation(id string) *operation {
+	return &operation{operation: spec.NewOperation(id)}
+}
+
+// WithID sets the ID property on this operation, allows for chaining.
+func (o *operation) WithID(id string) *operation {
+	o.operation.WithID(id)
+	return o
+}
+
+// WithDescription sets the description on this operation, allows for chaining
+func (o *operation) WithDescription(description string) *operation {
+	o.operation.WithDescription(description)
+	return o
+}
+
+// WithSummary sets the summary on this operation, allows for chaining
+func (o *operation) WithSummary(summary string) *operation {
+	o.operation.WithSummary(summary)
+	return o
+}
+
+// WithExternalDocs sets/removes the external docs for/from this operation.
+func (o *operation) WithExternalDocs(description, url string) *operation {
+	o.operation.WithExternalDocs(description, url)
+	return o
+}
+
+// Deprecate marks the operation as deprecated
+func (o *operation) Deprecate() *operation {
+	o.operation.Deprecate()
+	return o
+}
+
+// Undeprecate marks the operation as not deprecated
+func (o *operation) Undeprecate() *operation {
+	o.operation.Undeprecate()
+	return o
+}
+
+// WithConsumes adds media types for incoming body values
+func (o *operation) WithConsumes(mediaTypes ...string) *operation {
+	o.operation.WithConsumes(mediaTypes...)
+	return o
+}
+
+// WithProduces adds media types for outgoing body values
+func (o *operation) WithProduces(mediaTypes ...string) *operation {
+	o.operation.WithProduces(mediaTypes...)
+	return o
+}
+
+// WithTags adds tags for this operation
+func (o *operation) WithTags(tags ...string) *operation {
+	o.operation.WithTags(tags...)
+	return o
+}
+
+// SetSchemes 设置服务协议
+func (o *operation) WithSchemes(schemes ...string) *operation {
+	o.operation.Schemes = schemes
+	return o
+}
+
+// AddParam adds a parameter to this operation
+func (o *operation) AddParam(param *spec.Parameter) *operation {
+	o.operation.AddParam(param)
+	return o
+}
+
+// RemoveParam removes a parameter from the operation
+func (o *operation) RemoveParam(name, in string) *operation {
+	o.operation.RemoveParam(name, in)
+	return o
+}
+
+// SecuredWith adds a security scope to this operation.
+func (o *operation) SecuredWith(name string, scopes ...string) *operation {
+	o.operation.SecuredWith(name, scopes...)
+	return o
+}
+
+// WithDefaultResponse adds a default response to the operation.
+func (o *operation) WithDefaultResponse(response *spec.Response) *operation {
+	o.operation.WithDefaultResponse(response)
+	return o
+}
+
+// RespondsWith adds a status code response to the operation.
+func (o *operation) RespondsWith(code int, response *spec.Response) *operation {
+	o.operation.RespondsWith(code, response)
+	return o
 }
