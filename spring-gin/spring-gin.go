@@ -63,10 +63,11 @@ func (c *Container) Start() {
 	}
 
 	for _, mapper := range c.Mappers() {
+		path := SpringWeb.PathConvert(mapper.Path())
 		filters := append(c.GetFilters(), mapper.Filters()...)
 		handler := HandlerWrapper(mapper.Path(), mapper.Handler(), filters)
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
-			path := strings.Replace(mapper.Path(), "*", "*"+WildRouteName, 1)
+			path := strings.Replace(path, "*", "*"+WildRouteName, 1)
 			c.ginEngine.Handle(method, path, handler)
 		}
 	}

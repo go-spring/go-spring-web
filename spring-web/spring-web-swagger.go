@@ -17,7 +17,12 @@
 package SpringWeb
 
 import (
+	"encoding/xml"
+	"fmt"
 	"net/http"
+	"reflect"
+	"strings"
+	"time"
 
 	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag"
@@ -115,13 +120,20 @@ func (s *swagger) WithTermsOfService(termsOfService string) *swagger {
 
 // WithContact 设置作者的名字、主页地址、邮箱
 func (s *swagger) WithContact(name string, url string, email string) *swagger {
-	s.Info.Contact = &spec.ContactInfo{Name: name, URL: url, Email: email}
+	c := new(spec.ContactInfo)
+	c.Name = name
+	c.URL = url
+	c.Email = email
+	s.Info.Contact = c
 	return s
 }
 
 // WithLicense 设置开源协议的名称、地址
 func (s *swagger) WithLicense(name string, url string) *swagger {
-	s.Info.License = &spec.License{Name: name, URL: url}
+	l := new(spec.License)
+	l.Name = name
+	l.URL = url
+	s.Info.License = l
 	return s
 }
 
@@ -143,9 +155,9 @@ func (s *swagger) WithBasePath(basePath string) *swagger {
 	return s
 }
 
-// AddTag 添加一个标签
-func (s *swagger) AddTag(tag *spec.Tag) *swagger {
-	s.Swagger.Tags = append(s.Swagger.Tags, *tag)
+// WithTags 添加标签
+func (s *swagger) WithTags(tags ...spec.Tag) *swagger {
+	s.Swagger.Tags = tags
 	return s
 }
 
@@ -153,10 +165,16 @@ func (s *swagger) AddTag(tag *spec.Tag) *swagger {
 func (s *swagger) AddPath(path string, method uint32, op *operation,
 	parameters ...spec.Parameter) *swagger {
 
-	pathItem := spec.PathItem{
-		PathItemProps: spec.PathItemProps{
-			Parameters: parameters,
-		},
+	path = strings.TrimPrefix(path, doc.BasePath)
+	path = strings.TrimRight(path, "/")
+	pathItem, ok := s.Paths.Paths[path]
+
+	if !ok {
+		pathItem = spec.PathItem{
+			PathItemProps: spec.PathItemProps{
+				Parameters: parameters,
+			},
+		}
 	}
 
 	for _, m := range GetMethod(method) {
@@ -188,6 +206,153 @@ func (s *swagger) AddDefinition(name string, schema *spec.Schema) *swagger {
 	return s
 }
 
+type DefinitionField struct {
+	Description string
+	Example     interface{}
+	Enums       []interface{}
+}
+
+// BindDefinitions 绑定一个定义
+func (s *swagger) BindDefinitions(i ...interface{}) *swagger {
+	m := map[string]DefinitionField{}
+	for _, v := range i {
+		s.BindDefinitionWithTags(v, m)
+	}
+	return s
+}
+
+// BindDefinitionWithTags 绑定一个定义
+func (s *swagger) BindDefinitionWithTags(i interface{}, attachFields map[string]DefinitionField) *swagger {
+
+	it := reflect.TypeOf(i)
+	if it.Kind() == reflect.Ptr {
+		it = it.Elem()
+	}
+
+	objSchema := new(spec.Schema).Typed("object", "")
+	for i := 0; i < it.NumField(); i++ {
+		f := it.Field(i)
+
+		// 处理 XML 标签
+		var xmlTag []string
+		if tag, ok := f.Tag.Lookup("xml"); ok {
+			xmlTag = strings.Split(tag, ",")
+			if f.Type == reflect.TypeOf(xml.Name{}) {
+				objSchema.WithXMLName(xmlTag[0])
+				continue
+			}
+		}
+
+		propName := f.Name
+
+		// 处理 JSON 标签
+		var jsonTag []string
+		if tag, ok := f.Tag.Lookup("json"); ok {
+			jsonTag = strings.Split(tag, ",")
+			propName = jsonTag[0]
+		}
+
+		var propSchema *spec.Schema
+		switch k := f.Type.Kind(); k {
+		case reflect.Bool:
+			propSchema = spec.BoolProperty()
+		case reflect.Int8:
+			propSchema = spec.Int8Property()
+		case reflect.Int16:
+			propSchema = spec.Int16Property()
+		case reflect.Int32:
+			propSchema = spec.Int32Property()
+		case reflect.Int64:
+			propSchema = spec.Int64Property()
+		case reflect.String:
+			propSchema = spec.StringProperty()
+		case reflect.Struct:
+			if f.Type == reflect.TypeOf(time.Time{}) {
+				propSchema = spec.DateTimeProperty()
+			} else {
+				panic(fmt.Errorf("unsupported swagger type %s", f.Type))
+			}
+		case reflect.Ptr:
+			if et := f.Type.Elem(); et.Kind() == reflect.Struct {
+				propSchema = spec.RefSchema("#/definitions/" + et.Name())
+			} else {
+				panic(fmt.Errorf("unsupported swagger type %s", f.Type))
+			}
+		case reflect.Slice:
+			{
+				et := f.Type.Elem()
+
+				var items *spec.Schema
+				switch k := et.Kind(); k {
+				case reflect.Bool:
+					items = spec.BoolProperty()
+				case reflect.Int8:
+					items = spec.Int8Property()
+				case reflect.Int16:
+					items = spec.Int16Property()
+				case reflect.Int32:
+					items = spec.Int32Property()
+				case reflect.Int64:
+					items = spec.Int64Property()
+				case reflect.String:
+					items = spec.StringProperty()
+				case reflect.Struct:
+					items = spec.RefSchema("#/definitions/" + et.Name())
+				default:
+					panic(fmt.Errorf("unsupported swagger type %s", f.Type))
+				}
+
+				if len(xmlTag) > 0 {
+					items.WithXMLName(xmlTag[0])
+				}
+
+				propSchema = spec.ArrayProperty(items)
+			}
+		default:
+			panic(fmt.Errorf("unsupported swagger type %s", f.Type))
+		}
+
+		if len(xmlTag) > 1 {
+			for _, v := range xmlTag {
+				if v == "wrapped" {
+					propSchema.AsWrappedXML()
+					break
+				}
+			}
+		}
+
+		required := true
+
+		for _, v := range jsonTag {
+			if v == "omitempty" {
+				required = false
+				break
+			}
+		}
+
+		if required {
+			objSchema.AddRequired(propName)
+		}
+
+		if attachField, ok := attachFields[propName]; ok {
+			if len(attachField.Enums) > 0 {
+				propSchema.WithEnum(attachField.Enums...)
+			}
+			if attachField.Description != "" {
+				propSchema.WithDescription(attachField.Description)
+			}
+			if attachField.Example != "" {
+				propSchema.WithExample(attachField.Example)
+			}
+		}
+
+		objSchema.SetProperty(propName, *propSchema)
+	}
+
+	s.Definitions[it.Name()] = *objSchema
+	return s
+}
+
 // AddBasicSecurityDefinition 添加 Basic 方式认证
 func (s *swagger) AddBasicSecurityDefinition() *swagger {
 	s.Swagger.SecurityDefinitions["BasicAuth"] = spec.BasicAuth()
@@ -196,32 +361,47 @@ func (s *swagger) AddBasicSecurityDefinition() *swagger {
 
 // AddApiKeySecurityDefinition 添加 ApiKey 方式认证
 func (s *swagger) AddApiKeySecurityDefinition(name string, in string) *swagger {
-	s.Swagger.SecurityDefinitions["ApiKeyAuth"] = spec.APIKeyAuth(name, in)
+	if name == "" {
+		name = "ApiKeyAuth"
+	}
+	s.Swagger.SecurityDefinitions[name] = spec.APIKeyAuth(name, in)
 	return s
 }
 
 // AddOauth2ApplicationSecurityDefinition 添加 OAuth2 Application 方式认证
-func (s *swagger) AddOauth2ApplicationSecurityDefinition(tokenUrl string, scopes map[string]string) *swagger {
+func (s *swagger) AddOauth2ApplicationSecurityDefinition(name string, tokenUrl string, scopes map[string]string) *swagger {
+	if name == "" {
+		name = "OAuth2Application"
+	}
 	securityScheme := spec.OAuth2Application(tokenUrl)
-	return s.securitySchemeWithScopes("OAuth2Application", securityScheme, scopes)
+	return s.securitySchemeWithScopes(name, securityScheme, scopes)
 }
 
 // AddOauth2ImplicitSecurityDefinition 添加 OAuth2 Implicit 方式认证
-func (s *swagger) AddOauth2ImplicitSecurityDefinition(authorizationUrl string, scopes map[string]string) *swagger {
+func (s *swagger) AddOauth2ImplicitSecurityDefinition(name string, authorizationUrl string, scopes map[string]string) *swagger {
+	if name == "" {
+		name = "OAuth2Implicit"
+	}
 	securityScheme := spec.OAuth2Implicit(authorizationUrl)
-	return s.securitySchemeWithScopes("OAuth2Implicit", securityScheme, scopes)
+	return s.securitySchemeWithScopes(name, securityScheme, scopes)
 }
 
 // AddOauth2PasswordSecurityDefinition 添加 OAuth2 Password 方式认证
-func (s *swagger) AddOauth2PasswordSecurityDefinition(tokenUrl string, scopes map[string]string) *swagger {
+func (s *swagger) AddOauth2PasswordSecurityDefinition(name string, tokenUrl string, scopes map[string]string) *swagger {
+	if name == "" {
+		name = "OAuth2Password"
+	}
 	securityScheme := spec.OAuth2Password(tokenUrl)
-	return s.securitySchemeWithScopes("OAuth2Password", securityScheme, scopes)
+	return s.securitySchemeWithScopes(name, securityScheme, scopes)
 }
 
 // AddOauth2AccessCodeSecurityDefinition 添加 OAuth2 AccessCode 方式认证
-func (s *swagger) AddOauth2AccessCodeSecurityDefinition(authorizationUrl string, tokenUrl string, scopes map[string]string) *swagger {
+func (s *swagger) AddOauth2AccessCodeSecurityDefinition(name string, authorizationUrl string, tokenUrl string, scopes map[string]string) *swagger {
+	if name == "" {
+		name = "OAuth2AccessCode"
+	}
 	securityScheme := spec.OAuth2AccessToken(authorizationUrl, tokenUrl)
-	return s.securitySchemeWithScopes("OAuth2AccessCode", securityScheme, scopes)
+	return s.securitySchemeWithScopes(name, securityScheme, scopes)
 }
 
 func (s *swagger) securitySchemeWithScopes(name string, scheme *spec.SecurityScheme, scopes map[string]string) *swagger {
@@ -233,9 +413,21 @@ func (s *swagger) securitySchemeWithScopes(name string, scheme *spec.SecuritySch
 	return s
 }
 
+// WithExternalDocs
+func (s *swagger) WithExternalDocs(externalDocs *spec.ExternalDocumentation) *swagger {
+	s.Swagger.ExternalDocs = externalDocs
+	return s
+}
+
+type bindParam struct {
+	param       interface{}
+	description string
+}
+
 // operation 封装 *spec.Operation 对象，提供更多功能
 type operation struct {
 	operation *spec.Operation
+	bindParam *bindParam
 }
 
 // NewOperation creates a new operation instance.
@@ -331,4 +523,83 @@ func (o *operation) WithDefaultResponse(response *spec.Response) *operation {
 func (o *operation) RespondsWith(code int, response *spec.Response) *operation {
 	o.operation.RespondsWith(code, response)
 	return o
+}
+
+// Bind 绑定请求参数
+func (o *operation) BindParam(i interface{}, description string) *operation {
+	o.bindParam = &bindParam{param: i, description: description}
+	return o
+}
+
+// parseBind 解析绑定的请求参数
+func (o *operation) parseBind() error {
+	if o.bindParam != nil && o.bindParam.param != nil {
+		t := reflect.TypeOf(o.bindParam.param)
+		if t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+		if t.Kind() == reflect.Struct {
+			schema := spec.RefSchema("#/definitions/" + t.Name())
+			param := BodyParam("body", schema).
+				WithDescription(o.bindParam.description).
+				AsRequired()
+			o.AddParam(param)
+		}
+	}
+	return nil
+}
+
+// HeaderParam creates a header parameter, this is always required by default
+func HeaderParam(name string, typ, format string) *spec.Parameter {
+	param := spec.HeaderParam(name)
+	param.Typed(typ, format)
+	return param
+}
+
+// PathParam creates a path parameter, this is always required
+func PathParam(name string, typ, format string) *spec.Parameter {
+	param := spec.PathParam(name)
+	param.Typed(typ, format)
+	return param
+}
+
+// BodyParam creates a body parameter
+func BodyParam(name string, schema *spec.Schema) *spec.Parameter {
+	return &spec.Parameter{ParamProps: spec.ParamProps{Name: name, In: "body", Schema: schema}}
+}
+
+// NewResponse creates a new response instance
+func NewResponse(description string) *spec.Response {
+	resp := new(spec.Response)
+	resp.Description = description
+	return resp
+}
+
+// NewBindResponse creates a new response instance
+func NewBindResponse(i interface{}, description string) *spec.Response {
+	resp := new(spec.Response)
+	resp.Description = description
+
+	t := reflect.TypeOf(i)
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	slice := false
+	if t.Kind() == reflect.Slice {
+		slice = true
+		t = t.Elem()
+	}
+
+	if t.Kind() == reflect.Struct {
+		schema := spec.RefSchema("#/definitions/" + t.Name())
+		if slice {
+			resp.WithSchema(spec.ArrayProperty(schema))
+		} else {
+			resp.WithSchema(schema)
+		}
+	}
+
+	return resp
 }

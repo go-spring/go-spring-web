@@ -110,7 +110,8 @@ func (s *Service) Get(ctx SpringWeb.WebContext) {
 func (s *Service) Set(ctx SpringWeb.WebContext) {
 
 	var param struct {
-		A string `form:"a" json:"a"`
+		Name string `form:"name" json:"name"`
+		Age  string `form:"age" json:"age"`
 	}
 
 	if err := ctx.Bind(&param); err != nil {
@@ -119,7 +120,10 @@ func (s *Service) Set(ctx SpringWeb.WebContext) {
 
 	ctx.LogInfo("/set", "param="+SpringUtils.ToJson(param))
 
-	s.store["a"] = param.A
+	s.store["name"] = param.Name
+	s.store["age"] = param.Age
+
+	ctx.NoContent(http.StatusOK)
 }
 
 func (s *Service) Panic(ctx SpringWeb.WebContext) {

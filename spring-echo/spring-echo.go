@@ -60,8 +60,9 @@ func (c *Container) Start() {
 	for _, mapper := range c.Mappers() {
 		filters := append(c.GetFilters(), mapper.Filters()...)
 		handler := HandlerWrapper(mapper.Handler(), filters)
+		path := SpringWeb.PathConvert(mapper.Path())
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
-			c.echoServer.Add(method, mapper.Path(), handler)
+			c.echoServer.Add(method, path, handler)
 		}
 	}
 

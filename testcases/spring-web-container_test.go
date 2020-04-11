@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-openapi/spec"
 	"github.com/go-spring/go-spring-web/spring-echo"
 	"github.com/go-spring/go-spring-web/spring-gin"
 	"github.com/go-spring/go-spring-web/spring-web"
@@ -37,7 +38,13 @@ import (
 
 func TestWebContainer(t *testing.T) {
 
-	SpringWeb.Swagger().WithDescription("web container test")
+	SpringWeb.Swagger().
+		WithDescription("web container test").
+		AddDefinition("Set", new(spec.Schema).
+			Typed("object", "").
+			AddRequired("name", "age").
+			SetProperty("name", *spec.StringProperty()).
+			SetProperty("age", *spec.Int32Property()))
 
 	testRun := func(c SpringWeb.WebContainer) {
 		c.SetPort(8080)
@@ -51,14 +58,36 @@ func TestWebContainer(t *testing.T) {
 
 		s := testcases.NewService()
 
-		c.GET("/get", s.Get, f5).Swagger("").WithDescription("get")
+		c.GET("/get", s.Get, f5).Swagger("").
+			WithDescription("get").
+			AddParam(spec.QueryParam("key")).
+			WithConsumes(SpringWeb.MIMEApplicationForm).
+			WithProduces(SpringWeb.MIMEApplicationJSON).
+			RespondsWith(http.StatusOK, spec.NewResponse().
+				WithSchema(spec.StringProperty()).
+				AddExample(SpringWeb.MIMEApplicationJSON, 2))
+
 		c.GET("/global_interrupt", s.Get)
 		c.GET("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法
 		r := c.Route("", f2, f7)
 		{
-			r.POST("/set", s.Set)
+			r.POST("/set", s.Set).Swagger("").
+				WithDescription("set").
+				//WithConsumes(SpringWeb.MIMEApplicationForm).
+				WithConsumes(SpringWeb.MIMEApplicationJSON).
+				//AddParam(spec.QueryParam("name")).
+				//AddParam(spec.QueryParam("age")).
+				AddParam(&spec.Parameter{
+					ParamProps: spec.ParamProps{
+						Name:   "body",
+						In:     "body",
+						Schema: spec.RefSchema("#/definitions/Set"),
+					},
+				}).
+				RespondsWith(http.StatusOK, nil)
+
 			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
 		}
 
