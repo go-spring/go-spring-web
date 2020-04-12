@@ -190,6 +190,9 @@ func (c *BaseWebContainer) PreStart() {
 		c.GET("/swagger/*", HTTP(httpSwagger.Handler(
 			httpSwagger.URL("/swagger/doc.json"),
 		)))
+
+		// 注册 redoc 接口
+		c.GET("/redoc", ReDoc)
 	}
 }
 
