@@ -162,7 +162,7 @@ func (s *swagger) WithTags(tags ...spec.Tag) *swagger {
 }
 
 // AddPath 添加一个路由
-func (s *swagger) AddPath(path string, method uint32, op *operation,
+func (s *swagger) AddPath(path string, method uint32, op *Operation,
 	parameters ...spec.Parameter) *swagger {
 
 	path = strings.TrimPrefix(path, doc.BasePath)
@@ -424,115 +424,115 @@ type bindParam struct {
 	description string
 }
 
-// operation 封装 *spec.Operation 对象，提供更多功能
-type operation struct {
+// Operation 封装 *spec.Operation 对象，提供更多功能
+type Operation struct {
 	operation *spec.Operation
 	bindParam *bindParam
 }
 
 // NewOperation creates a new operation instance.
-func NewOperation(id string) *operation {
-	return &operation{operation: spec.NewOperation(id)}
+func NewOperation(id string) *Operation {
+	return &Operation{operation: spec.NewOperation(id)}
 }
 
 // WithID sets the ID property on this operation, allows for chaining.
-func (o *operation) WithID(id string) *operation {
+func (o *Operation) WithID(id string) *Operation {
 	o.operation.WithID(id)
 	return o
 }
 
 // WithDescription sets the description on this operation, allows for chaining
-func (o *operation) WithDescription(description string) *operation {
+func (o *Operation) WithDescription(description string) *Operation {
 	o.operation.WithDescription(description)
 	return o
 }
 
 // WithSummary sets the summary on this operation, allows for chaining
-func (o *operation) WithSummary(summary string) *operation {
+func (o *Operation) WithSummary(summary string) *Operation {
 	o.operation.WithSummary(summary)
 	return o
 }
 
 // WithExternalDocs sets/removes the external docs for/from this operation.
-func (o *operation) WithExternalDocs(description, url string) *operation {
+func (o *Operation) WithExternalDocs(description, url string) *Operation {
 	o.operation.WithExternalDocs(description, url)
 	return o
 }
 
 // Deprecate marks the operation as deprecated
-func (o *operation) Deprecate() *operation {
+func (o *Operation) Deprecate() *Operation {
 	o.operation.Deprecate()
 	return o
 }
 
 // Undeprecate marks the operation as not deprecated
-func (o *operation) Undeprecate() *operation {
+func (o *Operation) Undeprecate() *Operation {
 	o.operation.Undeprecate()
 	return o
 }
 
 // WithConsumes adds media types for incoming body values
-func (o *operation) WithConsumes(mediaTypes ...string) *operation {
+func (o *Operation) WithConsumes(mediaTypes ...string) *Operation {
 	o.operation.WithConsumes(mediaTypes...)
 	return o
 }
 
 // WithProduces adds media types for outgoing body values
-func (o *operation) WithProduces(mediaTypes ...string) *operation {
+func (o *Operation) WithProduces(mediaTypes ...string) *Operation {
 	o.operation.WithProduces(mediaTypes...)
 	return o
 }
 
 // WithTags adds tags for this operation
-func (o *operation) WithTags(tags ...string) *operation {
+func (o *Operation) WithTags(tags ...string) *Operation {
 	o.operation.WithTags(tags...)
 	return o
 }
 
 // SetSchemes 设置服务协议
-func (o *operation) WithSchemes(schemes ...string) *operation {
+func (o *Operation) WithSchemes(schemes ...string) *Operation {
 	o.operation.Schemes = schemes
 	return o
 }
 
 // AddParam adds a parameter to this operation
-func (o *operation) AddParam(param *spec.Parameter) *operation {
+func (o *Operation) AddParam(param *spec.Parameter) *Operation {
 	o.operation.AddParam(param)
 	return o
 }
 
 // RemoveParam removes a parameter from the operation
-func (o *operation) RemoveParam(name, in string) *operation {
+func (o *Operation) RemoveParam(name, in string) *Operation {
 	o.operation.RemoveParam(name, in)
 	return o
 }
 
 // SecuredWith adds a security scope to this operation.
-func (o *operation) SecuredWith(name string, scopes ...string) *operation {
+func (o *Operation) SecuredWith(name string, scopes ...string) *Operation {
 	o.operation.SecuredWith(name, scopes...)
 	return o
 }
 
 // WithDefaultResponse adds a default response to the operation.
-func (o *operation) WithDefaultResponse(response *spec.Response) *operation {
+func (o *Operation) WithDefaultResponse(response *spec.Response) *Operation {
 	o.operation.WithDefaultResponse(response)
 	return o
 }
 
 // RespondsWith adds a status code response to the operation.
-func (o *operation) RespondsWith(code int, response *spec.Response) *operation {
+func (o *Operation) RespondsWith(code int, response *spec.Response) *Operation {
 	o.operation.RespondsWith(code, response)
 	return o
 }
 
 // Bind 绑定请求参数
-func (o *operation) BindParam(i interface{}, description string) *operation {
+func (o *Operation) BindParam(i interface{}, description string) *Operation {
 	o.bindParam = &bindParam{param: i, description: description}
 	return o
 }
 
 // parseBind 解析绑定的请求参数
-func (o *operation) parseBind() error {
+func (o *Operation) parseBind() error {
 	if o.bindParam != nil && o.bindParam.param != nil {
 		t := reflect.TypeOf(o.bindParam.param)
 		if t.Kind() == reflect.Ptr {
