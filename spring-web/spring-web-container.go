@@ -20,7 +20,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/swaggo/http-swagger"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // Handler Web 处理函数
@@ -203,7 +203,7 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			ctx.LogError(err)
+			ctx.LogErrorf("Handler(%v) error:%v", fn, err)
 			ctx.Status(http.StatusInternalServerError)
 		}
 	}()
