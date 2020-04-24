@@ -16,6 +16,13 @@
 
 package SpringWeb
 
+import (
+	"reflect"
+	"runtime"
+
+	"github.com/go-spring/go-spring-parent/spring-logger"
+)
+
 // WebMapping 路由表，Spring-Web 使用的路由规则和 echo 完全相同，并对 gin 做了适配。
 type WebMapping interface {
 	// Mappers 返回映射器列表
@@ -82,6 +89,12 @@ func (w *defaultWebMapping) Route(basePath string, filters ...Filter) *Router {
 
 // Request 注册任意 HTTP 方法处理函数
 func (w *defaultWebMapping) Request(method uint32, path string, fn Handler, filters ...Filter) *Mapper {
+
+	fnPtr := reflect.ValueOf(fn).Pointer()
+	fnInfo := runtime.FuncForPC(fnPtr)
+	file, line := fnInfo.FileLine(fnPtr)
+	SpringLogger.Infof("%v %s -> %s:%d", GetMethod(method), path, file, line)
+
 	m := NewMapper(method, path, fn, filters)
 	w.mappers[m.Key()] = m
 	return m
