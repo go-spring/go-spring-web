@@ -76,9 +76,18 @@ func (w *defaultWebMapping) Mappers() map[string]*Mapper {
 	return w.mappers
 }
 
+func (w *defaultWebMapping) addMapper(m *Mapper) {
+	w.mappers[m.Key()] = m
+
+	fnPtr := reflect.ValueOf(m.handler).Pointer()
+	fnInfo := runtime.FuncForPC(fnPtr)
+	file, line := fnInfo.FileLine(fnPtr)
+	SpringLogger.Infof("%v %s -> %s:%d", GetMethod(m.method), m.path, file, line)
+}
+
 // AddMapper 添加一个 Mapper
 func (w *defaultWebMapping) AddMapper(m *Mapper) *Mapper {
-	w.mappers[m.Key()] = m
+	w.addMapper(m)
 	return m
 }
 
@@ -89,14 +98,8 @@ func (w *defaultWebMapping) Route(basePath string, filters ...Filter) *Router {
 
 // Request 注册任意 HTTP 方法处理函数
 func (w *defaultWebMapping) Request(method uint32, path string, fn Handler, filters ...Filter) *Mapper {
-
-	fnPtr := reflect.ValueOf(fn).Pointer()
-	fnInfo := runtime.FuncForPC(fnPtr)
-	file, line := fnInfo.FileLine(fnPtr)
-	SpringLogger.Infof("%v %s -> %s:%d", GetMethod(method), path, file, line)
-
 	m := NewMapper(method, path, fn, filters)
-	w.mappers[m.Key()] = m
+	w.addMapper(m)
 	return m
 }
 
