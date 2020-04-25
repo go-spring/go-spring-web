@@ -23,10 +23,10 @@ type Router struct {
 	filters  []Filter
 }
 
-// NewRouter Router 的构造函数
-func NewRouter(mapping WebMapping, basePath string, filters []Filter) *Router {
+// NewRouter Router 的构造函数，不依赖具体的 WebMapping 对象
+func NewRouter(basePath string, filters []Filter) *Router {
 	return &Router{
-		mapping:  mapping,
+		mapping:  NewDefaultWebMapping(),
 		basePath: basePath,
 		filters:  filters,
 	}

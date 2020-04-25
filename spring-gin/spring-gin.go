@@ -63,6 +63,7 @@ func (c *Container) Start() {
 	}
 
 	for _, mapper := range c.Mappers() {
+		c.PrintMapper(mapper)
 		path := SpringWeb.PathConvert(mapper.Path())
 		filters := append(c.GetFilters(), mapper.Filters()...)
 		handler := HandlerWrapper(mapper.Path(), mapper.Handler(), filters)

@@ -19,7 +19,10 @@ package SpringWeb
 import (
 	"context"
 	"net/http"
+	"reflect"
+	"runtime"
 
+	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/swaggo/http-swagger"
 )
 
@@ -66,6 +69,9 @@ type WebContainer interface {
 
 	// SetFilters 设置过滤器列表
 	SetFilters(filters ...Filter)
+
+	// AddRouter 添加新的路由信息
+	AddRouter(router *Router)
 
 	// EnableSwagger 是否启用 Swagger 功能
 	EnableSwagger() bool
@@ -161,6 +167,13 @@ func (c *BaseWebContainer) SetFilters(filters ...Filter) {
 	c.filters = filters
 }
 
+// AddRouter 添加新的路由信息
+func (c *BaseWebContainer) AddRouter(router *Router) {
+	for _, mapper := range router.mapping.Mappers() {
+		c.AddMapper(mapper)
+	}
+}
+
 // EnableSwagger 是否启用 Swagger 功能
 func (c *BaseWebContainer) EnableSwagger() bool {
 	return c.enableSwg
@@ -194,6 +207,14 @@ func (c *BaseWebContainer) PreStart() {
 		// 注册 redoc 接口
 		c.GET("/redoc", ReDoc)
 	}
+}
+
+// PrintMapper 打印路由注册信息
+func (c *BaseWebContainer) PrintMapper(m *Mapper) {
+	fnPtr := reflect.ValueOf(m.handler).Pointer()
+	fnInfo := runtime.FuncForPC(fnPtr)
+	file, line := fnInfo.FileLine(fnPtr)
+	SpringLogger.Infof("%v :%d %s -> %s:%d", GetMethod(m.method), c.port, m.path, file, line)
 }
 
 /////////////////// Invoke Handler //////////////////////

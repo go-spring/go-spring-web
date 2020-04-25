@@ -58,6 +58,7 @@ func (c *Container) Start() {
 
 	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
+		c.PrintMapper(mapper)
 		filters := append(c.GetFilters(), mapper.Filters()...)
 		handler := HandlerWrapper(mapper.Handler(), filters)
 		path := SpringWeb.PathConvert(mapper.Path())

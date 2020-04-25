@@ -42,11 +42,18 @@ func TestWebServer(t *testing.T) {
 
 	s := testcases.NewService()
 
+	// 可用于全局的路由分组
+	r := SpringWeb.NewRouter("/v1", nil)
+	r.GET("/router", func(ctx SpringWeb.WebContext) {
+		ctx.String(http.StatusOK, "router:ok")
+	})
+
 	// 添加第一个 Web 容器
 	{
 		g := SpringGin.NewContainer()
 		server.AddWebContainer(g)
 		g.SetPort(8080)
+		g.AddRouter(r)
 
 		g.GET("/get", s.Get, f5)
 	}
@@ -56,11 +63,12 @@ func TestWebServer(t *testing.T) {
 		e := SpringEcho.NewContainer()
 		server.AddWebContainer(e)
 		e.SetPort(9090)
+		e.AddRouter(r)
 
-		r := e.Route("", f2, f7)
+		r0 := e.Route("", f2, f7)
 		{
-			r.POST("/set", s.Set)
-			r.GET("/panic", s.Panic)
+			r0.POST("/set", s.Set)
+			r0.GET("/panic", s.Panic)
 		}
 	}
 
