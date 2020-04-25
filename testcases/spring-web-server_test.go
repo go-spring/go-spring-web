@@ -33,12 +33,15 @@ import (
 )
 
 func TestWebServer(t *testing.T) {
-	server := SpringWeb.NewWebServer()
 
 	l := list.New()
 	f2 := testcases.NewNumberFilter(2, l)
 	f5 := testcases.NewNumberFilter(5, l)
+	f6 := testcases.NewNumberFilter(6, l)
 	f7 := testcases.NewNumberFilter(7, l)
+
+	server := SpringWeb.NewWebServer()
+	server.SetFilters(f6)
 
 	s := testcases.NewService()
 

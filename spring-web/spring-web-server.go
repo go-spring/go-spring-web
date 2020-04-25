@@ -22,6 +22,7 @@ import (
 
 // WebServer 一个 WebServer 包含多个 WebContainer
 type WebServer struct {
+	filters    []Filter
 	Containers []WebContainer
 }
 
@@ -32,9 +33,21 @@ func NewWebServer() *WebServer {
 	}
 }
 
+// SetFilters 设置过滤器列表
+func (s *WebServer) SetFilters(filters ...Filter) {
+	s.filters = filters
+}
+
+// AddWebContainer 添加 WebContainer 实例
+func (s *WebServer) AddWebContainer(container WebContainer) {
+	s.Containers = append(s.Containers, container)
+}
+
 // Start 启动 Web 容器，非阻塞
 func (s *WebServer) Start() {
 	for _, c := range s.Containers {
+		filters := append(s.filters, c.GetFilters()...)
+		c.SetFilters(filters...)
 		c.Start()
 	}
 }
@@ -44,9 +57,4 @@ func (s *WebServer) Stop(ctx context.Context) {
 	for _, c := range s.Containers {
 		c.Stop(ctx)
 	}
-}
-
-// AddWebContainer 添加 WebContainer 实例
-func (s *WebServer) AddWebContainer(container WebContainer) {
-	s.Containers = append(s.Containers, container)
 }
