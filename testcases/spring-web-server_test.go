@@ -17,7 +17,6 @@
 package testcases_test
 
 import (
-	"container/list"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -34,22 +33,16 @@ import (
 
 func TestWebServer(t *testing.T) {
 
-	l := list.New()
-	f2 := testcases.NewNumberFilter(2, l)
-	f5 := testcases.NewNumberFilter(5, l)
-	f6 := testcases.NewNumberFilter(6, l)
-	f7 := testcases.NewNumberFilter(7, l)
-
 	server := SpringWeb.NewWebServer()
-	server.SetFilters(f6)
+	server.SetFilters(testcases.NewStringFilter("web_server"))
 
 	s := testcases.NewService()
 
 	// 可用于全局的路由分组
-	r := SpringWeb.NewRouter("/v1", nil)
+	r := SpringWeb.NewRouter("/v1", testcases.NewStringFilter("@router"))
 	r.GET("/router", func(ctx SpringWeb.WebContext) {
 		ctx.String(http.StatusOK, "router:ok")
-	})
+	}, testcases.NewStringFilter("@router:/router"))
 
 	// 添加第一个 Web 容器
 	{
@@ -58,7 +51,8 @@ func TestWebServer(t *testing.T) {
 		g.SetPort(8080)
 		g.AddRouter(r)
 
-		g.GET("/get", s.Get, f5)
+		g.SetFilters(testcases.NewStringFilter("gin"))
+		g.GET("/get", s.Get, testcases.NewStringFilter("gin:/get"))
 	}
 
 	// 添加第二个 Web 容器
@@ -68,10 +62,11 @@ func TestWebServer(t *testing.T) {
 		e.SetPort(9090)
 		e.AddRouter(r)
 
-		r0 := e.Route("", f2, f7)
+		e.SetFilters(testcases.NewStringFilter("echo"))
+		r0 := e.Route("", testcases.NewStringFilter("echo:route"))
 		{
-			r0.POST("/set", s.Set)
-			r0.GET("/panic", s.Panic)
+			r0.POST("/set", s.Set, testcases.NewStringFilter("echo:route:/set"))
+			r0.GET("/panic", s.Panic, testcases.NewStringFilter("echo:route:/panic"))
 		}
 	}
 
@@ -98,6 +93,16 @@ func TestWebServer(t *testing.T) {
 	fmt.Println()
 
 	resp, _ = http.Get("http://127.0.0.1:9090/panic")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
+
+	resp, _ = http.Get("http://127.0.0.1:8080/v1/router")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println()
+
+	resp, _ = http.Get("http://127.0.0.1:9090/v1/router")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 	fmt.Println()

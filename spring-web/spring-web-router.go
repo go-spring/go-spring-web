@@ -24,7 +24,7 @@ type Router struct {
 }
 
 // NewRouter Router 的构造函数，不依赖具体的 WebMapping 对象
-func NewRouter(basePath string, filters []Filter) *Router {
+func NewRouter(basePath string, filters ...Filter) *Router {
 	return &Router{
 		mapping:  NewDefaultWebMapping(),
 		basePath: basePath,
@@ -33,41 +33,42 @@ func NewRouter(basePath string, filters []Filter) *Router {
 }
 
 // Request 注册任意 HTTP 方法处理函数
-func (r *Router) Request(method uint32, path string, fn Handler) *Mapper {
-	return r.mapping.Request(method, r.basePath+path, fn, r.filters...)
+func (r *Router) Request(method uint32, path string, fn Handler, filters ...Filter) *Mapper {
+	filters = append(r.filters, filters...)
+	return r.mapping.Request(method, r.basePath+path, fn, filters...)
 }
 
 // GET 注册 GET 方法处理函数
-func (r *Router) GET(path string, fn Handler) *Mapper {
-	return r.Request(MethodGet, path, fn)
+func (r *Router) GET(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodGet, path, fn, filters...)
 }
 
 // POST 注册 POST 方法处理函数
-func (r *Router) POST(path string, fn Handler) *Mapper {
-	return r.Request(MethodPost, path, fn)
+func (r *Router) POST(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodPost, path, fn, filters...)
 }
 
 // PATCH 注册 PATCH 方法处理函数
-func (r *Router) PATCH(path string, fn Handler) *Mapper {
-	return r.Request(MethodPatch, path, fn)
+func (r *Router) PATCH(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodPatch, path, fn, filters...)
 }
 
 // PUT 注册 PUT 方法处理函数
-func (r *Router) PUT(path string, fn Handler) *Mapper {
-	return r.Request(MethodPut, path, fn)
+func (r *Router) PUT(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodPut, path, fn, filters...)
 }
 
 // DELETE 注册 DELETE 方法处理函数
-func (r *Router) DELETE(path string, fn Handler) *Mapper {
-	return r.Request(MethodDelete, path, fn)
+func (r *Router) DELETE(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodDelete, path, fn, filters...)
 }
 
 // HEAD 注册 HEAD 方法处理函数
-func (r *Router) HEAD(path string, fn Handler) *Mapper {
-	return r.Request(MethodHead, path, fn)
+func (r *Router) HEAD(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodHead, path, fn, filters...)
 }
 
 // OPTIONS 注册 OPTIONS 方法处理函数
-func (r *Router) OPTIONS(path string, fn Handler) *Mapper {
-	return r.Request(MethodOptions, path, fn)
+func (r *Router) OPTIONS(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.Request(MethodOptions, path, fn, filters...)
 }

@@ -84,6 +84,22 @@ func (f *NumberFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterC
 	chain.Next(ctx)
 }
 
+type StringFilter struct {
+	s string
+}
+
+func NewStringFilter(s string) *StringFilter {
+	return &StringFilter{s: s}
+}
+
+func (f *StringFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+
+	defer ctx.LogInfo("after ", f.s)
+	ctx.LogInfo("before ", f.s)
+
+	chain.Next(ctx)
+}
+
 ///////////////////// service ////////////////////////
 
 type Service struct {
