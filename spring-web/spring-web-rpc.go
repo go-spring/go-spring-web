@@ -23,18 +23,48 @@ import (
 	"reflect"
 
 	"github.com/go-spring/go-spring-parent/spring-error"
+	"github.com/go-spring/go-spring-parent/spring-utils"
 )
 
-// RpcHandler Web RPC 处理函数
-type RpcHandler func(WebContext) interface{}
+// rpcHandler Web RPC 处理函数
+type rpcHandler func(WebContext) interface{}
 
-// RPC Web RPC 适配函数
-func RPC(fn RpcHandler) Handler {
-	return func(webCtx WebContext) {
-		rpcInvoke(webCtx, func() interface{} {
-			return fn(webCtx)
+func (r rpcHandler) Invoke(ctx WebContext) {
+	if r != nil {
+		rpcInvoke(ctx, func() interface{} {
+			return r(ctx)
 		})
 	}
+}
+
+func (r rpcHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(r)
+}
+
+// RPC Web RPC 处理函数的辅助函数
+func RPC(fn func(WebContext) interface{}) Handler {
+	return rpcHandler(fn)
+}
+
+// bindHandler Web RPC 处理函数
+type bindHandler struct {
+	fn    interface{}
+	inTyp reflect.Type
+	fnVal reflect.Value
+}
+
+func (b *bindHandler) Invoke(ctx WebContext) {
+	rpcInvoke(ctx, func() interface{} {
+		inVal := reflect.New(b.inTyp)
+		err := ctx.Bind(inVal.Interface())
+		SpringError.ERROR.Panic(err).When(err != nil)
+		outVal := b.fnVal.Call([]reflect.Value{inVal.Elem()})
+		return outVal[0].Interface()
+	})
+}
+
+func (b *bindHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(b.fn)
 }
 
 // BIND 封装 Bind 操作的 Web RPC 适配函数
@@ -47,17 +77,10 @@ func BIND(fn interface{}) Handler {
 		panic("fn must be func(req:struct)resp:anything")
 	}
 
-	inTyp := fnTyp.In(0)
-	fnVal := reflect.ValueOf(fn)
-
-	return func(webCtx WebContext) {
-		rpcInvoke(webCtx, func() interface{} {
-			inVal := reflect.New(inTyp)
-			err := webCtx.Bind(inVal.Interface())
-			SpringError.ERROR.Panic(err).When(err != nil)
-			outVal := fnVal.Call([]reflect.Value{inVal.Elem()})
-			return outVal[0].Interface()
-		})
+	return &bindHandler{
+		fn:    fn,
+		inTyp: fnTyp.In(0),
+		fnVal: reflect.ValueOf(fn),
 	}
 }
 

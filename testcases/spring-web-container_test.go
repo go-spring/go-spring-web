@@ -186,14 +186,15 @@ func TestEchoServer(t *testing.T) {
 	e.HideBanner = true
 
 	// 配合 echo 框架使用
-	e.GET("/*", SpringEcho.HandlerWrapper(func(webCtx SpringWeb.WebContext) {
-		assert.Equal(t, "echo", webCtx.PathParam("*"))
-		assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-		assert.Equal(t, []string{"echo"}, webCtx.PathParamValues())
-		webCtx.JSON(http.StatusOK, map[string]string{
-			"a": "1",
-		})
-	}, nil))
+	e.GET("/*", SpringEcho.HandlerWrapper(
+		SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "echo", webCtx.PathParam("*"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"echo"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, map[string]string{
+				"a": "1",
+			})
+		}), nil))
 
 	go func() {
 		address := ":8080"
@@ -220,14 +221,15 @@ func TestGinServer(t *testing.T) {
 	}
 
 	// 配合 gin 框架使用
-	g.GET("/*"+SpringGin.WildRouteName, SpringGin.HandlerWrapper("/", func(webCtx SpringWeb.WebContext) {
-		assert.Equal(t, "gin", webCtx.PathParam("*"))
-		assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-		assert.Equal(t, []string{"gin"}, webCtx.PathParamValues())
-		webCtx.JSON(http.StatusOK, map[string]string{
-			"a": "1",
-		})
-	}, nil))
+	g.GET("/*"+SpringGin.WildRouteName, SpringGin.HandlerWrapper("/",
+		SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "gin", webCtx.PathParam("*"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"gin"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, map[string]string{
+				"a": "1",
+			})
+		}), nil))
 
 	go func() {
 		err := httpServer.ListenAndServe()

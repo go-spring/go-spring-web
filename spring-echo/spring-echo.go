@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
+	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/labstack/echo"
 )
@@ -105,12 +106,21 @@ func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.Handl
 	}
 }
 
+// echoHandler 封装 Echo 处理函数
+type echoHandler echo.HandlerFunc
+
+func (e echoHandler) Invoke(ctx SpringWeb.WebContext) {
+	echoCtx := ctx.NativeContext().(echo.Context)
+	if err := e(echoCtx); err != nil {
+		panic(err)
+	}
+}
+
+func (e echoHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(e)
+}
+
 // Echo Web Echo 适配函数
 func Echo(fn echo.HandlerFunc) SpringWeb.Handler {
-	return func(webCtx SpringWeb.WebContext) {
-		ctx := webCtx.NativeContext().(echo.Context)
-		if err := fn(ctx); err != nil {
-			panic(err)
-		}
-	}
+	return echoHandler(fn)
 }

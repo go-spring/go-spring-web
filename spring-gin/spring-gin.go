@@ -24,6 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-spring/go-spring-parent/spring-logger"
+	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
 
@@ -115,9 +116,20 @@ func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filte
 	}
 }
 
+// ginHandler 封装 Gin 处理函数
+type ginHandler gin.HandlerFunc
+
+func (g ginHandler) Invoke(ctx SpringWeb.WebContext) {
+	if g != nil {
+		g(ctx.NativeContext().(*gin.Context))
+	}
+}
+
+func (g ginHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(g)
+}
+
 // Gin Web Gin 适配函数
 func Gin(fn gin.HandlerFunc) SpringWeb.Handler {
-	return func(webCtx SpringWeb.WebContext) {
-		fn(webCtx.NativeContext().(*gin.Context))
-	}
+	return ginHandler(fn)
 }

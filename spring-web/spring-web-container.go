@@ -19,15 +19,35 @@ package SpringWeb
 import (
 	"context"
 	"net/http"
-	"reflect"
-	"runtime"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
+	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/swaggo/http-swagger"
 )
 
-// Handler Web 处理函数
-type Handler func(WebContext)
+// Handler Web 处理接口
+type Handler interface {
+	Invoke(WebContext)
+	FileLine() (file string, line int, fnName string)
+}
+
+// fnHandler 封装 Web 处理函数
+type fnHandler func(WebContext)
+
+func (f fnHandler) Invoke(ctx WebContext) {
+	if f != nil {
+		f(ctx)
+	}
+}
+
+func (f fnHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(f)
+}
+
+// FUNC 标准 Web 处理函数的辅助函数
+func FUNC(fn func(WebContext)) Handler {
+	return fnHandler(fn)
+}
 
 // WebContainer Web 容器
 type WebContainer interface {
@@ -211,10 +231,8 @@ func (c *BaseWebContainer) PreStart() {
 
 // PrintMapper 打印路由注册信息
 func (c *BaseWebContainer) PrintMapper(m *Mapper) {
-	fnPtr := reflect.ValueOf(m.handler).Pointer()
-	fnInfo := runtime.FuncForPC(fnPtr)
-	file, line := fnInfo.FileLine(fnPtr)
-	SpringLogger.Infof("%v :%d %s -> %s:%d", GetMethod(m.method), c.port, m.path, file, line)
+	file, line, fnName := m.handler.FileLine()
+	SpringLogger.Infof("%v :%d %s -> %s:%d %s", GetMethod(m.method), c.port, m.path, file, line, fnName)
 }
 
 /////////////////// Invoke Handler //////////////////////
@@ -234,13 +252,24 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 		chain := NewFilterChain(filters)
 		chain.Next(ctx)
 	} else {
-		fn(ctx)
+		fn.Invoke(ctx)
 	}
 }
 
-// HTTP Web HTTP 适配函数
-func HTTP(fn http.HandlerFunc) Handler {
-	return func(webCtx WebContext) {
-		fn(webCtx.ResponseWriter(), webCtx.Request())
+// httpHandler 标准 Http 处理函数
+type httpHandler http.HandlerFunc
+
+func (h httpHandler) Invoke(ctx WebContext) {
+	if h != nil {
+		h(ctx.ResponseWriter(), ctx.Request())
 	}
+}
+
+func (h httpHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(h)
+}
+
+// HTTP 标准 Http 处理函数的辅助函数
+func HTTP(fn http.HandlerFunc) Handler {
+	return httpHandler(fn)
 }

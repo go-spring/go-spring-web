@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/gin-gonic/gin v1.6.1
 	github.com/go-openapi/spec v0.19.7
-	github.com/go-spring/go-spring-parent v1.0.3-0.20200404121803-1aa91cbb77ee
+	github.com/go-spring/go-spring-parent v1.0.4-0.20200428141030-44420269f7ef
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/magiconair/properties v1.8.1
 	github.com/stretchr/testify v1.5.1

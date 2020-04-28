@@ -36,7 +36,7 @@ func HandlerFilter(fn Handler) Filter {
 
 // Invoke 执行 Web 处理函数
 func (h *handlerFilter) Invoke(ctx WebContext, _ *FilterChain) {
-	h.fn(ctx)
+	h.fn.Invoke(ctx)
 }
 
 // FilterChain 过滤器链条
