@@ -33,6 +33,7 @@ import (
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/magiconair/properties/assert"
 )
 
@@ -163,6 +164,20 @@ func TestWebContainer(t *testing.T) {
 	t.Run("SpringGin", func(t *testing.T) {
 		c := SpringGin.NewContainer()
 
+		//g := gin.New()
+		//g.Use(func(ctx *gin.Context) {
+		//	fmt.Println("xxx 00")
+		//	ctx.Next()
+		//	fmt.Println("xxx 11")
+		//})
+		//g.Use(func(ctx *gin.Context) {
+		//	fmt.Println("bbb 00")
+		//	ctx.Next()
+		//	fmt.Println("bbb 11")
+		//})
+		//g.Use(gin.Recovery())
+		//c.SetGinEngine(g)
+
 		c.GET("/native", SpringGin.Gin(func(ctx *gin.Context) {
 			ctx.String(http.StatusOK, "gin")
 		}))
@@ -173,11 +188,11 @@ func TestWebContainer(t *testing.T) {
 	t.Run("SpringEcho", func(t *testing.T) {
 		c := SpringEcho.NewContainer()
 
-		//fLogger := SpringEcho.EchoFilter(middleware.Logger())
-		//c.AddFilter(fLogger)
-		//
-		//fRecover := SpringEcho.EchoFilter(middleware.Recover())
-		//c.AddFilter(fRecover)
+		fLogger := SpringEcho.Filter(middleware.Logger())
+		c.SetLoggerFilter(fLogger)
+
+		fRecover := SpringEcho.Filter(middleware.Recover())
+		c.SetRecoveryFilter(fRecover)
 
 		c.GET("/native", SpringEcho.Echo(func(ctx echo.Context) error {
 			return ctx.String(http.StatusOK, "echo")

@@ -40,11 +40,6 @@ func NewContainer() *Container {
 	return c
 }
 
-// SetEchoServer 设置自定义 echo 容器
-func (c *Container) SetEchoServer(e *echo.Echo) {
-	c.echoServer = e
-}
-
 // Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
 
@@ -59,8 +54,14 @@ func (c *Container) Start() {
 
 	var cFilters []SpringWeb.Filter
 
-	cFilters = append(cFilters, c.GetLoggerFilter())
-	cFilters = append(cFilters, c.GetRecoveryFilter())
+	if f := c.GetLoggerFilter(); f != nil {
+		cFilters = append(cFilters, f)
+	}
+
+	if f := c.GetRecoveryFilter(); f != nil {
+		cFilters = append(cFilters, f)
+	}
+
 	cFilters = append(cFilters, c.GetFilters()...)
 
 	// 映射 Web 处理函数

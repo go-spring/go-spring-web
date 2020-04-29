@@ -60,13 +60,13 @@ func (s *WebServer) AddWebContainer(container WebContainer) {
 func (s *WebServer) Start() {
 	for _, c := range s.Containers {
 
-		// Container 使用 Server 的日志过滤器
-		if s.loggerFilter != nil && c.GetLoggerFilter() == nil {
+		// Container 使用 Server 的日志过滤器，如果 Container 使用的是默认值的话
+		if s.loggerFilter != nil && c.GetLoggerFilter() == defaultLoggerFilter {
 			c.SetLoggerFilter(s.loggerFilter)
 		}
 
-		// Container 使用 Server 的恢复过滤器
-		if s.recoveryFilter != nil && c.GetRecoveryFilter() == nil {
+		// Container 使用 Server 的恢复过滤器，如果 Container 使用的是默认值的话
+		if s.recoveryFilter != nil && c.GetRecoveryFilter() == defaultRecoveryFilter {
 			c.SetRecoveryFilter(s.recoveryFilter)
 		}
 

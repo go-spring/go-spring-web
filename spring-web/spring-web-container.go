@@ -123,8 +123,10 @@ type BaseWebContainer struct {
 // NewBaseWebContainer BaseWebContainer 的构造函数
 func NewBaseWebContainer() *BaseWebContainer {
 	return &BaseWebContainer{
-		WebMapping: NewDefaultWebMapping(),
-		enableSwg:  true,
+		WebMapping:     NewDefaultWebMapping(),
+		enableSwg:      true,
+		loggerFilter:   defaultLoggerFilter,
+		recoveryFilter: defaultRecoveryFilter,
 	}
 }
 
@@ -254,13 +256,6 @@ func (c *BaseWebContainer) PreStart() {
 		c.GET("/redoc", ReDoc)
 	}
 
-	if c.loggerFilter == nil {
-		c.loggerFilter = &loggerFilter{}
-	}
-
-	if c.recoveryFilter == nil {
-		c.recoveryFilter = &recoveryFilter{}
-	}
 }
 
 // PrintMapper 打印路由注册信息
@@ -322,6 +317,8 @@ func HTTP(fn http.HandlerFunc) Handler {
 
 /////////////////// Web Filters //////////////////////
 
+var defaultRecoveryFilter = &recoveryFilter{}
+
 // recoveryFilter 恢复过滤器
 type recoveryFilter struct{}
 
@@ -336,6 +333,8 @@ func (f *recoveryFilter) Invoke(ctx WebContext, chain *FilterChain) {
 
 	chain.Next(ctx)
 }
+
+var defaultLoggerFilter = &loggerFilter{}
 
 // loggerFilter 日志过滤器
 type loggerFilter struct{}
