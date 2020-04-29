@@ -34,7 +34,7 @@ import (
 func TestWebServer(t *testing.T) {
 
 	server := SpringWeb.NewWebServer()
-	server.SetFilters(testcases.NewStringFilter("web_server"))
+	server.AddFilter(testcases.NewStringFilter("web_server"))
 
 	s := testcases.NewService()
 
@@ -51,7 +51,7 @@ func TestWebServer(t *testing.T) {
 		g.SetPort(8080)
 		g.AddRouter(r)
 
-		g.SetFilters(testcases.NewStringFilter("gin"))
+		g.AddFilter(testcases.NewStringFilter("gin"))
 		g.GET("/get", s.Get, testcases.NewStringFilter("gin:/get"))
 	}
 
@@ -62,7 +62,7 @@ func TestWebServer(t *testing.T) {
 		e.SetPort(9090)
 		e.AddRouter(r)
 
-		e.SetFilters(testcases.NewStringFilter("echo"))
+		e.AddFilter(testcases.NewStringFilter("echo"))
 		r0 := e.Route("", testcases.NewStringFilter("echo:route"))
 		{
 			r0.POST("/set", s.Set, testcases.NewStringFilter("echo:route:/set"))

@@ -54,7 +54,7 @@ func TestWebContainer(t *testing.T) {
 		f5 := testcases.NewNumberFilter(5, l)
 		f7 := testcases.NewNumberFilter(7, l)
 
-		c.SetFilters(&testcases.LogFilter{}, &testcases.GlobalInterruptFilter{})
+		c.AddFilter(&testcases.LogFilter{}, &testcases.GlobalInterruptFilter{})
 
 		s := testcases.NewService()
 
@@ -172,6 +172,12 @@ func TestWebContainer(t *testing.T) {
 
 	t.Run("SpringEcho", func(t *testing.T) {
 		c := SpringEcho.NewContainer()
+
+		//fLogger := SpringEcho.EchoFilter(middleware.Logger())
+		//c.AddFilter(fLogger)
+		//
+		//fRecover := SpringEcho.EchoFilter(middleware.Recover())
+		//c.AddFilter(fRecover)
 
 		c.GET("/native", SpringEcho.Echo(func(ctx echo.Context) error {
 			return ctx.String(http.StatusOK, "echo")

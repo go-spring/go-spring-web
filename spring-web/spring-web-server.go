@@ -24,6 +24,9 @@ import (
 type WebServer struct {
 	filters    []Filter
 	Containers []WebContainer
+
+	loggerFilter   Filter // 日志过滤器
+	recoveryFilter Filter // 恢复过滤器
 }
 
 // NewWebServer WebServer 的构造函数
@@ -33,9 +36,19 @@ func NewWebServer() *WebServer {
 	}
 }
 
-// SetFilters 设置过滤器列表
-func (s *WebServer) SetFilters(filters ...Filter) {
-	s.filters = filters
+// AddFilter 添加过滤器
+func (s *WebServer) AddFilter(filter ...Filter) {
+	s.filters = append(s.filters, filter...)
+}
+
+// SetLoggerFilter 设置 Logger Filter
+func (s *WebServer) SetLoggerFilter(filter Filter) {
+	s.loggerFilter = filter
+}
+
+// 设置 Recovery Filter
+func (s *WebServer) SetRecoveryFilter(filter Filter) {
+	s.recoveryFilter = filter
 }
 
 // AddWebContainer 添加 WebContainer 实例
@@ -46,8 +59,21 @@ func (s *WebServer) AddWebContainer(container WebContainer) {
 // Start 启动 Web 容器，非阻塞
 func (s *WebServer) Start() {
 	for _, c := range s.Containers {
+
+		// Container 使用 Server 的日志过滤器
+		if s.loggerFilter != nil && c.GetLoggerFilter() == nil {
+			c.SetLoggerFilter(s.loggerFilter)
+		}
+
+		// Container 使用 Server 的恢复过滤器
+		if s.recoveryFilter != nil && c.GetRecoveryFilter() == nil {
+			c.SetRecoveryFilter(s.recoveryFilter)
+		}
+
+		// 添加 Server 的过滤器给 Container
 		filters := append(s.filters, c.GetFilters()...)
-		c.SetFilters(filters...)
+		c.setFilters(filters)
+
 		c.Start()
 	}
 }

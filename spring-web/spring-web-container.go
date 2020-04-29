@@ -19,6 +19,7 @@ package SpringWeb
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-parent/spring-utils"
@@ -29,24 +30,6 @@ import (
 type Handler interface {
 	Invoke(WebContext)
 	FileLine() (file string, line int, fnName string)
-}
-
-// fnHandler 封装 Web 处理函数
-type fnHandler func(WebContext)
-
-func (f fnHandler) Invoke(ctx WebContext) {
-	if f != nil {
-		f(ctx)
-	}
-}
-
-func (f fnHandler) FileLine() (file string, line int, fnName string) {
-	return SpringUtils.FileLine(f)
-}
-
-// FUNC 标准 Web 处理函数的辅助函数
-func FUNC(fn func(WebContext)) Handler {
-	return fnHandler(fn)
 }
 
 // WebContainer Web 容器
@@ -87,8 +70,23 @@ type WebContainer interface {
 	// GetFilters 返回过滤器列表
 	GetFilters() []Filter
 
-	// SetFilters 设置过滤器列表
-	SetFilters(filters ...Filter)
+	// setFilters 设置过滤器列表
+	setFilters(filters []Filter)
+
+	// AddFilter 添加过滤器
+	AddFilter(filter ...Filter)
+
+	// GetLoggerFilter 获取 Logger Filter
+	GetLoggerFilter() Filter
+
+	// SetLoggerFilter 设置 Logger Filter
+	SetLoggerFilter(filter Filter)
+
+	// GetRecoveryFilter 获取 Recovery Filter
+	GetRecoveryFilter() Filter
+
+	// SetRecoveryFilter 设置 Recovery Filter
+	SetRecoveryFilter(filter Filter)
 
 	// AddRouter 添加新的路由信息
 	AddRouter(router *Router)
@@ -117,6 +115,9 @@ type BaseWebContainer struct {
 	certFile  string
 	filters   []Filter
 	enableSwg bool // 是否启用 Swagger 功能
+
+	loggerFilter   Filter // 日志过滤器
+	recoveryFilter Filter // 恢复过滤器
 }
 
 // NewBaseWebContainer BaseWebContainer 的构造函数
@@ -182,9 +183,34 @@ func (c *BaseWebContainer) GetFilters() []Filter {
 	return c.filters
 }
 
-// SetFilters 设置过滤器列表
-func (c *BaseWebContainer) SetFilters(filters ...Filter) {
+// setFilters 设置过滤器列表
+func (c *BaseWebContainer) setFilters(filters []Filter) {
 	c.filters = filters
+}
+
+// AddFilter 添加过滤器
+func (c *BaseWebContainer) AddFilter(filter ...Filter) {
+	c.filters = append(c.filters, filter...)
+}
+
+// GetLoggerFilter 获取 Logger Filter
+func (c *BaseWebContainer) GetLoggerFilter() Filter {
+	return c.loggerFilter
+}
+
+// SetLoggerFilter 设置 Logger Filter
+func (c *BaseWebContainer) SetLoggerFilter(filter Filter) {
+	c.loggerFilter = filter
+}
+
+// GetRecoveryFilter 获取 Recovery Filter
+func (c *BaseWebContainer) GetRecoveryFilter() Filter {
+	return c.recoveryFilter
+}
+
+// 设置 Recovery Filter
+func (c *BaseWebContainer) SetRecoveryFilter(filter Filter) {
+	c.recoveryFilter = filter
 }
 
 // AddRouter 添加新的路由信息
@@ -227,6 +253,14 @@ func (c *BaseWebContainer) PreStart() {
 		// 注册 redoc 接口
 		c.GET("/redoc", ReDoc)
 	}
+
+	if c.loggerFilter == nil {
+		c.loggerFilter = &loggerFilter{}
+	}
+
+	if c.recoveryFilter == nil {
+		c.recoveryFilter = &recoveryFilter{}
+	}
 }
 
 // PrintMapper 打印路由注册信息
@@ -239,14 +273,6 @@ func (c *BaseWebContainer) PrintMapper(m *Mapper) {
 
 // InvokeHandler 执行 Web 处理函数
 func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
-
-	defer func() {
-		if err := recover(); err != nil {
-			ctx.LogError(err)
-			ctx.Status(http.StatusInternalServerError)
-		}
-	}()
-
 	if len(filters) > 0 {
 		filters = append(filters, HandlerFilter(fn))
 		chain := NewFilterChain(filters)
@@ -254,6 +280,26 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 	} else {
 		fn.Invoke(ctx)
 	}
+}
+
+/////////////////// Web Handlers //////////////////////
+
+// fnHandler 封装 Web 处理函数
+type fnHandler func(WebContext)
+
+func (f fnHandler) Invoke(ctx WebContext) {
+	if f != nil {
+		f(ctx)
+	}
+}
+
+func (f fnHandler) FileLine() (file string, line int, fnName string) {
+	return SpringUtils.FileLine(f)
+}
+
+// FUNC 标准 Web 处理函数的辅助函数
+func FUNC(fn func(WebContext)) Handler {
+	return fnHandler(fn)
 }
 
 // httpHandler 标准 Http 处理函数
@@ -272,4 +318,30 @@ func (h httpHandler) FileLine() (file string, line int, fnName string) {
 // HTTP 标准 Http 处理函数的辅助函数
 func HTTP(fn http.HandlerFunc) Handler {
 	return httpHandler(fn)
+}
+
+/////////////////// Web Filters //////////////////////
+
+// recoveryFilter 恢复过滤器
+type recoveryFilter struct{}
+
+func (f *recoveryFilter) Invoke(ctx WebContext, chain *FilterChain) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			ctx.LogError(err)
+			ctx.Status(http.StatusInternalServerError)
+		}
+	}()
+
+	chain.Next(ctx)
+}
+
+// loggerFilter 日志过滤器
+type loggerFilter struct{}
+
+func (f *loggerFilter) Invoke(ctx WebContext, chain *FilterChain) {
+	start := time.Now()
+	chain.Next(ctx)
+	ctx.LogInfo(time.Since(start))
 }

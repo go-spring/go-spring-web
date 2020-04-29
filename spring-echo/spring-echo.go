@@ -57,12 +57,20 @@ func (c *Container) Start() {
 		e.HideBanner = true
 	}
 
+	var cFilters []SpringWeb.Filter
+
+	cFilters = append(cFilters, c.GetLoggerFilter())
+	cFilters = append(cFilters, c.GetRecoveryFilter())
+	cFilters = append(cFilters, c.GetFilters()...)
+
 	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)
-		filters := append(c.GetFilters(), mapper.Filters()...)
-		handler := HandlerWrapper(mapper.Handler(), filters)
+
 		path := SpringWeb.PathConvert(mapper.Path())
+		filters := append(cFilters, mapper.Filters()...)
+		handler := HandlerWrapper(mapper.Handler(), filters)
+
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			c.echoServer.Add(method, path, handler)
 		}
@@ -123,4 +131,27 @@ func (e echoHandler) FileLine() (file string, line int, fnName string) {
 // Echo Web Echo 适配函数
 func Echo(fn echo.HandlerFunc) SpringWeb.Handler {
 	return echoHandler(fn)
+}
+
+// echoFilter 封装 Echo 中间件
+type echoFilter struct {
+	fn echo.MiddlewareFunc
+}
+
+func (f *echoFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+
+	h := f.fn(func(echoCtx echo.Context) error {
+		chain.Next(ctx)
+		return nil
+	})
+
+	err := h(ctx.NativeContext().(echo.Context))
+	if err != nil {
+		panic(err)
+	}
+}
+
+// EchoFilter Web Echo 中间件适配器
+func EchoFilter(fn echo.MiddlewareFunc) SpringWeb.Filter {
+	return &echoFilter{fn: fn}
 }

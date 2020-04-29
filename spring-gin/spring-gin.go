@@ -63,11 +63,19 @@ func (c *Container) Start() {
 		c.ginEngine = gin.New()
 	}
 
+	var cFilters []SpringWeb.Filter
+
+	cFilters = append(cFilters, c.GetLoggerFilter())
+	cFilters = append(cFilters, c.GetRecoveryFilter())
+	cFilters = append(cFilters, c.GetFilters()...)
+
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)
+
 		path := SpringWeb.PathConvert(mapper.Path())
-		filters := append(c.GetFilters(), mapper.Filters()...)
+		filters := append(cFilters, mapper.Filters()...)
 		handler := HandlerWrapper(mapper.Path(), mapper.Handler(), filters)
+
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			path := strings.Replace(path, "*", "*"+WildRouteName, 1)
 			c.ginEngine.Handle(method, path, handler)
@@ -132,4 +140,18 @@ func (g ginHandler) FileLine() (file string, line int, fnName string) {
 // Gin Web Gin 适配函数
 func Gin(fn gin.HandlerFunc) SpringWeb.Handler {
 	return ginHandler(fn)
+}
+
+// ginFilter 封装 Gin 中间件
+type ginFilter struct {
+	fn gin.HandlerFunc
+}
+
+func (f *ginFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+	//f.fn(ctx.NativeContext().(*gin.Context))
+}
+
+// GinFilter Web Gin 中间件适配器
+func GinFilter(fn gin.HandlerFunc) SpringWeb.Filter {
+	return &ginFilter{fn: fn}
 }
