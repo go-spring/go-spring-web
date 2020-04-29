@@ -115,10 +115,10 @@ func NewService() *Service {
 func (s *Service) Get(ctx SpringWeb.WebContext) {
 
 	key := ctx.QueryParam("key")
-	ctx.LogInfo("/get", "key=", key)
+	ctx.LogInfo("/get ", "key=", key)
 
 	val := s.store[key]
-	ctx.LogInfo("/get", "val=", val)
+	ctx.LogInfo("/get ", "val=", val)
 
 	ctx.String(http.StatusOK, val)
 }
@@ -134,7 +134,7 @@ func (s *Service) Set(ctx SpringWeb.WebContext) {
 		panic(err)
 	}
 
-	ctx.LogInfo("/set", "param="+SpringUtils.ToJson(param))
+	ctx.LogInfo("/set ", "param="+SpringUtils.ToJson(param))
 
 	s.store["name"] = param.Name
 	s.store["age"] = param.Age

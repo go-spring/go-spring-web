@@ -109,17 +109,7 @@ func (c *Container) Stop(ctx context.Context) {
 // HandlerWrapper Web 处理函数包装器
 func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filter) func(*gin.Context) {
 	return func(ginCtx *gin.Context) {
-
-		ctx := ginCtx.Request.Context()
-		logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
-
-		webCtx := &Context{
-			LoggerContext: logCtx,
-			ginContext:    ginCtx,
-			handlerPath:   path,
-			handlerFunc:   fn,
-		}
-
+		webCtx := NewContext(path, fn, ginCtx)
 		SpringWeb.InvokeHandler(webCtx, fn, filters)
 	}
 }
@@ -129,7 +119,7 @@ type ginHandler gin.HandlerFunc
 
 func (g ginHandler) Invoke(ctx SpringWeb.WebContext) {
 	if g != nil {
-		g(ctx.NativeContext().(*gin.Context))
+		g(GinContext(ctx))
 	}
 }
 
@@ -140,18 +130,4 @@ func (g ginHandler) FileLine() (file string, line int, fnName string) {
 // Gin Web Gin 适配函数
 func Gin(fn gin.HandlerFunc) SpringWeb.Handler {
 	return ginHandler(fn)
-}
-
-// ginFilter 封装 Gin 中间件
-type ginFilter struct {
-	fn gin.HandlerFunc
-}
-
-func (f *ginFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
-	//f.fn(ctx.NativeContext().(*gin.Context))
-}
-
-// GinFilter Web Gin 中间件适配器
-func GinFilter(fn gin.HandlerFunc) SpringWeb.Filter {
-	return &ginFilter{fn: fn}
 }

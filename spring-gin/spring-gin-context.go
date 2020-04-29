@@ -40,6 +40,16 @@ const (
 	WildRouteName = "@_@"
 )
 
+// GinContext 将 SpringWeb.WebContext 转换为 *gin.Context
+func GinContext(webCtx SpringWeb.WebContext) *gin.Context {
+	return webCtx.NativeContext().(*gin.Context)
+}
+
+// WebContext 将 *gin.Context 转换为 SpringWeb.WebContext
+func WebContext(ginCtx *gin.Context) SpringWeb.WebContext {
+	return ginCtx.MustGet("@WebCtx").(*Context)
+}
+
 // Context 适配 gin 的 Web 上下文
 type Context struct {
 	// LoggerContext 日志接口上下文
@@ -58,6 +68,23 @@ type Context struct {
 	pathParamValues []string
 }
 
+// NewContext Context 的构造函数
+func NewContext(path string, fn SpringWeb.Handler, ginCtx *gin.Context) *Context {
+
+	ctx := ginCtx.Request.Context()
+	logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
+
+	webCtx := &Context{
+		LoggerContext: logCtx,
+		ginContext:    ginCtx,
+		handlerPath:   path,
+		handlerFunc:   fn,
+	}
+
+	webCtx.Set("@WebCtx", webCtx)
+	return webCtx
+}
+
 // NativeContext 返回封装的底层上下文对象
 func (ctx *Context) NativeContext() interface{} {
 	return ctx.ginContext
@@ -65,8 +92,7 @@ func (ctx *Context) NativeContext() interface{} {
 
 // Get retrieves data from the context.
 func (ctx *Context) Get(key string) interface{} {
-	val, _ := ctx.ginContext.Get(key)
-	return val
+	return ctx.ginContext.MustGet(key)
 }
 
 // Set saves data in the context.

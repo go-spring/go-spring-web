@@ -329,7 +329,7 @@ func (f *recoveryFilter) Invoke(ctx WebContext, chain *FilterChain) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			ctx.LogError(err)
+			ctx.LogError("[PANIC RECOVER] ", err)
 			ctx.Status(http.StatusInternalServerError)
 		}
 	}()
@@ -343,5 +343,5 @@ type loggerFilter struct{}
 func (f *loggerFilter) Invoke(ctx WebContext, chain *FilterChain) {
 	start := time.Now()
 	chain.Next(ctx)
-	ctx.LogInfo(time.Since(start))
+	ctx.LogInfo("cost: ", time.Since(start))
 }

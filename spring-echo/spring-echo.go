@@ -99,16 +99,7 @@ func (c *Container) Stop(ctx context.Context) {
 // HandlerWrapper Web 处理函数包装器
 func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
-
-		ctx := echoCtx.Request().Context()
-		logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
-
-		webCtx := &Context{
-			LoggerContext: logCtx,
-			echoContext:   echoCtx,
-			handlerFunc:   fn,
-		}
-
+		webCtx := NewContext(fn, echoCtx)
 		SpringWeb.InvokeHandler(webCtx, fn, filters)
 		return nil
 	}
@@ -118,8 +109,7 @@ func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.Handl
 type echoHandler echo.HandlerFunc
 
 func (e echoHandler) Invoke(ctx SpringWeb.WebContext) {
-	echoCtx := ctx.NativeContext().(echo.Context)
-	if err := e(echoCtx); err != nil {
+	if err := e(EchoContext(ctx)); err != nil {
 		panic(err)
 	}
 }
@@ -145,13 +135,12 @@ func (f *echoFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterCha
 		return nil
 	})
 
-	err := h(ctx.NativeContext().(echo.Context))
-	if err != nil {
+	if err := h(EchoContext(ctx)); err != nil {
 		panic(err)
 	}
 }
 
-// EchoFilter Web Echo 中间件适配器
-func EchoFilter(fn echo.MiddlewareFunc) SpringWeb.Filter {
+// Filter Web Echo 中间件适配器
+func Filter(fn echo.MiddlewareFunc) SpringWeb.Filter {
 	return &echoFilter{fn: fn}
 }

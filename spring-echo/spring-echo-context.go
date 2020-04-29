@@ -32,6 +32,16 @@ import (
 	"github.com/labstack/echo"
 )
 
+// EchoContext 将 SpringWeb.WebContext 转换为 echo.Context
+func EchoContext(webCtx SpringWeb.WebContext) echo.Context {
+	return webCtx.NativeContext().(echo.Context)
+}
+
+// WebContext 将 echo.Context 转换为 SpringWeb.WebContext
+func WebContext(echoCtx echo.Context) SpringWeb.WebContext {
+	return echoCtx.Get("@WebCtx").(*Context)
+}
+
 // Context 适配 echo 的 Web 上下文
 type Context struct {
 	// LoggerContext 日志接口上下文
@@ -42,6 +52,22 @@ type Context struct {
 
 	// handlerFunc Web 处理函数
 	handlerFunc SpringWeb.Handler
+}
+
+// NewContext Context 的构造函数
+func NewContext(fn SpringWeb.Handler, echoCtx echo.Context) *Context {
+
+	ctx := echoCtx.Request().Context()
+	logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
+
+	webCtx := &Context{
+		LoggerContext: logCtx,
+		echoContext:   echoCtx,
+		handlerFunc:   fn,
+	}
+
+	echoCtx.Set("@WebCtx", webCtx)
+	return webCtx
 }
 
 // NativeContext 返回封装的底层上下文对象
