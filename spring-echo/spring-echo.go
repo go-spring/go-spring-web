@@ -40,6 +40,11 @@ func NewContainer() *Container {
 	return c
 }
 
+// Deprecated: Filter 机制可完美替代中间件机制，不再需要定制化
+func (c *Container) SetEchoServer(e *echo.Echo) {
+	c.echoServer = e
+}
+
 // Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
 
@@ -125,13 +130,11 @@ func Echo(fn echo.HandlerFunc) SpringWeb.Handler {
 }
 
 // echoFilter 封装 Echo 中间件
-type echoFilter struct {
-	fn echo.MiddlewareFunc
-}
+type echoFilter echo.MiddlewareFunc
 
-func (f *echoFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
+func (filter echoFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 
-	h := f.fn(func(echoCtx echo.Context) error {
+	h := filter(func(echoCtx echo.Context) error {
 		chain.Next(ctx)
 		return nil
 	})
@@ -143,5 +146,5 @@ func (f *echoFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChai
 
 // Filter Web Echo 中间件适配器
 func Filter(fn echo.MiddlewareFunc) SpringWeb.Filter {
-	return &echoFilter{fn: fn}
+	return echoFilter(fn)
 }

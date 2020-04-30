@@ -164,19 +164,11 @@ func TestWebContainer(t *testing.T) {
 	t.Run("SpringGin", func(t *testing.T) {
 		c := SpringGin.NewContainer()
 
-		//g := gin.New()
-		//g.Use(func(ctx *gin.Context) {
-		//	fmt.Println("xxx 00")
-		//	ctx.Next()
-		//	fmt.Println("xxx 11")
-		//})
-		//g.Use(func(ctx *gin.Context) {
-		//	fmt.Println("bbb 00")
-		//	ctx.Next()
-		//	fmt.Println("bbb 11")
-		//})
-		//g.Use(gin.Recovery())
-		//c.SetGinEngine(g)
+		fLogger := SpringGin.Filter(gin.Logger())
+		c.SetLoggerFilter(fLogger)
+
+		fRecover := SpringGin.Filter(gin.Recovery())
+		c.SetRecoveryFilter(fRecover)
 
 		c.GET("/native", SpringGin.Gin(func(ctx *gin.Context) {
 			ctx.String(http.StatusOK, "gin")
@@ -250,7 +242,7 @@ func TestGinServer(t *testing.T) {
 			webCtx.JSON(http.StatusOK, map[string]string{
 				"a": "1",
 			})
-		}), nil))
+		}), nil)...)
 
 	go func() {
 		err := httpServer.ListenAndServe()
