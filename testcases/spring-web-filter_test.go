@@ -43,7 +43,7 @@ func TestFilterChain(t *testing.T) {
 		testcases.NewNumberFilter(5, l),
 	}
 
-	chain := SpringWeb.NewFilterChain(filters)
+	chain := SpringWeb.NewDefaultFilterChain(filters)
 	chain.Next(webCtx)
 
 	assert.Equal(t, SpringUtils.NewList(2, 5, 5, 2), l)

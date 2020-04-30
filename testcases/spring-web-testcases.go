@@ -32,7 +32,7 @@ import (
 
 type LogFilter struct{}
 
-func (f *LogFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+func (f *LogFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 
 	if strings.Index(ctx.Path(), "*") > 0 {
 		fmt.Println(ctx.Path(), "->", ctx.Request().URL)
@@ -45,13 +45,13 @@ func (f *LogFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChai
 
 type InterruptFilter struct{}
 
-func (f *InterruptFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+func (f *InterruptFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 	ctx.LogInfo("interrupt")
 }
 
 type GlobalInterruptFilter struct{}
 
-func (f *GlobalInterruptFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+func (f *GlobalInterruptFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 	if ctx.Path() == "/global_interrupt" {
 		ctx.LogInfo("global interrupt")
 	} else {
@@ -71,7 +71,7 @@ func NewNumberFilter(n int, l *list.List) *NumberFilter {
 	}
 }
 
-func (f *NumberFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+func (f *NumberFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 
 	defer func() {
 		ctx.LogInfo("after ", f.n)
@@ -92,7 +92,7 @@ func NewStringFilter(s string) *StringFilter {
 	return &StringFilter{s: s}
 }
 
-func (f *StringFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+func (f *StringFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 
 	defer ctx.LogInfo("after ", f.s)
 	ctx.LogInfo("before ", f.s)

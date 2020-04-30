@@ -129,7 +129,7 @@ type echoFilter struct {
 	fn echo.MiddlewareFunc
 }
 
-func (f *echoFilter) Invoke(ctx SpringWeb.WebContext, chain *SpringWeb.FilterChain) {
+func (f *echoFilter) Invoke(ctx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
 
 	h := f.fn(func(echoCtx echo.Context) error {
 		chain.Next(ctx)

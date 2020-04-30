@@ -270,7 +270,7 @@ func (c *BaseWebContainer) PrintMapper(m *Mapper) {
 func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 	if len(filters) > 0 {
 		filters = append(filters, HandlerFilter(fn))
-		chain := NewFilterChain(filters)
+		chain := NewDefaultFilterChain(filters)
 		chain.Next(ctx)
 	} else {
 		fn.Invoke(ctx)
@@ -322,7 +322,7 @@ var defaultRecoveryFilter = &recoveryFilter{}
 // recoveryFilter 恢复过滤器
 type recoveryFilter struct{}
 
-func (f *recoveryFilter) Invoke(ctx WebContext, chain *FilterChain) {
+func (f *recoveryFilter) Invoke(ctx WebContext, chain FilterChain) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -339,7 +339,7 @@ var defaultLoggerFilter = &loggerFilter{}
 // loggerFilter 日志过滤器
 type loggerFilter struct{}
 
-func (f *loggerFilter) Invoke(ctx WebContext, chain *FilterChain) {
+func (f *loggerFilter) Invoke(ctx WebContext, chain FilterChain) {
 	start := time.Now()
 	chain.Next(ctx)
 	ctx.LogInfo("cost: ", time.Since(start))
