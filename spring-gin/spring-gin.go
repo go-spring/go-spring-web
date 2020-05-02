@@ -18,9 +18,7 @@ package SpringGin
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-spring/go-spring-parent/spring-logger"
@@ -54,7 +52,6 @@ func (c *Container) SetGinEngine(e *gin.Engine) {
 
 // Start 启动 Web 容器，非阻塞
 func (c *Container) Start() {
-	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 
 	c.PreStart()
 
@@ -75,50 +72,49 @@ func (c *Container) Start() {
 
 	cFilters = append(cFilters, c.GetFilters()...)
 
+	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)
 
-		path := SpringWeb.PathConvert(mapper.Path())
+		path, wildCardName := SpringWeb.ToPathStyle(mapper.Path(), SpringWeb.GinPathStyle)
 		filters := append(cFilters, mapper.Filters()...)
-		handlers := HandlerWrapper(mapper.Path(), mapper.Handler(), filters)
+		handlers := HandlerWrapper(mapper.Path(), mapper.Handler(), wildCardName, filters)
 
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
-			path := strings.Replace(path, "*", "*"+WildRouteName, 1)
 			c.ginEngine.Handle(method, path, handlers...)
 		}
 	}
 
 	c.httpServer = &http.Server{
-		Addr:    address,
+		Addr:    c.Address(),
 		Handler: c.ginEngine,
 	}
 
 	go func() {
-		SpringLogger.Info("⇨ http server started on", address)
+		SpringLogger.Info("⇨ http server started on", c.Address())
 		var err error
 		if c.EnableSSL() {
 			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
 		} else {
 			err = c.httpServer.ListenAndServe()
 		}
-		SpringLogger.Infof("exit http server on %s return %v", address, err)
+		SpringLogger.Infof("exit http server on %s return %v", c.Address(), err)
 	}()
 }
 
 // Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
 	err := c.httpServer.Shutdown(ctx)
-	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
-	SpringLogger.Infof("shutdown http server on %s return %v", address, err)
+	SpringLogger.Infof("shutdown http server on %s return %v", c.Address(), err)
 }
 
 // HandlerWrapper Web 处理函数包装器
-func HandlerWrapper(path string, fn SpringWeb.Handler, filters []SpringWeb.Filter) []gin.HandlerFunc {
+func HandlerWrapper(path string, fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) []gin.HandlerFunc {
 	var handlers []gin.HandlerFunc
 
 	// 建立 WebContext 和 GinContext 之间的关联
 	handlers = append(handlers, func(ginCtx *gin.Context) {
-		NewContext(path, fn, ginCtx)
+		NewContext(path, fn, wildCardName, ginCtx)
 	})
 
 	// 封装过滤器

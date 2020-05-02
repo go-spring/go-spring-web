@@ -18,6 +18,7 @@ package SpringWeb
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -128,6 +129,11 @@ func NewBaseWebContainer() *BaseWebContainer {
 		loggerFilter:   defaultLoggerFilter,
 		recoveryFilter: defaultRecoveryFilter,
 	}
+}
+
+// Address 返回监听地址
+func (c *BaseWebContainer) Address() string {
+	return fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 }
 
 // GetIP 返回监听的 IP

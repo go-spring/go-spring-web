@@ -52,10 +52,13 @@ type Context struct {
 
 	// handlerFunc Web 处理函数
 	handlerFunc SpringWeb.Handler
+
+	// wildCardName 通配符的名称
+	wildCardName string
 }
 
 // NewContext Context 的构造函数
-func NewContext(fn SpringWeb.Handler, echoCtx echo.Context) *Context {
+func NewContext(fn SpringWeb.Handler, wildCardName string, echoCtx echo.Context) *Context {
 
 	ctx := echoCtx.Request().Context()
 	logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
@@ -64,6 +67,7 @@ func NewContext(fn SpringWeb.Handler, echoCtx echo.Context) *Context {
 		LoggerContext: logCtx,
 		echoContext:   echoCtx,
 		handlerFunc:   fn,
+		wildCardName:  wildCardName,
 	}
 
 	echoCtx.Set("@WebCtx", webCtx)
@@ -149,6 +153,9 @@ func (ctx *Context) GetRawData() ([]byte, error) {
 
 // PathParam returns path parameter by name.
 func (ctx *Context) PathParam(name string) string {
+	if name == ctx.wildCardName {
+		name = "*"
+	}
 	return ctx.echoContext.Param(name)
 }
 

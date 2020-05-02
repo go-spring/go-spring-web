@@ -18,7 +18,6 @@ package SpringEcho
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-parent/spring-utils"
@@ -53,8 +52,8 @@ func (c *Container) Start() {
 	// 使用默认的 echo 容器
 	if c.echoServer == nil {
 		e := echo.New()
-		c.echoServer = e
 		e.HideBanner = true
+		c.echoServer = e
 	}
 
 	var cFilters []SpringWeb.Filter
@@ -73,9 +72,9 @@ func (c *Container) Start() {
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)
 
-		path := SpringWeb.PathConvert(mapper.Path())
+		path, wildCardName := SpringWeb.ToPathStyle(mapper.Path(), SpringWeb.EchoPathStyle)
 		filters := append(cFilters, mapper.Filters()...)
-		handler := HandlerWrapper(mapper.Handler(), filters)
+		handler := HandlerWrapper(mapper.Handler(), wildCardName, filters)
 
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			c.echoServer.Add(method, path, handler)
@@ -84,28 +83,26 @@ func (c *Container) Start() {
 
 	// 启动 echo 容器
 	go func() {
-		address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
 		var err error
 		if c.EnableSSL() {
-			err = c.echoServer.StartTLS(address, c.GetCertFile(), c.GetKeyFile())
+			err = c.echoServer.StartTLS(c.Address(), c.GetCertFile(), c.GetKeyFile())
 		} else {
-			err = c.echoServer.Start(address)
+			err = c.echoServer.Start(c.Address())
 		}
-		SpringLogger.Infof("exit http server on %s return %v", address, err)
+		SpringLogger.Infof("exit http server on %s return %s", c.Address(), SpringUtils.ToString(err))
 	}()
 }
 
 // Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
 	err := c.echoServer.Shutdown(ctx)
-	address := fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
-	SpringLogger.Infof("shutdown http server on %s return %v", address, err)
+	SpringLogger.Infof("shutdown http server on %s return %s", c.Address(), SpringUtils.ToString(err))
 }
 
 // HandlerWrapper Web 处理函数包装器
-func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.HandlerFunc {
+func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
-		webCtx := NewContext(fn, echoCtx)
+		webCtx := NewContext(fn, wildCardName, echoCtx)
 		SpringWeb.InvokeHandler(webCtx, fn, filters)
 		return nil
 	}

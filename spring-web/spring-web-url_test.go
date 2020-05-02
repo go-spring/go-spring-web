@@ -23,20 +23,113 @@ import (
 	"github.com/magiconair/properties/assert"
 )
 
-func TestPathConvert(t *testing.T) {
+func TestToPathStyle(t *testing.T) {
+
+	t.Run("/:a", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/:a", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}", newPath)
+		assert.Equal(t, "", wildCardName)
+	})
 
 	t.Run("/{a}", func(t *testing.T) {
-		actual := SpringWeb.PathConvert("/{a}")
-		assert.Equal(t, "/:a", actual)
+		newPath, wildCardName := SpringWeb.ToPathStyle("/{a}", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}", newPath)
+		assert.Equal(t, "", wildCardName)
 	})
 
-	t.Run("/{a}/{bc}", func(t *testing.T) {
-		actual := SpringWeb.PathConvert("/{a}/{bc}")
-		assert.Equal(t, "/:a/:bc", actual)
+	t.Run("/:a/b/:c", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/:a/b/:c", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a/b/:c", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a/b/:c", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}", newPath)
+		assert.Equal(t, "", wildCardName)
 	})
 
-	t.Run("/{a}/{bc}/*", func(t *testing.T) {
-		actual := SpringWeb.PathConvert("/{a}/{bc}/*")
-		assert.Equal(t, "/:a/:bc/*", actual)
+	t.Run("/{a}/b/{c}", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/{a}/b/{c}", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}", newPath)
+		assert.Equal(t, "", wildCardName)
+	})
+
+	t.Run("/:a/b/:c/*", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/:a/b/:c/*", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c/*", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a/b/:c/*", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c/*@_@", newPath)
+		assert.Equal(t, "@_@", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a/b/:c/*", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}/{*}", newPath)
+		assert.Equal(t, "", wildCardName)
+	})
+
+	t.Run("/{a}/b/{c}/{*}", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/{a}/b/{c}/{*}", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c/*", newPath)
+		assert.Equal(t, "", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}/{*}", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c/*@_@", newPath)
+		assert.Equal(t, "@_@", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}/{*}", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}/{*}", newPath)
+		assert.Equal(t, "", wildCardName)
+	})
+
+	t.Run("/:a/b/:c/*e", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/:a/b/:c/*e", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c/*", newPath)
+		assert.Equal(t, "e", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a/b/:c/*e", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c/*e", newPath)
+		assert.Equal(t, "e", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/:a/b/:c/*e", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}/{*:e}", newPath)
+		assert.Equal(t, "e", wildCardName)
+	})
+
+	t.Run("/{a}/b/{c}/{*:e}", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/{a}/b/{c}/{*:e}", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c/*", newPath)
+		assert.Equal(t, "e", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}/{*:e}", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c/*e", newPath)
+		assert.Equal(t, "e", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}/{*:e}", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}/{*:e}", newPath)
+		assert.Equal(t, "e", wildCardName)
+	})
+
+	t.Run("/{a}/b/{c}/{e:*}", func(t *testing.T) {
+		newPath, wildCardName := SpringWeb.ToPathStyle("/{a}/b/{c}/{e:*}", SpringWeb.EchoPathStyle)
+		assert.Equal(t, "/:a/b/:c/*", newPath)
+		assert.Equal(t, "e", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}/{e:*}", SpringWeb.GinPathStyle)
+		assert.Equal(t, "/:a/b/:c/*e", newPath)
+		assert.Equal(t, "e", wildCardName)
+		newPath, wildCardName = SpringWeb.ToPathStyle("/{a}/b/{c}/{e:*}", SpringWeb.JavaPathStyle)
+		assert.Equal(t, "/{a}/b/{c}/{*:e}", newPath)
+		assert.Equal(t, "e", wildCardName)
 	})
 }

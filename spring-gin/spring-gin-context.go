@@ -36,10 +36,6 @@ const (
 	defaultMemory = 32 << 20 // 32 MB
 )
 
-const (
-	WildRouteName = "@_@"
-)
-
 // GinContext 将 SpringWeb.WebContext 转换为 *gin.Context
 func GinContext(webCtx SpringWeb.WebContext) *gin.Context {
 	return webCtx.NativeContext().(*gin.Context)
@@ -66,10 +62,13 @@ type Context struct {
 
 	pathParamNames  []string
 	pathParamValues []string
+
+	// wildCardName 通配符名称
+	wildCardName string
 }
 
 // NewContext Context 的构造函数
-func NewContext(path string, fn SpringWeb.Handler, ginCtx *gin.Context) *Context {
+func NewContext(path string, fn SpringWeb.Handler, wildCardName string, ginCtx *gin.Context) *Context {
 
 	ctx := ginCtx.Request.Context()
 	logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
@@ -79,6 +78,7 @@ func NewContext(path string, fn SpringWeb.Handler, ginCtx *gin.Context) *Context
 		ginContext:    ginCtx,
 		handlerPath:   path,
 		handlerFunc:   fn,
+		wildCardName:  wildCardName,
 	}
 
 	webCtx.Set("@WebCtx", webCtx)
@@ -178,7 +178,7 @@ func (ctx *Context) GetRawData() ([]byte, error) {
 // PathParam returns path parameter by name.
 func (ctx *Context) PathParam(name string) string {
 	if name == "*" {
-		name = WildRouteName
+		name = ctx.wildCardName
 	}
 	v := ctx.ginContext.Param(name)
 	if len(v) > 0 {
@@ -193,7 +193,7 @@ func (ctx *Context) PathParamNames() []string {
 		ctx.pathParamNames = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
 			name := entry.Key
-			if name == WildRouteName {
+			if name == ctx.wildCardName {
 				name = "*"
 			}
 			ctx.pathParamNames = append(ctx.pathParamNames, name)

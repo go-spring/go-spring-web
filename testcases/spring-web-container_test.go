@@ -92,7 +92,22 @@ func TestWebContainer(t *testing.T) {
 			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
 		}
 
-		c.GET("/wild/*", func(webCtx SpringWeb.WebContext) {
+		c.GET("/wild_1/*", func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "anything", webCtx.PathParam("*"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
+		})
+
+		c.GET("/wild_2/*none", func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "anything", webCtx.PathParam("*"))
+			assert.Equal(t, "anything", webCtx.PathParam("none"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
+		})
+
+		c.GET("/wild_3/{*}", func(webCtx SpringWeb.WebContext) {
 			assert.Equal(t, "anything", webCtx.PathParam("*"))
 			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
 			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
@@ -151,7 +166,17 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		resp, _ = http.Get("http://127.0.0.1:8080/wild/anything")
+		resp, _ = http.Get("http://127.0.0.1:8080/wild_1/anything")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.Get("http://127.0.0.1:8080/wild_2/anything")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.Get("http://127.0.0.1:8080/wild_3/anything")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
@@ -207,7 +232,7 @@ func TestEchoServer(t *testing.T) {
 			webCtx.JSON(http.StatusOK, map[string]string{
 				"a": "1",
 			})
-		}), nil))
+		}), "", nil))
 
 	go func() {
 		address := ":8080"
@@ -234,7 +259,7 @@ func TestGinServer(t *testing.T) {
 	}
 
 	// 配合 gin 框架使用
-	g.GET("/*"+SpringGin.WildRouteName, SpringGin.HandlerWrapper("/",
+	g.GET("/*"+SpringWeb.DefaultWildCardName, SpringGin.HandlerWrapper("/",
 		SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
 			assert.Equal(t, "gin", webCtx.PathParam("*"))
 			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
@@ -242,7 +267,7 @@ func TestGinServer(t *testing.T) {
 			webCtx.JSON(http.StatusOK, map[string]string{
 				"a": "1",
 			})
-		}), nil)...)
+		}), SpringWeb.DefaultWildCardName, nil)...)
 
 	go func() {
 		err := httpServer.ListenAndServe()
