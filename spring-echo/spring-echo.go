@@ -89,14 +89,14 @@ func (c *Container) Start() {
 		} else {
 			err = c.echoServer.Start(c.Address())
 		}
-		SpringLogger.Infof("exit http server on %s return %s", c.Address(), SpringUtils.ToString(err))
+		SpringLogger.Infof("exit echo server on %s return %s", c.Address(), SpringUtils.ToString(err))
 	}()
 }
 
 // Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
 	err := c.echoServer.Shutdown(ctx)
-	SpringLogger.Infof("shutdown http server on %s return %s", c.Address(), SpringUtils.ToString(err))
+	SpringLogger.Infof("shutdown echo server on %s return %s", c.Address(), SpringUtils.ToString(err))
 }
 
 // HandlerWrapper Web 处理函数包装器

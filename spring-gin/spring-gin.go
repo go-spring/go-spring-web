@@ -91,21 +91,21 @@ func (c *Container) Start() {
 	}
 
 	go func() {
-		SpringLogger.Info("⇨ http server started on", c.Address())
+		SpringLogger.Info("⇨ http server started on ", c.Address())
 		var err error
 		if c.EnableSSL() {
 			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
 		} else {
 			err = c.httpServer.ListenAndServe()
 		}
-		SpringLogger.Infof("exit http server on %s return %v", c.Address(), err)
+		SpringLogger.Infof("exit gin server on %s return %s", c.Address(), SpringUtils.ToString(err))
 	}()
 }
 
 // Stop 停止 Web 容器，阻塞
 func (c *Container) Stop(ctx context.Context) {
 	err := c.httpServer.Shutdown(ctx)
-	SpringLogger.Infof("shutdown http server on %s return %v", c.Address(), err)
+	SpringLogger.Infof("shutdown gin server on %s return %s", c.Address(), SpringUtils.ToString(err))
 }
 
 // HandlerWrapper Web 处理函数包装器
@@ -147,9 +147,7 @@ func (chain *ginFilterChain) Next(_ SpringWeb.WebContext) {
 type ginHandler gin.HandlerFunc
 
 func (g ginHandler) Invoke(ctx SpringWeb.WebContext) {
-	if g != nil {
-		g(GinContext(ctx))
-	}
+	g(GinContext(ctx))
 }
 
 func (g ginHandler) FileLine() (file string, line int, fnName string) {

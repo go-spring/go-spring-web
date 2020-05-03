@@ -289,9 +289,7 @@ func InvokeHandler(ctx WebContext, fn Handler, filters []Filter) {
 type fnHandler func(WebContext)
 
 func (f fnHandler) Invoke(ctx WebContext) {
-	if f != nil {
-		f(ctx)
-	}
+	f(ctx)
 }
 
 func (f fnHandler) FileLine() (file string, line int, fnName string) {
@@ -307,9 +305,7 @@ func FUNC(fn func(WebContext)) Handler {
 type httpHandler http.HandlerFunc
 
 func (h httpHandler) Invoke(ctx WebContext) {
-	if h != nil {
-		h(ctx.ResponseWriter(), ctx.Request())
-	}
+	h(ctx.ResponseWriter(), ctx.Request())
 }
 
 func (h httpHandler) FileLine() (file string, line int, fnName string) {
