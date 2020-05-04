@@ -21,9 +21,11 @@ import (
 	"reflect"
 )
 
-var handlerType = reflect.TypeOf((*Handler)(nil)).Elem()
+// HandlerType Handler 的反射类型
+var HandlerType = reflect.TypeOf((*Handler)(nil)).Elem()
 
-var fnHandlerType = reflect.TypeOf((*fnHandler)(nil)).Elem()
+// FnHandlerType fnHandler 的反射类型
+var FnHandlerType = reflect.TypeOf((*fnHandler)(nil)).Elem()
 
 // WebMapping 路由表，Spring-Web 使用的路由规则和 echo 完全相同，并对 gin 做了适配。
 type WebMapping interface {
@@ -94,11 +96,15 @@ func (w *defaultWebMapping) Request(method uint32, path string, fn interface{}, 
 	var v reflect.Value
 
 	fnType := reflect.TypeOf(fn)
-	if fnType.AssignableTo(handlerType) {
-		v = reflect.ValueOf(fn).Convert(handlerType)
-	} else if fnType.AssignableTo(fnHandlerType) {
-		v = reflect.ValueOf(fn).Convert(fnHandlerType)
-		v = v.Convert(handlerType)
+	fnValue := reflect.ValueOf(fn)
+
+	if fnType.AssignableTo(FnHandlerType) { // 标准形式
+		v = fnValue.Convert(FnHandlerType)
+		v = v.Convert(HandlerType)
+
+	} else if fnType.AssignableTo(HandlerType) {
+		v = fnValue.Convert(HandlerType)
+
 	} else {
 		panic(errors.New("error func type"))
 	}

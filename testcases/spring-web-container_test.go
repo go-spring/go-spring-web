@@ -68,7 +68,9 @@ func TestWebContainer(t *testing.T) {
 				WithSchema(spec.StringProperty()).
 				AddExample(SpringWeb.MIMEApplicationJSON, 2))
 
-		c.GET("/global_interrupt", s.Get)
+		// 等价于 c.GET("/global_interrupt", s.Get)
+		c.GET("/global_interrupt", SpringWeb.METHOD(s, "Get"))
+
 		c.GET("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法

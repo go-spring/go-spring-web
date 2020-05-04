@@ -18,8 +18,10 @@ package SpringWeb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
@@ -299,6 +301,35 @@ func (f fnHandler) FileLine() (file string, line int, fnName string) {
 // FUNC 标准 Web 处理函数的辅助函数
 func FUNC(fn func(WebContext)) Handler {
 	return fnHandler(fn)
+}
+
+// methodHandler 类型方法处理函数
+type methodHandler struct {
+	receiver   interface{}
+	method     reflect.Value
+	methodName string
+}
+
+func (m *methodHandler) Invoke(ctx WebContext) {
+	m.method.Call([]reflect.Value{reflect.ValueOf(ctx)})
+}
+
+func (m *methodHandler) FileLine() (file string, line int, fnName string) {
+	method, _ := reflect.TypeOf(m.receiver).MethodByName(m.methodName)
+	return SpringUtils.FileLine(method.Func.Interface())
+}
+
+// METHOD 和标准 Web 处理函数兼容的对象方法的辅助函数
+func METHOD(receiver interface{}, methodName string) Handler {
+	method := reflect.ValueOf(receiver).MethodByName(methodName)
+	if method.IsZero() {
+		panic(errors.New("can't find method " + methodName))
+	}
+	return &methodHandler{
+		receiver:   receiver,
+		method:     method,
+		methodName: methodName,
+	}
 }
 
 // httpHandler 标准 Http 处理函数
