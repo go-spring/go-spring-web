@@ -45,7 +45,7 @@ func TestRpc(t *testing.T) {
 	// 添加第一个 web 容器
 	{
 		c1 := SpringGin.NewContainer()
-		server.AddWebContainer(c1)
+		server.AddContainer(c1)
 		c1.SetPort(8080)
 
 		c1.GET("/ok", SpringWeb.RPC(rc.OK), f2, f5)
@@ -54,7 +54,7 @@ func TestRpc(t *testing.T) {
 	// 添加第二个 web 容器
 	{
 		c2 := SpringEcho.NewContainer()
-		server.AddWebContainer(c2)
+		server.AddContainer(c2)
 		c2.SetPort(9090)
 
 		r := c2.Route("", f2, f7)
@@ -64,6 +64,9 @@ func TestRpc(t *testing.T) {
 		}
 
 		c2.GET("/echo", SpringWeb.BIND(rc.Echo), f5)
+		c2.GET("/ptr_echo", SpringWeb.BIND(rc.PtrEcho), f5)
+		c2.GET("/ctx_echo", SpringWeb.BIND(rc.CtxEcho), f5)
+		c2.GET("/echo_ctx", SpringWeb.BIND(rc.EchoCtx), f5)
 	}
 
 	// 启动 web 服务器
@@ -74,7 +77,7 @@ func TestRpc(t *testing.T) {
 
 	resp, _ := http.Get("http://127.0.0.1:8080/ok")
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body)+"\n")
 
 	resp, _ = http.Get("http://127.0.0.1:9090/err")
 	body, _ = ioutil.ReadAll(resp.Body)
@@ -89,6 +92,18 @@ func TestRpc(t *testing.T) {
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
 	resp, _ = http.Get("http://127.0.0.1:9090/echo?str=echo")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	resp, _ = http.Get("http://127.0.0.1:9090/ptr_echo?str=echo")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	resp, _ = http.Get("http://127.0.0.1:9090/ctx_echo?str=echo")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	resp, _ = http.Get("http://127.0.0.1:9090/echo_ctx?str=echo")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 

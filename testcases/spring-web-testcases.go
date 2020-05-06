@@ -158,7 +158,23 @@ type EchoResponse struct {
 	Echo string `json:"echo"`
 }
 
+// Echo BIND 的结构体参数形式
 func (s *RpcService) Echo(request EchoRequest) *EchoResponse {
+	return &EchoResponse{"echo " + request.Str}
+}
+
+// PtrEcho BIND 的结构体指针参数形式
+func (s *RpcService) PtrEcho(request *EchoRequest) *EchoResponse {
+	return &EchoResponse{"echo " + request.Str}
+}
+
+// Echo BIND 的第一种 WebContext 形式
+func (s *RpcService) CtxEcho(ctx SpringWeb.WebContext, request *EchoRequest) *EchoResponse {
+	return &EchoResponse{"echo " + request.Str}
+}
+
+// Echo BIND 的另一种 WebContext 形式
+func (s *RpcService) EchoCtx(request EchoRequest, ctx SpringWeb.WebContext) *EchoResponse {
 	return &EchoResponse{"echo " + request.Str}
 }
 

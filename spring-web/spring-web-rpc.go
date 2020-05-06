@@ -26,39 +26,68 @@ import (
 	"github.com/go-spring/go-spring-parent/spring-utils"
 )
 
-// rpcHandler Web RPC 处理函数
+// rpcHandler RPC 形式的 Web 处理接口
 type rpcHandler func(WebContext) interface{}
 
 func (r rpcHandler) Invoke(ctx WebContext) {
-	if r != nil {
-		rpcInvoke(ctx, func() interface{} {
-			return r(ctx)
-		})
-	}
+	rpcInvoke(ctx, func() interface{} { return r(ctx) })
 }
 
 func (r rpcHandler) FileLine() (file string, line int, fnName string) {
 	return SpringUtils.FileLine(r)
 }
 
-// RPC Web RPC 处理函数的辅助函数
+// RPC 转换成 RPC 形式的 Web 处理接口
 func RPC(fn func(WebContext) interface{}) Handler {
 	return rpcHandler(fn)
 }
 
-// bindHandler Web RPC 处理函数
+// bindHandler BIND 形式的 Web 处理接口
 type bindHandler struct {
-	fn    interface{}
-	inTyp reflect.Type
-	fnVal reflect.Value
+	fn       interface{}   // 原始函数的指针
+	fnVal    reflect.Value // 原始函数的值
+	bindType reflect.Type  // 待绑定的类型
+	ctxIndex int           // ctx 变量的位置
 }
 
 func (b *bindHandler) Invoke(ctx WebContext) {
 	rpcInvoke(ctx, func() interface{} {
-		inVal := reflect.New(b.inTyp)
-		err := ctx.Bind(inVal.Interface())
+
+		var (
+			err     error
+			bindVal reflect.Value
+		)
+
+		// 获取待绑定的值
+		if b.bindType.Kind() == reflect.Ptr {
+			bindVal = reflect.New(b.bindType.Elem())
+			err = ctx.Bind(bindVal.Interface())
+		} else {
+			bindVal = reflect.New(b.bindType)
+			err = ctx.Bind(bindVal.Interface())
+			bindVal = bindVal.Elem()
+		}
+
 		SpringError.ERROR.Panic(err).When(err != nil)
-		outVal := b.fnVal.Call([]reflect.Value{inVal.Elem()})
+
+		var in []reflect.Value
+
+		// 组装请求参数
+		if b.ctxIndex == 0 {
+			// func(WebContext,Request)Response
+			in = append(in, reflect.ValueOf(ctx))
+			in = append(in, bindVal)
+		} else if b.ctxIndex == 1 {
+			// func(Request,WebContext)Response
+			in = append(in, bindVal)
+			in = append(in, reflect.ValueOf(ctx))
+		} else {
+			// func(Request)Response
+			in = append(in, bindVal)
+		}
+
+		// 执行处理函数，并返回结果
+		outVal := b.fnVal.Call(in)
 		return outVal[0].Interface()
 	})
 }
@@ -67,20 +96,77 @@ func (b *bindHandler) FileLine() (file string, line int, fnName string) {
 	return SpringUtils.FileLine(b.fn)
 }
 
-// BIND 封装 Bind 操作的 Web RPC 适配函数
-func BIND(fn interface{}) Handler {
-
+func validBindFn(fn interface{}) (reflect.Type, int, bool) {
 	fnTyp := reflect.TypeOf(fn)
 
-	// 检查 fn 的类型，必须是 func(req:struct)resp:anything 这样的格式
-	if fnTyp.Kind() != reflect.Func || fnTyp.NumIn() != 1 || fnTyp.NumOut() != 1 {
-		panic("fn must be func(req:struct)resp:anything")
+	// 必须是函数
+	if fnTyp.Kind() != reflect.Func {
+		return nil, -1, false
+	}
+
+	// 只能有一个返回值
+	if fnTyp.NumOut() != 1 {
+		return nil, -1, false
+	}
+
+	// 待绑定参数必须是结构体或者结构体的指针
+	validBindType := func(t reflect.Type) bool {
+		return SpringUtils.Indirect(t).Kind() == reflect.Struct
+	}
+
+	// 只有一个入参
+	if fnTyp.NumIn() == 1 {
+		bindType := fnTyp.In(0)
+		if !validBindType(bindType) {
+			return nil, -1, false
+		}
+		return bindType, -1, true
+	}
+
+	// 有两个入参
+	if fnTyp.NumIn() == 2 {
+		t0 := fnTyp.In(0)
+		if t0 == webContextType {
+			bindType := fnTyp.In(1)
+			if !validBindType(bindType) {
+				return nil, -1, false
+			}
+			return bindType, 0, true
+		} else {
+			bindType := t0
+			if !validBindType(bindType) {
+				return nil, -1, false
+			}
+			if fnTyp.In(1) != webContextType {
+				return nil, -1, false
+			}
+			return bindType, 1, true
+		}
+	}
+
+	return nil, -1, false
+}
+
+// BIND 转换成 BIND 形式的 Web 处理接口
+func BIND(fn interface{}) Handler {
+
+	var (
+		ok       bool
+		ctxIndex int
+		bindType reflect.Type
+	)
+
+	if bindType, ctxIndex, ok = validBindFn(fn); !ok {
+		panic(errors.New("fn should be func(req:struct)resp:anything or " +
+			"func(ctx:WebContext,req:struct)resp:anything or " +
+			"func(req:struct,ctx:WebContext)resp:anything"))
 	}
 
 	return &bindHandler{
-		fn:    fn,
-		inTyp: fnTyp.In(0),
-		fnVal: reflect.ValueOf(fn),
+		fn:       fn,
+		fnVal:    reflect.ValueOf(fn),
+		bindType: bindType,
+		ctxIndex: ctxIndex,
 	}
 }
 

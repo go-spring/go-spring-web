@@ -47,7 +47,7 @@ func TestWebServer(t *testing.T) {
 	// 添加第一个 Web 容器
 	{
 		g := SpringGin.NewContainer()
-		server.AddWebContainer(g)
+		server.AddContainer(g)
 		g.SetPort(8080)
 		g.AddRouter(r)
 
@@ -58,7 +58,7 @@ func TestWebServer(t *testing.T) {
 	// 添加第二个 Web 容器
 	{
 		e := SpringEcho.NewContainer()
-		server.AddWebContainer(e)
+		server.AddContainer(e)
 		e.SetPort(9090)
 		e.AddRouter(r)
 

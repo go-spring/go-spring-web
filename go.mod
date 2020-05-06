@@ -6,7 +6,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gin-gonic/gin v1.6.1
 	github.com/go-openapi/spec v0.19.7
-	github.com/go-spring/go-spring-parent v1.0.4-0.20200504123106-150fd9f7a358
+	github.com/go-spring/go-spring-parent v1.0.4-0.20200506141212-6d85dd292cd2
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/magiconair/properties v1.8.1
 	github.com/stretchr/testify v1.5.1

@@ -18,59 +18,62 @@ package SpringWeb
 
 import (
 	"context"
+
+	"github.com/go-spring/go-spring-parent/spring-utils"
 )
 
 // WebServer 一个 WebServer 包含多个 WebContainer
 type WebServer struct {
-	filters    []Filter
-	Containers []WebContainer
-
-	loggerFilter   Filter // 日志过滤器
-	recoveryFilter Filter // 恢复过滤器
+	containers     []WebContainer // Web 容器列表
+	filters        []Filter       // 共用的普通过滤器
+	loggerFilter   Filter         // 共用的日志过滤器
+	recoveryFilter Filter         // 共用的恢复过滤器
 }
 
 // NewWebServer WebServer 的构造函数
 func NewWebServer() *WebServer {
-	return &WebServer{
-		Containers: make([]WebContainer, 0),
-	}
+	return &WebServer{}
 }
 
-// AddFilter 添加过滤器
-func (s *WebServer) AddFilter(filter ...Filter) {
+// AddFilter 添加共用的普通过滤器
+func (s *WebServer) AddFilter(filter ...Filter) *WebServer {
 	s.filters = append(s.filters, filter...)
+	return s
 }
 
-// SetLoggerFilter 设置 Logger Filter
-func (s *WebServer) SetLoggerFilter(filter Filter) {
+// SetLoggerFilter 设置共用的日志过滤器
+func (s *WebServer) SetLoggerFilter(filter Filter) *WebServer {
 	s.loggerFilter = filter
+	return s
 }
 
-// 设置 Recovery Filter
-func (s *WebServer) SetRecoveryFilter(filter Filter) {
+// SetRecoveryFilter 设置共用的恢复过滤器
+func (s *WebServer) SetRecoveryFilter(filter Filter) *WebServer {
 	s.recoveryFilter = filter
+	return s
 }
 
-// AddWebContainer 添加 WebContainer 实例
-func (s *WebServer) AddWebContainer(container WebContainer) {
-	s.Containers = append(s.Containers, container)
+// AddContainer 添加 WebContainer 实例
+func (s *WebServer) AddContainer(container ...WebContainer) *WebServer {
+	s.containers = append(s.containers, container...)
+	return s
 }
 
-// Start 启动 Web 容器，非阻塞
+// Start 启动 Web 容器，非阻塞调用
 func (s *WebServer) Start() {
-	for _, c := range s.Containers {
+	for _, c := range s.containers {
 
-		// Container 使用 Server 的日志过滤器，如果 Container 使用的是默认值的话
+		// 如果 Container 使用的是默认值的话，Container 使用 Server 的日志过滤器
 		if s.loggerFilter != nil && c.GetLoggerFilter() == defaultLoggerFilter {
 			c.SetLoggerFilter(s.loggerFilter)
 		}
 
-		// Container 使用 Server 的恢复过滤器，如果 Container 使用的是默认值的话
+		// 如果 Container 使用的是默认值的话，Container 使用 Server 的恢复过滤器
 		if s.recoveryFilter != nil && c.GetRecoveryFilter() == defaultRecoveryFilter {
 			c.SetRecoveryFilter(s.recoveryFilter)
 		}
 
-		// 添加 Server 的过滤器给 Container
+		// 添加 Server 的普通过滤器给 Container
 		filters := append(s.filters, c.GetFilters()...)
 		c.setFilters(filters)
 
@@ -78,9 +81,12 @@ func (s *WebServer) Start() {
 	}
 }
 
-// Stop 停止 Web 容器，阻塞
+// Stop 停止 Web 容器，阻塞调用
 func (s *WebServer) Stop(ctx context.Context) {
-	for _, c := range s.Containers {
-		c.Stop(ctx)
+	var wg SpringUtils.WaitGroup
+	for _, container := range s.containers {
+		c := container // 避免延迟绑定
+		wg.Add(func() { c.Stop(ctx) })
 	}
+	wg.Wait()
 }
