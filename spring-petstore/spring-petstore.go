@@ -251,7 +251,7 @@ func main() {
 	r := c.Route("/v2/pet/")
 	pet := new(PetController)
 	{
-		r.POST("", pet.AddPet).
+		r.PostFunc("", pet.AddPet).
 			Swagger("addPet").
 			WithTags("pet").
 			WithSummary("Add a new pet to the store").
@@ -273,7 +273,7 @@ func main() {
 			RespondsWith(http.StatusMethodNotAllowed, SpringWeb.NewResponse("Validation exception")).
 			SecuredWith("petstore_auth", "write:pets", "read:pets")
 
-		r.GET("{petId}", pet.GetPetById).
+		r.GetFunc("{petId}", pet.GetPetById).
 			Swagger("getPetById").
 			WithTags("pet").
 			WithDescription("Returns a single pet").
@@ -285,7 +285,7 @@ func main() {
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("Pet not found")).
 			SecuredWith("api_key", []string{}...)
 
-		r.POST("{petId}", pet.UpdatePetWithForm).
+		r.PostFunc("{petId}", pet.UpdatePetWithForm).
 			Swagger("updatePetWithForm").
 			WithTags("pet").
 			WithSummary("Updates a pet in the store with form data").
@@ -308,7 +308,7 @@ func main() {
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("Pet not found")).
 			SecuredWith("petstore_auth", "write:pets", "read:pets")
 
-		r.POST("{petId}/uploadImage", pet.UploadFile).
+		r.PostFunc("{petId}/uploadImage", pet.UploadFile).
 			Swagger("uploadFile").
 			WithTags("pet").
 			WithSummary("uploads an image").
@@ -320,7 +320,7 @@ func main() {
 			RespondsWith(http.StatusOK, SpringWeb.NewBindResponse(new(ApiResponse), "successful operation")).
 			SecuredWith("petstore_auth", "write:pets", "read:pets")
 
-		r.GET("findByStatus", pet.FindPetsByStatus).
+		r.GetFunc("findByStatus", pet.FindPetsByStatus).
 			Swagger("findPetsByStatus").
 			WithTags("pet").
 			WithDescription("Multiple status values can be provided with comma separated strings").
@@ -334,7 +334,7 @@ func main() {
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid status value")).
 			SecuredWith("petstore_auth", "write:pets", "read:pets")
 
-		r.GET("findByTags", pet.FindPetsByTags).
+		r.GetFunc("findByTags", pet.FindPetsByTags).
 			Swagger("findPetsByTags").
 			Deprecate().
 			WithTags("pet").
@@ -353,7 +353,7 @@ func main() {
 	r = c.Route("/v2/store/")
 	order := new(OrderController)
 	{
-		r.POST("order", order.PlaceOrder).
+		r.PostFunc("order", order.PlaceOrder).
 			Swagger("placeOrder").
 			WithTags("store").
 			WithDescription("").
@@ -364,7 +364,7 @@ func main() {
 			RespondsWith(http.StatusOK, SpringWeb.NewBindResponse(Order{}, "successful operation")).
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid Order"))
 
-		r.GET("order/{orderId}", order.GetOrderById).
+		r.GetFunc("order/{orderId}", order.GetOrderById).
 			Swagger("getOrderById").
 			WithTags("store").
 			WithDescription("For valid response try integer IDs with value \u003e= 1 and \u003c= 10. Other values will generated exceptions").
@@ -385,7 +385,7 @@ func main() {
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid ID supplied")).
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("Order not found"))
 
-		r.GET("inventory", order.GetInventory).
+		r.GetFunc("inventory", order.GetInventory).
 			Swagger("getInventory").
 			WithTags("store").
 			WithDescription("Returns a map of status codes to quantities").
@@ -399,7 +399,7 @@ func main() {
 	user := new(UserController)
 	{
 
-		r.POST("", user.CreateUser).
+		r.PostFunc("", user.CreateUser).
 			Swagger("createUser").
 			WithTags("user").
 			WithDescription("This can only be done by the logged in user.").
@@ -409,7 +409,7 @@ func main() {
 			BindParam(User{}, "Created user object").
 			WithDefaultResponse(spec.NewResponse().WithDescription("successful operation"))
 
-		r.GET("{username}", user.GetUserByName).
+		r.GetFunc("{username}", user.GetUserByName).
 			Swagger("getUserByName").
 			WithTags("user").
 			WithDescription("").
@@ -442,7 +442,7 @@ func main() {
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid username supplied")).
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("User not found"))
 
-		r.GET("login", user.LoginUser).
+		r.GetFunc("login", user.LoginUser).
 			Swagger("loginUser").
 			WithTags("user").
 			WithDescription("").
@@ -466,7 +466,7 @@ func main() {
 				WithSchema(spec.StringProperty())).
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid username/password supplied"))
 
-		r.GET("logout", user.LogoutUser).
+		r.GetFunc("logout", user.LogoutUser).
 			Swagger("logoutUser").
 			WithTags("user").
 			WithDescription("").
@@ -474,7 +474,7 @@ func main() {
 			WithProduces("application/json", "application/xml").
 			WithDefaultResponse(SpringWeb.NewResponse("successful operation"))
 
-		r.POST("createWithArray", user.CreateUsersWithArrayInput).
+		r.PostFunc("createWithArray", user.CreateUsersWithArrayInput).
 			Swagger("createUsersWithArrayInput").
 			WithTags("user").
 			WithDescription("").
@@ -486,7 +486,7 @@ func main() {
 				WithDescription("List of user object")).
 			WithDefaultResponse(SpringWeb.NewResponse("successful operation"))
 
-		r.POST("createWithList", user.CreateUsersWithListInput).
+		r.PostFunc("createWithList", user.CreateUsersWithListInput).
 			Swagger("createUsersWithListInput").
 			WithTags("user").
 			WithDescription("").

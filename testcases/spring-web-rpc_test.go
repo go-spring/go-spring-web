@@ -48,7 +48,7 @@ func TestRpc(t *testing.T) {
 		server.AddContainer(c1)
 		c1.SetPort(8080)
 
-		c1.GET("/ok", SpringWeb.RPC(rc.OK), f2, f5)
+		c1.Get("/ok", SpringWeb.RPC(rc.OK), f2, f5)
 	}
 
 	// 添加第二个 web 容器
@@ -59,14 +59,14 @@ func TestRpc(t *testing.T) {
 
 		r := c2.Route("", f2, f7)
 		{
-			r.GET("/err", SpringWeb.RPC(rc.Err))
-			r.GET("/panic", SpringWeb.RPC(rc.Panic))
+			r.Get("/err", SpringWeb.RPC(rc.Err))
+			r.Get("/panic", SpringWeb.RPC(rc.Panic))
 		}
 
-		c2.GET("/echo", SpringWeb.BIND(rc.Echo), f5)
-		c2.GET("/ptr_echo", SpringWeb.BIND(rc.PtrEcho), f5)
-		c2.GET("/ctx_echo", SpringWeb.BIND(rc.CtxEcho), f5)
-		c2.GET("/echo_ctx", SpringWeb.BIND(rc.EchoCtx), f5)
+		c2.GetBinding("/echo", rc.Echo, f5)
+		c2.GetBinding("/ptr_echo", rc.PtrEcho, f5)
+		c2.GetBinding("/ctx_echo", rc.CtxEcho, f5)
+		c2.GetBinding("/echo_ctx", rc.EchoCtx, f5)
 	}
 
 	// 启动 web 服务器

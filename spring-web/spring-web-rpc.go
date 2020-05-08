@@ -116,6 +116,7 @@ func validBindFn(fn interface{}) (reflect.Type, int, bool) {
 
 	// 只有一个入参
 	if fnTyp.NumIn() == 1 {
+		// func(Request)Response
 		bindType := fnTyp.In(0)
 		if !validBindType(bindType) {
 			return nil, -1, false
@@ -127,12 +128,14 @@ func validBindFn(fn interface{}) (reflect.Type, int, bool) {
 	if fnTyp.NumIn() == 2 {
 		t0 := fnTyp.In(0)
 		if t0 == webContextType {
+			// func(WebContext,Request)Response
 			bindType := fnTyp.In(1)
 			if !validBindType(bindType) {
 				return nil, -1, false
 			}
 			return bindType, 0, true
 		} else {
+			// func(Request,WebContext)Response
 			bindType := t0
 			if !validBindType(bindType) {
 				return nil, -1, false
