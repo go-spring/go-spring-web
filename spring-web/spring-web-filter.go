@@ -16,30 +16,27 @@
 
 package SpringWeb
 
-// Filter 过滤器
+// Filter 过滤器接口
 type Filter interface {
-	// Invoke 函数内部通过 chain.Next() 驱动链条向后执行
+	// Invoke 通过 chain.Next() 驱动链条向后执行
 	Invoke(ctx WebContext, chain FilterChain)
 }
 
-// handlerFilter 包装 Web 处理函数的过滤器
+// handlerFilter 包装 Web 处理接口的过滤器
 type handlerFilter struct {
 	fn Handler
 }
 
-// HandlerFilter 把 Web 处理函数转换成过滤器
+// HandlerFilter 把 Web 处理接口转换成过滤器
 func HandlerFilter(fn Handler) Filter {
-	return &handlerFilter{
-		fn: fn,
-	}
+	return &handlerFilter{fn: fn}
 }
 
-// Invoke 执行 Web 处理函数
 func (h *handlerFilter) Invoke(ctx WebContext, _ FilterChain) {
 	h.fn.Invoke(ctx)
 }
 
-// FilterChain 过滤器链条
+// FilterChain 过滤器链条接口
 type FilterChain interface {
 	Next(ctx WebContext)
 }
@@ -52,16 +49,17 @@ type DefaultFilterChain struct {
 
 // NewDefaultFilterChain DefaultFilterChain 的构造函数
 func NewDefaultFilterChain(filters []Filter) *DefaultFilterChain {
-	return &DefaultFilterChain{
-		filters: filters,
-	}
+	return &DefaultFilterChain{filters: filters}
 }
 
-// Invoke 函数内部通过 chain.Next() 驱动链条向后执行
 func (chain *DefaultFilterChain) Next(ctx WebContext) {
+
+	// 链条执行到此结束
 	if chain.next >= len(chain.filters) {
 		return
 	}
+
+	// 执行下一个过滤器
 	f := chain.filters[chain.next]
 	chain.next++
 	f.Invoke(ctx, chain)

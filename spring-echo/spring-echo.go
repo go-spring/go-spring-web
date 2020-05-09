@@ -108,6 +108,8 @@ func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringW
 	}
 }
 
+/////////////////// handler //////////////////////
+
 // echoHandler 封装 Echo 处理函数
 type echoHandler echo.HandlerFunc
 
@@ -125,6 +127,8 @@ func (e echoHandler) FileLine() (file string, line int, fnName string) {
 func Echo(fn echo.HandlerFunc) SpringWeb.Handler {
 	return echoHandler(fn)
 }
+
+/////////////////// filter //////////////////////
 
 // echoFilter 封装 Echo 中间件
 type echoFilter echo.MiddlewareFunc

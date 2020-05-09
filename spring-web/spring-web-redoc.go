@@ -22,7 +22,13 @@ import (
 
 // ReDoc redoc 响应函数
 func ReDoc(ctx WebContext) {
-	index, _ := template.New("redoc.html").Parse(redocTempl)
+
+	index, err := template.New("redoc.html").Parse(redocTempl)
+	if err != nil {
+		panic(err)
+	}
+
+	// 不确定 Execute 是否线程安全，官方文档表示也许是线程安全的，谁知道呢
 	_ = index.Execute(ctx.ResponseWriter(), map[string]interface{}{
 		"URL": "/swagger/doc.json",
 	})

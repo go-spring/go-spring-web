@@ -127,7 +127,7 @@ func validBindFn(fn interface{}) (reflect.Type, int, bool) {
 	// 有两个入参
 	if fnTyp.NumIn() == 2 {
 		t0 := fnTyp.In(0)
-		if t0 == webContextType {
+		if t0 == WebContextType {
 			// func(WebContext,Request)Response
 			bindType := fnTyp.In(1)
 			if !validBindType(bindType) {
@@ -140,7 +140,7 @@ func validBindFn(fn interface{}) (reflect.Type, int, bool) {
 			if !validBindType(bindType) {
 				return nil, -1, false
 			}
-			if fnTyp.In(1) != webContextType {
+			if fnTyp.In(1) != WebContextType {
 				return nil, -1, false
 			}
 			return bindType, 1, true

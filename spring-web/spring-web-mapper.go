@@ -64,12 +64,6 @@ func (m *Mapper) Filters() []Filter {
 	return m.filters
 }
 
-// SetFilters 设置 Mapper 的过滤器列表
-func (m *Mapper) SetFilters(filters []Filter) *Mapper {
-	m.filters = filters
-	return m
-}
-
 // Swagger 生成并返回 Operation 对象
 func (m *Mapper) Swagger(id string) *Operation {
 	m.swagger = NewOperation(id)

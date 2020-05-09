@@ -59,7 +59,7 @@ func TestWebContainer(t *testing.T) {
 
 		s := testcases.NewService()
 
-		c.GetFunc("/get", s.Get, f5).Swagger("").
+		c.GetMapping("/get", s.Get, f5).Swagger("").
 			WithDescription("get").
 			AddParam(spec.QueryParam("key")).
 			WithConsumes(SpringWeb.MIMEApplicationForm).
@@ -69,14 +69,14 @@ func TestWebContainer(t *testing.T) {
 				AddExample(SpringWeb.MIMEApplicationJSON, 2))
 
 		// 等价于 c.GET("/global_interrupt", s.Get)
-		c.Get("/global_interrupt", SpringWeb.METHOD(s, "Get"))
+		c.HandleGet("/global_interrupt", SpringWeb.METHOD(s, "Get"))
 
-		c.GetFunc("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
+		c.GetMapping("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法
 		r := c.Route("", f2, f7)
 		{
-			r.PostFunc("/set", s.Set).Swagger("").
+			r.PostMapping("/set", s.Set).Swagger("").
 				WithDescription("set").
 				//WithConsumes(SpringWeb.MIMEApplicationForm).
 				WithConsumes(SpringWeb.MIMEApplicationJSON).
@@ -94,14 +94,14 @@ func TestWebContainer(t *testing.T) {
 			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
 		}
 
-		c.GetFunc("/wild_1/*", func(webCtx SpringWeb.WebContext) {
+		c.GetMapping("/wild_1/*", func(webCtx SpringWeb.WebContext) {
 			assert.Equal(t, "anything", webCtx.PathParam("*"))
 			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
 			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
 			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
 		})
 
-		c.GetFunc("/wild_2/*none", func(webCtx SpringWeb.WebContext) {
+		c.GetMapping("/wild_2/*none", func(webCtx SpringWeb.WebContext) {
 			assert.Equal(t, "anything", webCtx.PathParam("*"))
 			assert.Equal(t, "anything", webCtx.PathParam("none"))
 			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
@@ -109,7 +109,7 @@ func TestWebContainer(t *testing.T) {
 			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
 		})
 
-		c.GetFunc("/wild_3/{*}", func(webCtx SpringWeb.WebContext) {
+		c.GetMapping("/wild_3/{*}", func(webCtx SpringWeb.WebContext) {
 			assert.Equal(t, "anything", webCtx.PathParam("*"))
 			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
 			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
@@ -197,7 +197,7 @@ func TestWebContainer(t *testing.T) {
 		fRecover := SpringGin.Filter(gin.Recovery())
 		c.SetRecoveryFilter(fRecover)
 
-		c.Get("/native", SpringGin.Gin(func(ctx *gin.Context) {
+		c.HandleGet("/native", SpringGin.Gin(func(ctx *gin.Context) {
 			ctx.String(http.StatusOK, "gin")
 		}))
 
@@ -213,7 +213,7 @@ func TestWebContainer(t *testing.T) {
 		fRecover := SpringEcho.Filter(middleware.Recover())
 		c.SetRecoveryFilter(fRecover)
 
-		c.Get("/native", SpringEcho.Echo(func(ctx echo.Context) error {
+		c.HandleGet("/native", SpringEcho.Echo(func(ctx echo.Context) error {
 			return ctx.String(http.StatusOK, "echo")
 		}))
 

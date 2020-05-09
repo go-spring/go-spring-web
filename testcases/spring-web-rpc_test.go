@@ -48,7 +48,7 @@ func TestRpc(t *testing.T) {
 		server.AddContainer(c1)
 		c1.SetPort(8080)
 
-		c1.Get("/ok", SpringWeb.RPC(rc.OK), f2, f5)
+		c1.HandleGet("/ok", SpringWeb.RPC(rc.OK), f2, f5)
 	}
 
 	// 添加第二个 web 容器
@@ -59,8 +59,8 @@ func TestRpc(t *testing.T) {
 
 		r := c2.Route("", f2, f7)
 		{
-			r.Get("/err", SpringWeb.RPC(rc.Err))
-			r.Get("/panic", SpringWeb.RPC(rc.Panic))
+			r.HandleGet("/err", SpringWeb.RPC(rc.Err))
+			r.HandleGet("/panic", SpringWeb.RPC(rc.Panic))
 		}
 
 		c2.GetBinding("/echo", rc.Echo, f5)

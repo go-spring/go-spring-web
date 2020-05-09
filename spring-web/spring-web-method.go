@@ -34,7 +34,6 @@ const (
 	MethodGetPost = MethodGet | MethodPost
 )
 
-// methods
 var methods = map[uint32]string{
 	MethodGet:     http.MethodGet,
 	MethodHead:    http.MethodHead,

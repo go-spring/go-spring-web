@@ -43,13 +43,13 @@ func (r *Router) GET(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.Request(MethodGet, path, fn, filters...)
 }
 
-// Get 注册 GET 方法处理函数
-func (r *Router) Get(path string, fn Handler, filters ...Filter) *Mapper {
+// HandleGet 注册 GET 方法处理函数
+func (r *Router) HandleGet(path string, fn Handler, filters ...Filter) *Mapper {
 	return r.Request(MethodGet, path, fn, filters...)
 }
 
-// GetFunc 注册 GET 方法处理函数
-func (r *Router) GetFunc(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+// GetMapping 注册 GET 方法处理函数
+func (r *Router) GetMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
 	return r.Request(MethodGet, path, FUNC(fn), filters...)
 }
 
@@ -63,13 +63,13 @@ func (r *Router) POST(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.Request(MethodPost, path, fn, filters...)
 }
 
-// Post 注册 POST 方法处理函数
-func (r *Router) Post(path string, fn Handler, filters ...Filter) *Mapper {
+// HandlePost 注册 POST 方法处理函数
+func (r *Router) HandlePost(path string, fn Handler, filters ...Filter) *Mapper {
 	return r.Request(MethodPost, path, fn, filters...)
 }
 
-// PostFunc 注册 POST 方法处理函数
-func (r *Router) PostFunc(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+// PostMapping 注册 POST 方法处理函数
+func (r *Router) PostMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
 	return r.Request(MethodPost, path, FUNC(fn), filters...)
 }
 

@@ -40,7 +40,7 @@ func TestWebServer(t *testing.T) {
 
 	// 可用于全局的路由分组
 	r := SpringWeb.NewRouter("/v1", testcases.NewStringFilter("@router"))
-	r.GetFunc("/router", func(ctx SpringWeb.WebContext) {
+	r.GetMapping("/router", func(ctx SpringWeb.WebContext) {
 		ctx.String(http.StatusOK, "router:ok")
 	}, testcases.NewStringFilter("@router:/router"))
 
@@ -52,7 +52,7 @@ func TestWebServer(t *testing.T) {
 		g.AddRouter(r)
 
 		g.AddFilter(testcases.NewStringFilter("gin"))
-		g.GetFunc("/get", s.Get, testcases.NewStringFilter("gin:/get"))
+		g.GetMapping("/get", s.Get, testcases.NewStringFilter("gin:/get"))
 	}
 
 	// 添加第二个 Web 容器
@@ -65,8 +65,8 @@ func TestWebServer(t *testing.T) {
 		e.AddFilter(testcases.NewStringFilter("echo"))
 		r0 := e.Route("", testcases.NewStringFilter("echo:route"))
 		{
-			r0.PostFunc("/set", s.Set, testcases.NewStringFilter("echo:route:/set"))
-			r0.GetFunc("/panic", s.Panic, testcases.NewStringFilter("echo:route:/panic"))
+			r0.PostMapping("/set", s.Set, testcases.NewStringFilter("echo:route:/set"))
+			r0.GetMapping("/panic", s.Panic, testcases.NewStringFilter("echo:route:/panic"))
 		}
 	}
 

@@ -29,12 +29,15 @@ import (
 	"github.com/swaggo/http-swagger"
 )
 
-// HandlerFunc Web 处理函数
+// HandlerFunc 标准 Web 处理函数
 type HandlerFunc func(WebContext)
 
 // Handler Web 处理接口
 type Handler interface {
+	// Invoke 响应函数
 	Invoke(WebContext)
+
+	// FileLine 获取用户函数的文件名、行号以及函数名称
 	FileLine() (file string, line int, fnName string)
 }
 
@@ -259,12 +262,12 @@ func (c *BaseWebContainer) PreStart() {
 		}
 
 		// 注册 swagger-ui 和 doc.json 接口
-		c.Get("/swagger/*", HTTP(httpSwagger.Handler(
+		c.HandleGet("/swagger/*", HTTP(httpSwagger.Handler(
 			httpSwagger.URL("/swagger/doc.json"),
 		)))
 
 		// 注册 redoc 接口
-		c.GetFunc("/redoc", ReDoc)
+		c.GetMapping("/redoc", ReDoc)
 	}
 
 }

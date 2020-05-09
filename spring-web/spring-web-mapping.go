@@ -44,11 +44,11 @@ type WebMapping interface {
 	// GET 注册 GET 方法处理函数
 	GET(path string, fn interface{}, filters ...Filter) *Mapper
 
-	// Get 注册 GET 方法处理函数
-	Get(path string, fn Handler, filters ...Filter) *Mapper
+	// HandleGet 注册 GET 方法处理函数
+	HandleGet(path string, fn Handler, filters ...Filter) *Mapper
 
-	// GetFunc 注册 GET 方法处理函数
-	GetFunc(path string, fn HandlerFunc, filters ...Filter) *Mapper
+	// GetMapping 注册 GET 方法处理函数
+	GetMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper
 
 	// GetBinding 注册 GET 方法处理函数
 	GetBinding(path string, fn interface{}, filters ...Filter) *Mapper
@@ -56,11 +56,11 @@ type WebMapping interface {
 	// POST 注册 POST 方法处理函数
 	POST(path string, fn interface{}, filters ...Filter) *Mapper
 
-	// Post 注册 POST 方法处理函数
-	Post(path string, fn Handler, filters ...Filter) *Mapper
+	// HandlePost 注册 POST 方法处理函数
+	HandlePost(path string, fn Handler, filters ...Filter) *Mapper
 
-	// PostFunc 注册 POST 方法处理函数
-	PostFunc(path string, fn HandlerFunc, filters ...Filter) *Mapper
+	// PostMapping 注册 POST 方法处理函数
+	PostMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper
 
 	// PostBinding 注册 POST 方法处理函数
 	PostBinding(path string, fn interface{}, filters ...Filter) *Mapper
@@ -138,13 +138,13 @@ func (w *defaultWebMapping) GET(path string, fn interface{}, filters ...Filter) 
 	return w.Request(MethodGet, path, fn, filters...)
 }
 
-// Get 注册 GET 方法处理函数
-func (w *defaultWebMapping) Get(path string, fn Handler, filters ...Filter) *Mapper {
+// HandleGet 注册 GET 方法处理函数
+func (w *defaultWebMapping) HandleGet(path string, fn Handler, filters ...Filter) *Mapper {
 	return w.Request(MethodGet, path, fn, filters...)
 }
 
-// GetFunc 注册 GET 方法处理函数
-func (w *defaultWebMapping) GetFunc(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+// GetMapping 注册 GET 方法处理函数
+func (w *defaultWebMapping) GetMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
 	return w.Request(MethodGet, path, FUNC(fn), filters...)
 }
 
@@ -158,13 +158,13 @@ func (w *defaultWebMapping) POST(path string, fn interface{}, filters ...Filter)
 	return w.Request(MethodPost, path, fn, filters...)
 }
 
-// Post 注册 POST 方法处理函数
-func (w *defaultWebMapping) Post(path string, fn Handler, filters ...Filter) *Mapper {
+// HandlePost 注册 POST 方法处理函数
+func (w *defaultWebMapping) HandlePost(path string, fn Handler, filters ...Filter) *Mapper {
 	return w.Request(MethodPost, path, fn, filters...)
 }
 
-// PostFunc 注册 POST 方法处理函数
-func (w *defaultWebMapping) PostFunc(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+// PostMapping 注册 POST 方法处理函数
+func (w *defaultWebMapping) PostMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
 	return w.Request(MethodPost, path, FUNC(fn), filters...)
 }
 

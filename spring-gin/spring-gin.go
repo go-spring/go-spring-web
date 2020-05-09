@@ -133,15 +133,7 @@ func HandlerWrapper(path string, fn SpringWeb.Handler, wildCardName string, filt
 	return handlers
 }
 
-// ginFilterChain gin 适配的过滤器链条
-type ginFilterChain struct {
-	ginCtx *gin.Context
-}
-
-// Next 内部调用 gin.Context 对象的 Next 函数驱动链条向后执行
-func (chain *ginFilterChain) Next(_ SpringWeb.WebContext) {
-	chain.ginCtx.Next()
-}
+/////////////////// handler //////////////////////
 
 // ginHandler 封装 Gin 处理函数
 type ginHandler gin.HandlerFunc
@@ -159,6 +151,8 @@ func Gin(fn gin.HandlerFunc) SpringWeb.Handler {
 	return ginHandler(fn)
 }
 
+/////////////////// filter //////////////////////
+
 // ginFilter 封装 Gin 中间件
 type ginFilter gin.HandlerFunc
 
@@ -169,4 +163,14 @@ func (filter ginFilter) Invoke(ctx SpringWeb.WebContext, _ SpringWeb.FilterChain
 // Filter Web Gin 中间件适配器
 func Filter(fn gin.HandlerFunc) SpringWeb.Filter {
 	return ginFilter(fn)
+}
+
+// ginFilterChain gin 适配的过滤器链条
+type ginFilterChain struct {
+	ginCtx *gin.Context
+}
+
+// Next 内部调用 gin.Context 对象的 Next 函数驱动链条向后执行
+func (chain *ginFilterChain) Next(_ SpringWeb.WebContext) {
+	chain.ginCtx.Next()
 }
