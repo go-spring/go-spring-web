@@ -85,16 +85,21 @@ func (c *Container) Start() {
 		}
 	}
 
-	c.httpServer = &http.Server{
-		Addr:    c.Address(),
-		Handler: c.ginEngine,
-	}
-
 	go func() {
-		SpringLogger.Info("⇨ http server started on ", c.Address())
 		var err error
-		if cfg := c.Config(); cfg.EnableSSL {
-			err = c.httpServer.ListenAndServeTLS(cfg.SSLCertFile, cfg.SSLKeyFile)
+		cfg := c.Config()
+
+		c.httpServer = &http.Server{
+			Addr:         c.Address(),
+			Handler:      c.ginEngine,
+			ReadTimeout:  cfg.ReadTimeout,
+			WriteTimeout: cfg.WriteTimeout,
+		}
+
+		SpringLogger.Info("⇨ http server started on ", c.Address())
+
+		if cfg.EnableSSL {
+			err = c.httpServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
 		} else {
 			err = c.httpServer.ListenAndServe()
 		}

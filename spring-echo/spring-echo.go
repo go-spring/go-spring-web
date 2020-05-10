@@ -83,9 +83,11 @@ func (c *Container) Start() {
 
 	// 启动 echo 容器
 	go func() {
+		// TODO 应用 ReadTimeout 和 WriteTimeout。
+
 		var err error
 		if cfg := c.Config(); cfg.EnableSSL {
-			err = c.echoServer.StartTLS(c.Address(), cfg.SSLCertFile, cfg.SSLKeyFile)
+			err = c.echoServer.StartTLS(c.Address(), cfg.CertFile, cfg.KeyFile)
 		} else {
 			err = c.echoServer.Start(c.Address())
 		}

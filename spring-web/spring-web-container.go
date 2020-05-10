@@ -43,11 +43,14 @@ type Handler interface {
 
 // ContainerConfig Web 容器配置
 type ContainerConfig struct {
-	IP          string // 监听 IP
-	Port        int    // 监听端口
-	EnableSSL   bool   // 使用 SSL
-	SSLKeyFile  string // SSL 证书
-	SSLCertFile string // SSL 秘钥
+	IP        string // 监听 IP
+	Port      int    // 监听端口
+	EnableSSL bool   // 使用 SSL
+	KeyFile   string // SSL 证书
+	CertFile  string // SSL 秘钥
+
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 }
 
 // WebContainer Web 容器
