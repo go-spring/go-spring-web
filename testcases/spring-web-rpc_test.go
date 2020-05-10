@@ -44,18 +44,18 @@ func TestRpc(t *testing.T) {
 
 	// 添加第一个 web 容器
 	{
-		c1 := SpringGin.NewContainer()
+		cfg := SpringWeb.ContainerConfig{Port: 8080}
+		c1 := SpringGin.NewContainer(cfg)
 		server.AddContainer(c1)
-		c1.SetPort(8080)
 
 		c1.HandleGet("/ok", SpringWeb.RPC(rc.OK), f2, f5)
 	}
 
 	// 添加第二个 web 容器
 	{
-		c2 := SpringEcho.NewContainer()
+		cfg := SpringWeb.ContainerConfig{Port: 9090}
+		c2 := SpringEcho.NewContainer(cfg)
 		server.AddContainer(c2)
-		c2.SetPort(9090)
 
 		r := c2.Route("", f2, f7)
 		{

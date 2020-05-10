@@ -245,8 +245,8 @@ func main() {
 				"write:pets": "modify pets in your account",
 			})
 
-	c := SpringEcho.NewContainer()
-	c.SetPort(8080)
+	cfg := SpringWeb.ContainerConfig{Port: 8080}
+	c := SpringEcho.NewContainer(cfg)
 
 	r := c.Route("/v2/pet/")
 	pet := new(PetController)

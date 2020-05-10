@@ -46,9 +46,9 @@ func TestWebServer(t *testing.T) {
 
 	// 添加第一个 Web 容器
 	{
-		g := SpringGin.NewContainer()
+		cfg := SpringWeb.ContainerConfig{Port: 8080}
+		g := SpringGin.NewContainer(cfg)
 		server.AddContainer(g)
-		g.SetPort(8080)
 		g.AddRouter(r)
 
 		g.AddFilter(testcases.NewStringFilter("gin"))
@@ -57,9 +57,9 @@ func TestWebServer(t *testing.T) {
 
 	// 添加第二个 Web 容器
 	{
-		e := SpringEcho.NewContainer()
+		cfg := SpringWeb.ContainerConfig{Port: 9090}
+		e := SpringEcho.NewContainer(cfg)
 		server.AddContainer(e)
-		e.SetPort(9090)
 		e.AddRouter(r)
 
 		e.AddFilter(testcases.NewStringFilter("echo"))

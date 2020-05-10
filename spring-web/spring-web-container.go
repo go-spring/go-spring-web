@@ -41,40 +41,22 @@ type Handler interface {
 	FileLine() (file string, line int, fnName string)
 }
 
+// ContainerConfig Web 容器配置
+type ContainerConfig struct {
+	IP          string // 监听 IP
+	Port        int    // 监听端口
+	EnableSSL   bool   // 使用 SSL
+	SSLKeyFile  string // SSL 证书
+	SSLCertFile string // SSL 秘钥
+}
+
 // WebContainer Web 容器
 type WebContainer interface {
 	// WebMapping 路由表
 	WebMapping
 
-	// GetIP 返回监听的 IP
-	GetIP() string
-
-	// SetIP 设置监听的 IP
-	SetIP(ip string)
-
-	// GetPort 返回监听的 Port
-	GetPort() int
-
-	// SetPort 设置监听的 Port
-	SetPort(port int)
-
-	// EnableSSL 返回是否启用 SSL
-	EnableSSL() bool
-
-	// SetEnableSSL 设置是否启用 SSL
-	SetEnableSSL(enable bool)
-
-	// GetKeyFile 返回 KeyFile 的路径
-	GetKeyFile() string
-
-	// SetKeyFile 设置 KeyFile 的路径
-	SetKeyFile(keyFile string)
-
-	// GetCertFile 返回 CertFile 的路径
-	GetCertFile() string
-
-	// SetCertFile 设置 CertFile 的路径
-	SetCertFile(certFile string)
+	// Config 获取 Web 容器配置
+	Config() ContainerConfig
 
 	// GetFilters 返回过滤器列表
 	GetFilters() []Filter
@@ -117,11 +99,7 @@ type WebContainer interface {
 type BaseWebContainer struct {
 	WebMapping
 
-	ip        string // 监听 IP
-	port      int    // 监听端口
-	enableSSL bool   // 使用 SSL
-	keyFile   string
-	certFile  string
+	config    ContainerConfig
 	filters   []Filter
 	enableSwg bool // 是否启用 Swagger 功能
 
@@ -130,9 +108,10 @@ type BaseWebContainer struct {
 }
 
 // NewBaseWebContainer BaseWebContainer 的构造函数
-func NewBaseWebContainer() *BaseWebContainer {
+func NewBaseWebContainer(config ContainerConfig) *BaseWebContainer {
 	return &BaseWebContainer{
 		WebMapping:     NewDefaultWebMapping(),
+		config:         config,
 		enableSwg:      true,
 		loggerFilter:   defaultLoggerFilter,
 		recoveryFilter: defaultRecoveryFilter,
@@ -141,57 +120,12 @@ func NewBaseWebContainer() *BaseWebContainer {
 
 // Address 返回监听地址
 func (c *BaseWebContainer) Address() string {
-	return fmt.Sprintf("%s:%d", c.GetIP(), c.GetPort())
+	return fmt.Sprintf("%s:%d", c.config.IP, c.config.Port)
 }
 
-// GetIP 返回监听的 IP
-func (c *BaseWebContainer) GetIP() string {
-	return c.ip
-}
-
-// SetIP 设置监听的 IP
-func (c *BaseWebContainer) SetIP(ip string) {
-	c.ip = ip
-}
-
-// GetPort 返回监听的 Port
-func (c *BaseWebContainer) GetPort() int {
-	return c.port
-}
-
-// SetPort 设置监听的 Port
-func (c *BaseWebContainer) SetPort(port int) {
-	c.port = port
-}
-
-// EnableSSL 返回是否启用 SSL
-func (c *BaseWebContainer) EnableSSL() bool {
-	return c.enableSSL
-}
-
-// SetEnableSSL 设置是否启用 SSL
-func (c *BaseWebContainer) SetEnableSSL(enable bool) {
-	c.enableSSL = enable
-}
-
-// GetKeyFile 返回 KeyFile 的路径
-func (c *BaseWebContainer) GetKeyFile() string {
-	return c.keyFile
-}
-
-// SetKeyFile 设置 KeyFile 的路径
-func (c *BaseWebContainer) SetKeyFile(keyFile string) {
-	c.keyFile = keyFile
-}
-
-// GetCertFile 返回 CertFile 的路径
-func (c *BaseWebContainer) GetCertFile() string {
-	return c.certFile
-}
-
-// SetCertFile 设置 CertFile 的路径
-func (c *BaseWebContainer) SetCertFile(certFile string) {
-	c.certFile = certFile
+// Config 获取 Web 容器配置
+func (c *BaseWebContainer) Config() ContainerConfig {
+	return c.config
 }
 
 // GetFilters 返回过滤器列表
@@ -275,7 +209,7 @@ func (c *BaseWebContainer) PreStart() {
 // PrintMapper 打印路由注册信息
 func (c *BaseWebContainer) PrintMapper(m *Mapper) {
 	file, line, fnName := m.handler.FileLine()
-	SpringLogger.Infof("%v :%d %s -> %s:%d %s", GetMethod(m.method), c.port, m.path, file, line, fnName)
+	SpringLogger.Infof("%v :%d %s -> %s:%d %s", GetMethod(m.method), c.config.Port, m.path, file, line, fnName)
 }
 
 /////////////////// Invoke Handler //////////////////////

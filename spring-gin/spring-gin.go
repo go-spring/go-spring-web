@@ -38,9 +38,9 @@ type Container struct {
 }
 
 // NewContainer Container 的构造函数
-func NewContainer() *Container {
+func NewContainer(config SpringWeb.ContainerConfig) *Container {
 	c := &Container{
-		BaseWebContainer: SpringWeb.NewBaseWebContainer(),
+		BaseWebContainer: SpringWeb.NewBaseWebContainer(config),
 	}
 	return c
 }
@@ -93,8 +93,8 @@ func (c *Container) Start() {
 	go func() {
 		SpringLogger.Info("⇨ http server started on ", c.Address())
 		var err error
-		if c.EnableSSL() {
-			err = c.httpServer.ListenAndServeTLS(c.GetCertFile(), c.GetKeyFile())
+		if cfg := c.Config(); cfg.EnableSSL {
+			err = c.httpServer.ListenAndServeTLS(cfg.SSLCertFile, cfg.SSLKeyFile)
 		} else {
 			err = c.httpServer.ListenAndServe()
 		}

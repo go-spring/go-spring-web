@@ -38,6 +38,7 @@ import (
 )
 
 func TestWebContainer(t *testing.T) {
+	cfg := SpringWeb.ContainerConfig{Port: 8080}
 
 	SpringWeb.Swagger().
 		WithDescription("web container test").
@@ -48,7 +49,6 @@ func TestWebContainer(t *testing.T) {
 			SetProperty("age", *spec.Int32Property()))
 
 	testRun := func(c SpringWeb.WebContainer) {
-		c.SetPort(8080)
 
 		l := list.New()
 		f2 := testcases.NewNumberFilter(2, l)
@@ -189,7 +189,7 @@ func TestWebContainer(t *testing.T) {
 	}
 
 	t.Run("SpringGin", func(t *testing.T) {
-		c := SpringGin.NewContainer()
+		c := SpringGin.NewContainer(cfg)
 
 		fLogger := SpringGin.Filter(gin.Logger())
 		c.SetLoggerFilter(fLogger)
@@ -205,7 +205,7 @@ func TestWebContainer(t *testing.T) {
 	})
 
 	t.Run("SpringEcho", func(t *testing.T) {
-		c := SpringEcho.NewContainer()
+		c := SpringEcho.NewContainer(cfg)
 
 		fLogger := SpringEcho.Filter(middleware.Logger())
 		c.SetLoggerFilter(fLogger)
