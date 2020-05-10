@@ -53,6 +53,11 @@ func (s *WebServer) SetRecoveryFilter(filter Filter) *WebServer {
 	return s
 }
 
+// Containers 返回 WebContainer 实例列表
+func (s *WebServer) Containers() []WebContainer {
+	return s.containers
+}
+
 // AddContainer 添加 WebContainer 实例
 func (s *WebServer) AddContainer(container ...WebContainer) *WebServer {
 	s.containers = append(s.containers, container...)
