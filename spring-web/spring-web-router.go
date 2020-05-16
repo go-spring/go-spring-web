@@ -38,7 +38,7 @@ func (r *Router) Request(method uint32, path string, fn interface{}, filters ...
 	return r.mapping.Request(method, r.basePath+path, fn, filters...)
 }
 
-// GET 注册 GET 方法处理函数
+// Deprecated: 推荐使用 Get* 系列函数进行编译检查
 func (r *Router) GET(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.Request(MethodGet, path, fn, filters...)
 }
@@ -58,7 +58,7 @@ func (r *Router) GetBinding(path string, fn interface{}, filters ...Filter) *Map
 	return r.Request(MethodGet, path, BIND(fn), filters...)
 }
 
-// POST 注册 POST 方法处理函数
+// Deprecated: 推荐使用 Post* 系列函数进行编译检查
 func (r *Router) POST(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.Request(MethodPost, path, fn, filters...)
 }

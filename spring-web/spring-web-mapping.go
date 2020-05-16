@@ -41,7 +41,7 @@ type WebMapping interface {
 	// Request 注册任意 HTTP 方法处理函数
 	Request(method uint32, path string, fn interface{}, filters ...Filter) *Mapper
 
-	// GET 注册 GET 方法处理函数
+	// Deprecated: 推荐使用 Get* 系列函数进行编译检查
 	GET(path string, fn interface{}, filters ...Filter) *Mapper
 
 	// HandleGet 注册 GET 方法处理函数
@@ -53,7 +53,7 @@ type WebMapping interface {
 	// GetBinding 注册 GET 方法处理函数
 	GetBinding(path string, fn interface{}, filters ...Filter) *Mapper
 
-	// POST 注册 POST 方法处理函数
+	// Deprecated: 推荐使用 Post* 系列函数进行编译检查
 	POST(path string, fn interface{}, filters ...Filter) *Mapper
 
 	// HandlePost 注册 POST 方法处理函数
@@ -133,7 +133,7 @@ func (w *defaultWebMapping) Request(method uint32, path string, fn interface{}, 
 	return m
 }
 
-// GET 注册 GET 方法处理函数
+// Deprecated: 推荐使用 Get* 系列函数进行编译检查
 func (w *defaultWebMapping) GET(path string, fn interface{}, filters ...Filter) *Mapper {
 	return w.Request(MethodGet, path, fn, filters...)
 }
@@ -153,7 +153,7 @@ func (w *defaultWebMapping) GetBinding(path string, fn interface{}, filters ...F
 	return w.Request(MethodGet, path, BIND(fn), filters...)
 }
 
-// POST 注册 POST 方法处理函数
+// Deprecated: 推荐使用 Post* 系列函数进行编译检查
 func (w *defaultWebMapping) POST(path string, fn interface{}, filters ...Filter) *Mapper {
 	return w.Request(MethodPost, path, fn, filters...)
 }

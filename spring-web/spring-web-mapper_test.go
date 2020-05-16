@@ -24,7 +24,7 @@ import (
 )
 
 func TestMapper_Key(t *testing.T) {
+	fmt.Println(SpringWeb.NewMapper(SpringWeb.MethodAny, "/", nil, nil).Key())
 	fmt.Println(SpringWeb.NewMapper(SpringWeb.MethodGet, "/", nil, nil).Key())
 	fmt.Println(SpringWeb.NewMapper(SpringWeb.MethodGetPost, "/", nil, nil).Key())
-	fmt.Println(SpringWeb.NewMapper(SpringWeb.MethodAny, "/", nil, nil).Key())
 }

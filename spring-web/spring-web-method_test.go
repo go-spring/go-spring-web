@@ -46,7 +46,7 @@ func GetMethodViaCache(method uint32) []string {
 }
 
 func BenchmarkGetMethod(b *testing.B) {
-	// 事实证明通过缓存不一定能提高效率
+	// 测试结论：使用缓存不一定能提高效率
 
 	b.Run("1", func(b *testing.B) {
 		SpringWeb.GetMethod(SpringWeb.MethodGet)
