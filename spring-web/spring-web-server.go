@@ -35,16 +35,31 @@ func NewWebServer() *WebServer {
 	return &WebServer{}
 }
 
+// Filters 获取过滤器列表
+func (s *WebServer) Filters() []Filter {
+	return s.filters
+}
+
 // AddFilter 添加共用的普通过滤器
 func (s *WebServer) AddFilter(filter ...Filter) *WebServer {
 	s.filters = append(s.filters, filter...)
 	return s
 }
 
+// GetLoggerFilter 获取 Logger Filter
+func (s *WebServer) GetLoggerFilter() Filter {
+	return s.loggerFilter
+}
+
 // SetLoggerFilter 设置共用的日志过滤器
 func (s *WebServer) SetLoggerFilter(filter Filter) *WebServer {
 	s.loggerFilter = filter
 	return s
+}
+
+// GetRecoveryFilter 获取 Recovery Filter
+func (s *WebServer) GetRecoveryFilter() Filter {
+	return s.recoveryFilter
 }
 
 // SetRecoveryFilter 设置共用的恢复过滤器
