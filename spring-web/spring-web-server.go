@@ -46,6 +46,11 @@ func (s *WebServer) AddFilter(filter ...Filter) *WebServer {
 	return s
 }
 
+// ResetFilters 重新设置过滤器列表
+func (s *WebServer) ResetFilters(filters []Filter) {
+	s.filters = filters
+}
+
 // GetLoggerFilter 获取 Logger Filter
 func (s *WebServer) GetLoggerFilter() Filter {
 	return s.loggerFilter
@@ -95,7 +100,7 @@ func (s *WebServer) Start() {
 
 		// 添加 Server 的普通过滤器给 Container
 		filters := append(s.filters, c.GetFilters()...)
-		c.setFilters(filters)
+		c.ResetFilters(filters)
 
 		c.Start()
 	}

@@ -64,8 +64,8 @@ type WebContainer interface {
 	// GetFilters 返回过滤器列表
 	GetFilters() []Filter
 
-	// setFilters 设置过滤器列表
-	setFilters(filters []Filter)
+	// ResetFilters 重新设置过滤器列表
+	ResetFilters(filters []Filter)
 
 	// AddFilter 添加过滤器
 	AddFilter(filter ...Filter)
@@ -136,8 +136,8 @@ func (c *BaseWebContainer) GetFilters() []Filter {
 	return c.filters
 }
 
-// setFilters 设置过滤器列表
-func (c *BaseWebContainer) setFilters(filters []Filter) {
+// ResetFilters 重新设置过滤器列表
+func (c *BaseWebContainer) ResetFilters(filters []Filter) {
 	c.filters = filters
 }
 
