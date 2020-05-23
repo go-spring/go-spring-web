@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/go-spring/go-spring-web/spring-web"
@@ -28,6 +29,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
+	binding.Validator = SpringWeb.NewBuiltInValidator()
 }
 
 // Container 适配 gin 的 Web 容器

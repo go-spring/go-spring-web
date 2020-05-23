@@ -151,7 +151,7 @@ func (s *Service) Panic(ctx SpringWeb.WebContext) {
 type RpcService struct{}
 
 type EchoRequest struct {
-	Str string `query:"str"`
+	Str string `query:"str" validate:"required,len=4"`
 }
 
 type EchoResponse struct {

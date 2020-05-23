@@ -236,7 +236,11 @@ func (ctx *Context) Cookies() []*http.Cookie {
 
 // Bind binds the request body into provided type `i`.
 func (ctx *Context) Bind(i interface{}) error {
-	return ctx.echoContext.Bind(i)
+	if err := ctx.echoContext.Bind(i); err == nil {
+		return ctx.echoContext.Validate(i)
+	} else {
+		return err
+	}
 }
 
 // ResponseWriter returns `http.ResponseWriter`.
