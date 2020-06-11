@@ -39,6 +39,17 @@ func NewMapper(method uint32, path string, fn Handler, filters []Filter) *Mapper
 	}
 }
 
+// WithSwagger 设置 swagger operation
+func (m *Mapper) WithSwagger(swager *Operation) *Mapper {
+	m.swagger = swager
+	return m
+}
+
+// GetSwagger 返回 swagger operation
+func (m *Mapper) GetSwagger() *Operation {
+	return m.swagger
+}
+
 // Key 返回 Mapper 的标识符
 func (m *Mapper) Key() string {
 	return fmt.Sprintf("0x%.4x@%s", m.method, m.path)
