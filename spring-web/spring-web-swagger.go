@@ -76,6 +76,11 @@ func (s *swagger) ReadDoc() string {
 	}
 }
 
+// Get the info of swagger
+func (s *swagger) GetInfo() *spec.Info {
+	return s.Info
+}
+
 // WithID 设置应用 ID
 func (s *swagger) WithID(id string) *swagger {
 	s.ID = id
@@ -433,6 +438,14 @@ type Operation struct {
 // NewOperation creates a new operation instance.
 func NewOperation(id string) *Operation {
 	return &Operation{operation: spec.NewOperation(id)}
+}
+
+func (o *Operation) GetDescription() string {
+	return o.operation.Description
+}
+
+func (o *Operation) GetOperation() *spec.Operation {
+	return o.operation
 }
 
 // WithID sets the ID property on this operation, allows for chaining.
