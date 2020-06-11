@@ -76,11 +76,6 @@ func (s *swagger) ReadDoc() string {
 	}
 }
 
-// Get the info of swagger
-func (s *swagger) GetInfo() *spec.Info {
-	return s.Info
-}
-
 // WithID 设置应用 ID
 func (s *swagger) WithID(id string) *swagger {
 	s.ID = id
@@ -185,19 +180,19 @@ func (s *swagger) AddPath(path string, method uint32, op *Operation,
 	for _, m := range GetMethod(method) {
 		switch m {
 		case http.MethodGet:
-			pathItem.Get = op.operation
+			pathItem.Get = op.Operation
 		case http.MethodPost:
-			pathItem.Post = op.operation
+			pathItem.Post = op.Operation
 		case http.MethodPut:
-			pathItem.Put = op.operation
+			pathItem.Put = op.Operation
 		case http.MethodDelete:
-			pathItem.Delete = op.operation
+			pathItem.Delete = op.Operation
 		case http.MethodOptions:
-			pathItem.Options = op.operation
+			pathItem.Options = op.Operation
 		case http.MethodHead:
-			pathItem.Head = op.operation
+			pathItem.Head = op.Operation
 		case http.MethodPatch:
-			pathItem.Patch = op.operation
+			pathItem.Patch = op.Operation
 		}
 	}
 
@@ -431,110 +426,102 @@ type bindParam struct {
 
 // Operation 封装 *spec.Operation 对象，提供更多功能
 type Operation struct {
-	operation *spec.Operation
+	*spec.Operation
 	bindParam *bindParam
 }
 
 // NewOperation creates a new operation instance.
 func NewOperation(id string) *Operation {
-	return &Operation{operation: spec.NewOperation(id)}
-}
-
-func (o *Operation) GetDescription() string {
-	return o.operation.Description
-}
-
-func (o *Operation) GetOperation() *spec.Operation {
-	return o.operation
+	return &Operation{Operation: spec.NewOperation(id)}
 }
 
 // WithID sets the ID property on this operation, allows for chaining.
 func (o *Operation) WithID(id string) *Operation {
-	o.operation.WithID(id)
+	o.Operation.WithID(id)
 	return o
 }
 
 // WithDescription sets the description on this operation, allows for chaining
 func (o *Operation) WithDescription(description string) *Operation {
-	o.operation.WithDescription(description)
+	o.Operation.WithDescription(description)
 	return o
 }
 
 // WithSummary sets the summary on this operation, allows for chaining
 func (o *Operation) WithSummary(summary string) *Operation {
-	o.operation.WithSummary(summary)
+	o.Operation.WithSummary(summary)
 	return o
 }
 
 // WithExternalDocs sets/removes the external docs for/from this operation.
 func (o *Operation) WithExternalDocs(description, url string) *Operation {
-	o.operation.WithExternalDocs(description, url)
+	o.Operation.WithExternalDocs(description, url)
 	return o
 }
 
 // Deprecate marks the operation as deprecated
 func (o *Operation) Deprecate() *Operation {
-	o.operation.Deprecate()
+	o.Operation.Deprecate()
 	return o
 }
 
 // Undeprecate marks the operation as not deprecated
 func (o *Operation) Undeprecate() *Operation {
-	o.operation.Undeprecate()
+	o.Operation.Undeprecate()
 	return o
 }
 
 // WithConsumes adds media types for incoming body values
 func (o *Operation) WithConsumes(mediaTypes ...string) *Operation {
-	o.operation.WithConsumes(mediaTypes...)
+	o.Operation.WithConsumes(mediaTypes...)
 	return o
 }
 
 // WithProduces adds media types for outgoing body values
 func (o *Operation) WithProduces(mediaTypes ...string) *Operation {
-	o.operation.WithProduces(mediaTypes...)
+	o.Operation.WithProduces(mediaTypes...)
 	return o
 }
 
 // WithTags adds tags for this operation
 func (o *Operation) WithTags(tags ...string) *Operation {
-	o.operation.WithTags(tags...)
+	o.Operation.WithTags(tags...)
 	return o
 }
 
 // SetSchemes 设置服务协议
 func (o *Operation) WithSchemes(schemes ...string) *Operation {
-	o.operation.Schemes = schemes
+	o.Operation.Schemes = schemes
 	return o
 }
 
 // AddParam adds a parameter to this operation
 func (o *Operation) AddParam(param *spec.Parameter) *Operation {
-	o.operation.AddParam(param)
+	o.Operation.AddParam(param)
 	return o
 }
 
 // RemoveParam removes a parameter from the operation
 func (o *Operation) RemoveParam(name, in string) *Operation {
-	o.operation.RemoveParam(name, in)
+	o.Operation.RemoveParam(name, in)
 	return o
 }
 
 // SecuredWith adds a security scope to this operation.
 func (o *Operation) SecuredWith(name string, scopes ...string) *Operation {
-	o.operation.SecuredWith(name, scopes...)
+	o.Operation.SecuredWith(name, scopes...)
 	return o
 }
 
 // WithDefaultResponse adds a default response to the operation.
 func (o *Operation) WithDefaultResponse(response *spec.Response) *Operation {
-	o.operation.WithDefaultResponse(response)
+	o.Operation.WithDefaultResponse(response)
 	return o
 }
 
 // RespondsWith adds a status code response to the operation.
 func (o *Operation) RespondsWith(code int, response *spec.Response) *Operation {
-	o.operation.RespondsWith(code, response)
+	o.Operation.RespondsWith(code, response)
 	return o
 }
 
