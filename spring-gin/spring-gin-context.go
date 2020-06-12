@@ -43,7 +43,10 @@ func GinContext(webCtx SpringWeb.WebContext) *gin.Context {
 
 // WebContext 将 *gin.Context 转换为 SpringWeb.WebContext
 func WebContext(ginCtx *gin.Context) SpringWeb.WebContext {
-	return ginCtx.MustGet("@WebCtx").(*Context)
+	if webCtx, _ := ginCtx.Get("@WebCtx"); webCtx != nil {
+		return webCtx.(*Context)
+	}
+	return nil
 }
 
 // Context 适配 gin 的 Web 上下文
@@ -53,9 +56,6 @@ type Context struct {
 
 	// ginContext gin 上下文对象
 	ginContext *gin.Context
-
-	// handlerPath 处理器 Path
-	handlerPath string
 
 	// handlerFunc Web 处理函数
 	handlerFunc SpringWeb.Handler
@@ -68,7 +68,7 @@ type Context struct {
 }
 
 // NewContext Context 的构造函数
-func NewContext(path string, fn SpringWeb.Handler, wildCardName string, ginCtx *gin.Context) *Context {
+func NewContext(fn SpringWeb.Handler, wildCardName string, ginCtx *gin.Context) *Context {
 
 	ctx := ginCtx.Request.Context()
 	logCtx := SpringLogger.NewDefaultLoggerContext(ctx)
@@ -76,7 +76,6 @@ func NewContext(path string, fn SpringWeb.Handler, wildCardName string, ginCtx *
 	webCtx := &Context{
 		LoggerContext: logCtx,
 		ginContext:    ginCtx,
-		handlerPath:   path,
 		handlerFunc:   fn,
 		wildCardName:  wildCardName,
 	}
@@ -152,7 +151,7 @@ func (ctx *Context) ClientIP() string {
 
 // Path returns the registered path for the handler.
 func (ctx *Context) Path() string {
-	return ctx.handlerPath
+	return ctx.ginContext.FullPath()
 }
 
 // Handler returns the matched handler by router.

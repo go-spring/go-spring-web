@@ -307,7 +307,7 @@ func TestEchoServer(t *testing.T) {
 				webCtx.JSON(http.StatusOK, map[string]string{
 					"a": "1",
 				})
-			}), nil))
+			}), "", nil))
 
 		testRun(e)
 	})
@@ -359,7 +359,7 @@ func TestGinServer(t *testing.T) {
 		g := server()
 
 		// 配合 gin 框架使用
-		g.GET("/*"+SpringWeb.DefaultWildCardName, SpringGin.HandlerWrapper("/",
+		g.GET("/*"+SpringWeb.DefaultWildCardName, SpringGin.HandlerWrapper(
 			SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
 				assert.Equal(t, "gin", webCtx.PathParam("*"))
 				assert.Equal(t, []string{"*"}, webCtx.PathParamNames())

@@ -32,17 +32,24 @@ func init() {
 	binding.Validator = SpringWeb.NewBuiltInValidator()
 }
 
+type route struct {
+	fn           SpringWeb.Handler // Web 处理函数
+	wildCardName string            // 通配符的名称
+}
+
 // Container 适配 gin 的 Web 容器
 type Container struct {
 	*SpringWeb.BaseWebContainer
 	httpServer *http.Server
 	ginEngine  *gin.Engine
+	routes     map[string]route // 记录所有通过 spring echo 注册的路由
 }
 
 // NewContainer Container 的构造函数
 func NewContainer(config SpringWeb.ContainerConfig) *Container {
 	c := &Container{
 		BaseWebContainer: SpringWeb.NewBaseWebContainer(config),
+		routes:           make(map[string]route),
 	}
 	return c
 }
@@ -74,18 +81,39 @@ func (c *Container) Start() {
 
 	cFilters = append(cFilters, c.GetFilters()...)
 
-	// TODO 添加全局过滤器
+	// 添加容器级别的过滤器，这样在路由不存在时也会调用这些过滤器
+	c.ginEngine.Use(func(ginCtx *gin.Context) {
+
+		// 如果 method+path 是 spring gin 注册过的，那么可以保证 WebContext
+		// 的 Handler 是准确的，否则是不准确的，请优先使用 spring gin 注册路由。
+		key := ginCtx.Request.Method + ginCtx.FullPath()
+		if r, ok := c.routes[key]; ok {
+			NewContext(r.fn, r.wildCardName, ginCtx)
+		} else {
+			NewContext(nil, "", ginCtx)
+		}
+	})
+
+	for _, filter := range cFilters {
+		f := filter // 避免延迟绑定
+		c.ginEngine.Use(func(ginCtx *gin.Context) {
+			f.Invoke(WebContext(ginCtx), &ginFilterChain{ginCtx})
+		})
+	}
 
 	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)
 
 		path, wildCardName := SpringWeb.ToPathStyle(mapper.Path(), SpringWeb.GinPathStyle)
-		filters := append(cFilters, mapper.Filters()...)
-		handlers := HandlerWrapper(mapper.Path(), mapper.Handler(), wildCardName, filters)
+		handlers := HandlerWrapper(mapper.Handler(), wildCardName, mapper.Filters())
 
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			c.ginEngine.Handle(method, path, handlers...)
+			c.routes[method+path] = route{
+				fn:           mapper.Handler(),
+				wildCardName: wildCardName,
+			}
 		}
 	}
 
@@ -118,12 +146,14 @@ func (c *Container) Stop(ctx context.Context) {
 }
 
 // HandlerWrapper Web 处理函数包装器
-func HandlerWrapper(path string, fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) []gin.HandlerFunc {
+func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) []gin.HandlerFunc {
 	var handlers []gin.HandlerFunc
 
 	// 建立 WebContext 和 GinContext 之间的关联
 	handlers = append(handlers, func(ginCtx *gin.Context) {
-		NewContext(path, fn, wildCardName, ginCtx)
+		if WebContext(ginCtx) == nil {
+			NewContext(fn, wildCardName, ginCtx)
+		}
 	})
 
 	// 封装过滤器

@@ -100,7 +100,7 @@ func (c *Container) Start() {
 		c.PrintMapper(mapper)
 
 		path, wildCardName := SpringWeb.ToPathStyle(mapper.Path(), SpringWeb.EchoPathStyle)
-		fn := HandlerWrapper(mapper.Handler(), mapper.Filters())
+		fn := HandlerWrapper(mapper.Handler(), wildCardName, mapper.Filters())
 
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			c.echoServer.Add(method, path, fn)
@@ -135,9 +135,13 @@ func (c *Container) Stop(ctx context.Context) {
 }
 
 // HandlerWrapper Web 处理函数包装器
-func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.HandlerFunc {
+func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
-		SpringWeb.InvokeHandler(WebContext(echoCtx), fn, filters)
+		webCtx := WebContext(echoCtx)
+		if webCtx == nil {
+			webCtx = NewContext(fn, wildCardName, echoCtx)
+		}
+		SpringWeb.InvokeHandler(webCtx, fn, filters)
 		return nil
 	}
 }
