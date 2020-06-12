@@ -18,6 +18,7 @@ package SpringEcho
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-parent/spring-utils"
@@ -68,13 +69,31 @@ func (c *Container) Start() {
 
 	cFilters = append(cFilters, c.GetFilters()...)
 
+	// 添加容器级别的过滤器，这样在路由不存在时也会调用这些过滤器
+	c.echoServer.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(echoCtx echo.Context) error {
+
+			// TODO 找到更好的方式判断是否是 echo 的内置函数
+			_, _, fnName := SpringUtils.FileLine(next)
+			if strings.HasPrefix(fnName, "glob.") {
+				NewContext(nil, "", echoCtx)
+			} else {
+				_ = next(echoCtx)
+			}
+
+			filters := append(cFilters, SpringWeb.HandlerFilter(Echo(next)))
+			chain := SpringWeb.NewDefaultFilterChain(filters)
+			chain.Next(WebContext(echoCtx))
+			return nil
+		}
+	})
+
 	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)
 
 		path, wildCardName := SpringWeb.ToPathStyle(mapper.Path(), SpringWeb.EchoPathStyle)
-		filters := append(cFilters, mapper.Filters()...)
-		handler := HandlerWrapper(mapper.Handler(), wildCardName, filters)
+		handler := HandlerWrapper(mapper.Handler(), wildCardName, mapper.Filters())
 
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
 			c.echoServer.Add(method, path, handler)
@@ -107,8 +126,13 @@ func (c *Container) Stop(ctx context.Context) {
 // HandlerWrapper Web 处理函数包装器
 func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
-		webCtx := NewContext(fn, wildCardName, echoCtx)
-		SpringWeb.InvokeHandler(webCtx, fn, filters)
+		// 第一次调用的时候生成 SpringWeb.WebContext 对象
+		if called := echoCtx.Get("@Called"); called == nil {
+			NewContext(fn, wildCardName, echoCtx)
+			echoCtx.Set("@Called", 1)
+		} else {
+			SpringWeb.InvokeHandler(WebContext(echoCtx), fn, filters)
+		}
 		return nil
 	}
 }

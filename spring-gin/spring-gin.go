@@ -74,6 +74,8 @@ func (c *Container) Start() {
 
 	cFilters = append(cFilters, c.GetFilters()...)
 
+	// TODO 添加全局过滤器
+
 	// 映射 Web 处理函数
 	for _, mapper := range c.Mappers() {
 		c.PrintMapper(mapper)

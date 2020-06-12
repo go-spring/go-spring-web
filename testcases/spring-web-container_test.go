@@ -50,71 +50,8 @@ func TestWebContainer(t *testing.T) {
 
 	testRun := func(c SpringWeb.WebContainer) {
 
-		l := list.New()
-		f2 := testcases.NewNumberFilter(2, l)
-		f5 := testcases.NewNumberFilter(5, l)
-		f7 := testcases.NewNumberFilter(7, l)
-
+		// 添加容器过滤器，这些过滤器在路由未注册时也仍会执行
 		c.AddFilter(&testcases.LogFilter{}, &testcases.GlobalInterruptFilter{})
-
-		s := testcases.NewService()
-
-		c.GetMapping("/get", s.Get, f5).Swagger("").
-			WithDescription("get").
-			AddParam(spec.QueryParam("key")).
-			WithConsumes(SpringWeb.MIMEApplicationForm).
-			WithProduces(SpringWeb.MIMEApplicationJSON).
-			RespondsWith(http.StatusOK, spec.NewResponse().
-				WithSchema(spec.StringProperty()).
-				AddExample(SpringWeb.MIMEApplicationJSON, 2))
-
-		// 等价于 c.GET("/global_interrupt", s.Get)
-		c.HandleGet("/global_interrupt", SpringWeb.METHOD(s, "Get"))
-
-		c.GetMapping("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
-
-		// 障眼法
-		r := c.Route("", f2, f7)
-		{
-			r.PostMapping("/set", s.Set).Swagger("").
-				WithDescription("set").
-				//WithConsumes(SpringWeb.MIMEApplicationForm).
-				WithConsumes(SpringWeb.MIMEApplicationJSON).
-				//AddParam(spec.QueryParam("name")).
-				//AddParam(spec.QueryParam("age")).
-				AddParam(&spec.Parameter{
-					ParamProps: spec.ParamProps{
-						Name:   "body",
-						In:     "body",
-						Schema: spec.RefSchema("#/definitions/Set"),
-					},
-				}).
-				RespondsWith(http.StatusOK, nil)
-
-			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
-		}
-
-		c.GetMapping("/wild_1/*", func(webCtx SpringWeb.WebContext) {
-			assert.Equal(t, "anything", webCtx.PathParam("*"))
-			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
-			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
-		})
-
-		c.GetMapping("/wild_2/*none", func(webCtx SpringWeb.WebContext) {
-			assert.Equal(t, "anything", webCtx.PathParam("*"))
-			assert.Equal(t, "anything", webCtx.PathParam("none"))
-			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
-			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
-		})
-
-		c.GetMapping("/wild_3/{*}", func(webCtx SpringWeb.WebContext) {
-			assert.Equal(t, "anything", webCtx.PathParam("*"))
-			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
-			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
-		})
 
 		// 启动 web 服务器
 		c.Start()
@@ -188,102 +125,252 @@ func TestWebContainer(t *testing.T) {
 		time.Sleep(time.Millisecond * 50)
 	}
 
-	t.Run("SpringGin", func(t *testing.T) {
+	prepare := func(c SpringWeb.WebContainer) SpringWeb.WebContainer {
+
+		l := list.New()
+		f2 := testcases.NewNumberFilter(2, l)
+		f5 := testcases.NewNumberFilter(5, l)
+		f7 := testcases.NewNumberFilter(7, l)
+
+		s := testcases.NewService()
+
+		c.GetMapping("/get", s.Get, f5).Swagger("").
+			WithDescription("get").
+			AddParam(spec.QueryParam("key")).
+			WithConsumes(SpringWeb.MIMEApplicationForm).
+			WithProduces(SpringWeb.MIMEApplicationJSON).
+			RespondsWith(http.StatusOK, spec.NewResponse().
+				WithSchema(spec.StringProperty()).
+				AddExample(SpringWeb.MIMEApplicationJSON, 2))
+
+		// 等价于 c.GET("/global_interrupt", s.Get)
+		c.HandleGet("/global_interrupt", SpringWeb.METHOD(s, "Get"))
+
+		c.GetMapping("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
+
+		// 障眼法
+		r := c.Route("", f2, f7)
+		{
+			r.PostMapping("/set", s.Set).Swagger("").
+				WithDescription("set").
+				//WithConsumes(SpringWeb.MIMEApplicationForm).
+				WithConsumes(SpringWeb.MIMEApplicationJSON).
+				//AddParam(spec.QueryParam("name")).
+				//AddParam(spec.QueryParam("age")).
+				AddParam(&spec.Parameter{
+					ParamProps: spec.ParamProps{
+						Name:   "body",
+						In:     "body",
+						Schema: spec.RefSchema("#/definitions/Set"),
+					},
+				}).
+				RespondsWith(http.StatusOK, nil)
+
+			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
+		}
+
+		c.GetMapping("/wild_1/*", func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "anything", webCtx.PathParam("*"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
+		})
+
+		c.GetMapping("/wild_2/*none", func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "anything", webCtx.PathParam("*"))
+			assert.Equal(t, "anything", webCtx.PathParam("none"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
+		})
+
+		c.GetMapping("/wild_3/{*}", func(webCtx SpringWeb.WebContext) {
+			assert.Equal(t, "anything", webCtx.PathParam("*"))
+			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
+			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
+		})
+
+		return c
+	}
+
+	// 创建 gin 容器
+	ginServer := func() SpringWeb.WebContainer {
 		c := SpringGin.NewContainer(cfg)
 
+		// 使用 gin 原生的中间件
 		fLogger := SpringGin.Filter(gin.Logger())
 		c.SetLoggerFilter(fLogger)
 
+		// 使用 gin 原生的中间件
 		fRecover := SpringGin.Filter(gin.Recovery())
 		c.SetRecoveryFilter(fRecover)
+
+		return c
+	}
+
+	t.Run("gin no route", func(t *testing.T) {
+		testRun(ginServer())
+	})
+
+	t.Run("gin wild route", func(t *testing.T) {
+		c := ginServer()
 
 		c.HandleGet("/native", SpringGin.Gin(func(ctx *gin.Context) {
 			ctx.String(http.StatusOK, "gin")
 		}))
 
-		testRun(c)
+		testRun(prepare(c))
 	})
 
-	t.Run("SpringEcho", func(t *testing.T) {
+	// 创建 echo 容器
+	echoServer := func() SpringWeb.WebContainer {
 		c := SpringEcho.NewContainer(cfg)
 
+		// 使用 echo 原生的中间件
 		fLogger := SpringEcho.Filter(middleware.Logger())
 		c.SetLoggerFilter(fLogger)
 
+		// 使用 echo 原生的中间件
 		fRecover := SpringEcho.Filter(middleware.Recover())
 		c.SetRecoveryFilter(fRecover)
+
+		return c
+	}
+
+	t.Run("echo no route", func(t *testing.T) {
+		testRun(echoServer())
+	})
+
+	t.Run("echo wild route", func(t *testing.T) {
+		c := echoServer()
 
 		c.HandleGet("/native", SpringEcho.Echo(func(ctx echo.Context) error {
 			return ctx.String(http.StatusOK, "echo")
 		}))
 
-		testRun(c)
+		testRun(prepare(c))
 	})
 }
 
 func TestEchoServer(t *testing.T) {
-	e := echo.New()
-	e.HideBanner = true
 
-	// 配合 echo 框架使用
-	e.GET("/*", SpringEcho.HandlerWrapper(
-		SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
-			assert.Equal(t, "echo", webCtx.PathParam("*"))
-			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-			assert.Equal(t, []string{"echo"}, webCtx.PathParamValues())
-			webCtx.JSON(http.StatusOK, map[string]string{
-				"a": "1",
-			})
-		}), "", nil))
+	// 创建 Echo 服务器
+	server := func() *echo.Echo {
 
-	go func() {
-		address := ":8080"
-		err := e.Start(address)
-		fmt.Println("exit http server on", address, "return", err)
-	}()
+		e := echo.New()
+		e.HideBanner = true
 
-	time.Sleep(100 * time.Millisecond)
+		// echo 的全局中间件在路由未注册时仍然可用
+		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				fmt.Println("echo::use::0")
+				defer fmt.Println("echo::use::1")
+				return next(c)
+			}
+		})
 
-	resp, _ := http.Get("http://127.0.0.1:8080/echo")
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		return e
+	}
 
-	_ = e.Shutdown(context.Background())
-	time.Sleep(100 * time.Millisecond)
+	testRun := func(e *echo.Echo) {
+
+		go func() {
+			address := ":8080"
+			err := e.Start(address)
+			fmt.Println("exit http server on", address, "return", err)
+		}()
+
+		time.Sleep(100 * time.Millisecond)
+
+		resp, _ := http.Get("http://127.0.0.1:8080/echo")
+		body, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+		_ = e.Shutdown(context.Background())
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	t.Run("no route", func(t *testing.T) {
+		testRun(server())
+	})
+
+	t.Run("wild route", func(t *testing.T) {
+		e := server()
+
+		// 配合 echo 框架使用
+		e.GET("/*", SpringEcho.HandlerWrapper(
+			SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
+				assert.Equal(t, "echo", webCtx.PathParam("*"))
+				assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+				assert.Equal(t, []string{"echo"}, webCtx.PathParamValues())
+				webCtx.JSON(http.StatusOK, map[string]string{
+					"a": "1",
+				})
+			}), "", nil))
+
+		testRun(e)
+	})
 }
 
 func TestGinServer(t *testing.T) {
-	g := gin.New()
 
-	httpServer := &http.Server{
-		Addr:    ":8080",
-		Handler: g,
+	// 创建 gin 服务器
+	server := func() *gin.Engine {
+		g := gin.New()
+
+		// gin 的全局中间件在路由未注册时仍然可用
+		g.Use(func(c *gin.Context) {
+			fmt.Println("gin::use::0")
+			defer fmt.Println("gin::use::1")
+			c.Next()
+		})
+
+		return g
 	}
 
-	// 配合 gin 框架使用
-	g.GET("/*"+SpringWeb.DefaultWildCardName, SpringGin.HandlerWrapper("/",
-		SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
-			assert.Equal(t, "gin", webCtx.PathParam("*"))
-			assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
-			assert.Equal(t, []string{"gin"}, webCtx.PathParamValues())
-			webCtx.JSON(http.StatusOK, map[string]string{
-				"a": "1",
-			})
-		}), SpringWeb.DefaultWildCardName, nil)...)
+	testRun := func(g *gin.Engine) {
 
-	go func() {
-		err := httpServer.ListenAndServe()
-		fmt.Println("exit http server on", httpServer.Addr, "return", err)
-	}()
+		httpServer := &http.Server{
+			Addr:    ":8080",
+			Handler: g,
+		}
 
-	time.Sleep(100 * time.Millisecond)
+		go func() {
+			err := httpServer.ListenAndServe()
+			fmt.Println("exit http server on", httpServer.Addr, "return", err)
+		}()
 
-	resp, _ := http.Get("http://127.0.0.1:8080/gin")
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		time.Sleep(100 * time.Millisecond)
 
-	_ = httpServer.Shutdown(context.Background())
-	time.Sleep(100 * time.Millisecond)
+		resp, _ := http.Get("http://127.0.0.1:8080/gin")
+		body, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+		_ = httpServer.Shutdown(context.Background())
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	t.Run("no route", func(t *testing.T) {
+		testRun(server())
+	})
+
+	t.Run("wild route", func(t *testing.T) {
+		g := server()
+
+		// 配合 gin 框架使用
+		g.GET("/*"+SpringWeb.DefaultWildCardName, SpringGin.HandlerWrapper("/",
+			SpringWeb.FUNC(func(webCtx SpringWeb.WebContext) {
+				assert.Equal(t, "gin", webCtx.PathParam("*"))
+				assert.Equal(t, []string{"*"}, webCtx.PathParamNames())
+				assert.Equal(t, []string{"gin"}, webCtx.PathParamValues())
+				webCtx.JSON(http.StatusOK, map[string]string{
+					"a": "1",
+				})
+			}), SpringWeb.DefaultWildCardName, nil)...)
+
+		testRun(g)
+	})
 }
 
 func TestHttpServer(t *testing.T) {
