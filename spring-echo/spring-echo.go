@@ -18,7 +18,6 @@ package SpringEcho
 
 import (
 	"context"
-	"strings"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
 	"github.com/go-spring/go-spring-parent/spring-utils"
@@ -26,16 +25,23 @@ import (
 	"github.com/labstack/echo"
 )
 
+type route struct {
+	fn           SpringWeb.Handler // Web 处理函数
+	wildCardName string            // 通配符的名称
+}
+
 // Container 适配 echo 的 Web 容器
 type Container struct {
 	*SpringWeb.BaseWebContainer
 	echoServer *echo.Echo
+	routes     map[string]route // 记录所有通过 spring echo 注册的路由
 }
 
 // NewContainer Container 的构造函数
 func NewContainer(config SpringWeb.ContainerConfig) *Container {
 	c := &Container{
 		BaseWebContainer: SpringWeb.NewBaseWebContainer(config),
+		routes:           make(map[string]route),
 	}
 	return c
 }
@@ -73,12 +79,13 @@ func (c *Container) Start() {
 	c.echoServer.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(echoCtx echo.Context) error {
 
-			// TODO 找到更好的方式判断是否是 echo 的内置函数
-			_, _, fnName := SpringUtils.FileLine(next)
-			if strings.HasPrefix(fnName, "glob.") {
-				NewContext(nil, "", echoCtx)
+			// 如果 method+path 是 spring echo 注册过的，那么可以保证 WebContext
+			// 的 Handler 是准确的，否则是不准确的，请优先使用 spring echo 注册路由。
+			key := echoCtx.Request().Method + echoCtx.Path()
+			if r, ok := c.routes[key]; ok {
+				NewContext(r.fn, r.wildCardName, echoCtx)
 			} else {
-				_ = next(echoCtx)
+				NewContext(nil, "", echoCtx)
 			}
 
 			filters := append(cFilters, SpringWeb.HandlerFilter(Echo(next)))
@@ -93,10 +100,14 @@ func (c *Container) Start() {
 		c.PrintMapper(mapper)
 
 		path, wildCardName := SpringWeb.ToPathStyle(mapper.Path(), SpringWeb.EchoPathStyle)
-		handler := HandlerWrapper(mapper.Handler(), wildCardName, mapper.Filters())
+		fn := HandlerWrapper(mapper.Handler(), mapper.Filters())
 
 		for _, method := range SpringWeb.GetMethod(mapper.Method()) {
-			c.echoServer.Add(method, path, handler)
+			c.echoServer.Add(method, path, fn)
+			c.routes[method+path] = route{
+				fn:           mapper.Handler(),
+				wildCardName: wildCardName,
+			}
 		}
 	}
 
@@ -124,15 +135,9 @@ func (c *Container) Stop(ctx context.Context) {
 }
 
 // HandlerWrapper Web 处理函数包装器
-func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringWeb.Filter) echo.HandlerFunc {
+func HandlerWrapper(fn SpringWeb.Handler, filters []SpringWeb.Filter) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
-		// 第一次调用的时候生成 SpringWeb.WebContext 对象
-		if called := echoCtx.Get("@Called"); called == nil {
-			NewContext(fn, wildCardName, echoCtx)
-			echoCtx.Set("@Called", 1)
-		} else {
-			SpringWeb.InvokeHandler(WebContext(echoCtx), fn, filters)
-		}
+		SpringWeb.InvokeHandler(WebContext(echoCtx), fn, filters)
 		return nil
 	}
 }

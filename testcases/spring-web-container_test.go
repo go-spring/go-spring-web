@@ -307,7 +307,7 @@ func TestEchoServer(t *testing.T) {
 				webCtx.JSON(http.StatusOK, map[string]string{
 					"a": "1",
 				})
-			}), "", nil))
+			}), nil))
 
 		testRun(e)
 	})
