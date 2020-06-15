@@ -194,3 +194,6 @@ func (s *RpcService) Panic(ctx SpringWeb.WebContext) interface{} {
 
 	return "ok"
 }
+
+func (s *RpcService) NoParam() {
+}

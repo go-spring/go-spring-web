@@ -59,35 +59,51 @@ func (b *bindHandler) Invoke(ctx WebContext) {
 		)
 
 		// 获取待绑定的值
-		if b.bindType.Kind() == reflect.Ptr {
-			bindVal = reflect.New(b.bindType.Elem())
-			err = ctx.Bind(bindVal.Interface())
-		} else {
-			bindVal = reflect.New(b.bindType)
-			err = ctx.Bind(bindVal.Interface())
-			bindVal = bindVal.Elem()
-		}
+		if b.bindType != nil {
 
-		SpringError.ERROR.Panic(err).When(err != nil)
+			if b.bindType.Kind() == reflect.Ptr {
+				bindVal = reflect.New(b.bindType.Elem())
+				err = ctx.Bind(bindVal.Interface())
+			} else {
+				bindVal = reflect.New(b.bindType)
+				err = ctx.Bind(bindVal.Interface())
+				bindVal = bindVal.Elem()
+			}
+
+			SpringError.ERROR.Panic(err).When(err != nil)
+		}
 
 		var in []reflect.Value
 
 		// 组装请求参数
 		if b.ctxIndex == 0 {
+			// func(WebContext)Response
 			// func(WebContext,Request)Response
 			in = append(in, reflect.ValueOf(ctx))
-			in = append(in, bindVal)
+			if bindVal.IsValid() {
+				in = append(in, bindVal)
+			}
 		} else if b.ctxIndex == 1 {
+			// func(WebContext)Response
 			// func(Request,WebContext)Response
-			in = append(in, bindVal)
+			if bindVal.IsValid() {
+				in = append(in, bindVal)
+			}
 			in = append(in, reflect.ValueOf(ctx))
 		} else {
+			// func()Response
 			// func(Request)Response
-			in = append(in, bindVal)
+			if bindVal.IsValid() {
+				in = append(in, bindVal)
+			}
 		}
 
 		// 执行处理函数，并返回结果
 		outVal := b.fnVal.Call(in)
+
+		if len(outVal) == 0 {
+			return nil
+		}
 		return outVal[0].Interface()
 	})
 }
@@ -104,14 +120,19 @@ func validBindFn(fn interface{}) (reflect.Type, int, bool) {
 		return nil, -1, false
 	}
 
-	// 只能有一个返回值
-	if fnTyp.NumOut() != 1 {
+	// 最多只能有一个返回值
+	if fnTyp.NumOut() > 1 {
 		return nil, -1, false
 	}
 
 	// 待绑定参数必须是结构体或者结构体的指针
 	validBindType := func(t reflect.Type) bool {
 		return SpringUtils.Indirect(t).Kind() == reflect.Struct
+	}
+
+	// 可能没有入参
+	if fnTyp.NumIn() == 0 {
+		return nil, -1, true
 	}
 
 	// 只有一个入参

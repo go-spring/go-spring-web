@@ -67,6 +67,7 @@ func TestRpc(t *testing.T) {
 		c2.GetBinding("/ptr_echo", rc.PtrEcho, f5)
 		c2.GetBinding("/ctx_echo", rc.CtxEcho, f5)
 		c2.GetBinding("/echo_ctx", rc.EchoCtx, f5)
+		c2.GetBinding("/no_param", rc.NoParam, f5)
 	}
 
 	// 启动 web 服务器
@@ -104,6 +105,10 @@ func TestRpc(t *testing.T) {
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
 	resp, _ = http.Get("http://127.0.0.1:9090/echo_ctx?str=echo")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+
+	resp, _ = http.Get("http://127.0.0.1:9090/no_param")
 	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
