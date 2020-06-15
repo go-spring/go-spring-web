@@ -180,11 +180,7 @@ func (ctx *Context) PathParam(name string) string {
 	if name == "*" {
 		name = ctx.wildCardName
 	}
-	v := ctx.ginContext.Param(name)
-	if len(v) > 0 {
-		return v[1:]
-	}
-	return ""
+	return ctx.ginContext.Param(name)
 }
 
 // PathParamNames returns path parameter names.
