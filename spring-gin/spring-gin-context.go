@@ -203,11 +203,7 @@ func (ctx *Context) PathParamValues() []string {
 	if ctx.pathParamValues == nil {
 		ctx.pathParamValues = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
-			v := entry.Value
-			if len(v) > 0 {
-				v = v[1:]
-			}
-			ctx.pathParamValues = append(ctx.pathParamValues, v)
+			ctx.pathParamValues = append(ctx.pathParamValues, entry.Value)
 		}
 	}
 	return ctx.pathParamValues
