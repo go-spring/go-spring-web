@@ -120,6 +120,11 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
+		resp, _ = http.Get("http://127.0.0.1:8080/namespaces/default/pods/joke")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
 		c.Stop(context.TODO())
 
 		time.Sleep(time.Millisecond * 50)
@@ -167,6 +172,11 @@ func TestWebContainer(t *testing.T) {
 				RespondsWith(http.StatusOK, nil)
 
 			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
+
+			r.GetMapping("/namespaces/:namespace/pods/:pod", func(webCtx SpringWeb.WebContext) {
+				fmt.Println(webCtx.PathParam("namespace"))
+				fmt.Println(webCtx.PathParam("pod"))
+			})
 		}
 
 		c.GetMapping("/wild_1/*", func(webCtx SpringWeb.WebContext) {

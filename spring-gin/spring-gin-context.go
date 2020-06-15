@@ -60,8 +60,8 @@ type Context struct {
 	// handlerFunc Web 处理函数
 	handlerFunc SpringWeb.Handler
 
-	pathParamNames  []string
-	pathParamValues []string
+	pathNames  []string
+	pathValues []string
 
 	// wildCardName 通配符名称
 	wildCardName string
@@ -184,28 +184,28 @@ func (ctx *Context) PathParam(name string) string {
 
 // PathParamNames returns path parameter names.
 func (ctx *Context) PathParamNames() []string {
-	if ctx.pathParamNames == nil {
-		ctx.pathParamNames = make([]string, 0)
+	if ctx.pathNames == nil {
+		ctx.pathNames = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
 			name := entry.Key
 			if name == ctx.wildCardName {
 				name = "*"
 			}
-			ctx.pathParamNames = append(ctx.pathParamNames, name)
+			ctx.pathNames = append(ctx.pathNames, name)
 		}
 	}
-	return ctx.pathParamNames
+	return ctx.pathNames
 }
 
 // PathParamValues returns path parameter values.
 func (ctx *Context) PathParamValues() []string {
-	if ctx.pathParamValues == nil {
-		ctx.pathParamValues = make([]string, 0)
+	if ctx.pathValues == nil {
+		ctx.pathValues = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
-			ctx.pathParamValues = append(ctx.pathParamValues, entry.Value)
+			ctx.pathValues = append(ctx.pathValues, entry.Value)
 		}
 	}
-	return ctx.pathParamValues
+	return ctx.pathValues
 }
 
 // QueryParam returns the query param for the provided name.
