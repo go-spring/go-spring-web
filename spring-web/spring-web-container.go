@@ -291,6 +291,14 @@ func HTTP(fn http.HandlerFunc) Handler {
 	return httpHandler(fn)
 }
 
+// WrapH 用于包装 http.Handler 的辅助函数
+func WrapH(handler http.Handler) Handler {
+	return HTTP(func(res http.ResponseWriter, req *http.Request) {
+		handler.ServeHTTP(res, req)
+		return
+	})
+}
+
 /////////////////// Web Filters //////////////////////
 
 var defaultRecoveryFilter = &recoveryFilter{}
