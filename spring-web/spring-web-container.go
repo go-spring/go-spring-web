@@ -265,7 +265,7 @@ func (m *methodHandler) FileLine() (file string, line int, fnName string) {
 // METHOD 和标准 Web 处理函数兼容的对象方法的辅助函数
 func METHOD(receiver interface{}, methodName string) Handler {
 	method := reflect.ValueOf(receiver).MethodByName(methodName)
-	if method.IsZero() {
+	if method.IsNil() {
 		panic(errors.New("can't find method " + methodName))
 	}
 	return &methodHandler{
