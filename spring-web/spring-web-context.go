@@ -26,6 +26,9 @@ import (
 	"github.com/go-spring/go-spring-parent/spring-logger"
 )
 
+// WebContextKey WebContext 和 NativeContext 相互转换的 Key
+const WebContextKey = "@WebCtx"
+
 // WebContextType WebContext 的反射类型
 var WebContextType = reflect.TypeOf((*WebContext)(nil)).Elem()
 

@@ -43,7 +43,7 @@ func GinContext(webCtx SpringWeb.WebContext) *gin.Context {
 
 // WebContext 将 *gin.Context 转换为 SpringWeb.WebContext
 func WebContext(ginCtx *gin.Context) SpringWeb.WebContext {
-	if webCtx, _ := ginCtx.Get("@WebCtx"); webCtx != nil {
+	if webCtx, _ := ginCtx.Get(SpringWeb.WebContextKey); webCtx != nil {
 		return webCtx.(*Context)
 	}
 	return nil
@@ -80,7 +80,7 @@ func NewContext(fn SpringWeb.Handler, wildCardName string, ginCtx *gin.Context) 
 		wildCardName:  wildCardName,
 	}
 
-	webCtx.Set("@WebCtx", webCtx)
+	webCtx.Set(SpringWeb.WebContextKey, webCtx)
 	return webCtx
 }
 

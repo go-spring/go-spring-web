@@ -39,7 +39,7 @@ func EchoContext(webCtx SpringWeb.WebContext) echo.Context {
 
 // WebContext 将 echo.Context 转换为 SpringWeb.WebContext
 func WebContext(echoCtx echo.Context) SpringWeb.WebContext {
-	if webCtx := echoCtx.Get("@WebCtx"); webCtx != nil {
+	if webCtx := echoCtx.Get(SpringWeb.WebContextKey); webCtx != nil {
 		return webCtx.(*Context)
 	}
 	return nil
@@ -73,7 +73,7 @@ func NewContext(fn SpringWeb.Handler, wildCardName string, echoCtx echo.Context)
 		wildCardName:  wildCardName,
 	}
 
-	echoCtx.Set("@WebCtx", webCtx)
+	webCtx.Set(SpringWeb.WebContextKey, webCtx)
 	return webCtx
 }
 
