@@ -104,6 +104,11 @@ func (ctx *Context) Request() *http.Request {
 	return ctx.ginContext.Request
 }
 
+// SetRequest sets `*http.Request`.
+func (ctx *Context) SetRequest(r *http.Request) {
+	ctx.ginContext.Request = r
+}
+
 // IsTLS returns true if HTTP connection is TLS otherwise false.
 func (ctx *Context) IsTLS() bool {
 	return ctx.ginContext.Request.TLS != nil

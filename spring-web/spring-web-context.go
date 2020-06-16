@@ -54,6 +54,9 @@ type WebContext interface {
 	// Request returns `*http.Request`.
 	Request() *http.Request
 
+	// SetRequest sets `*http.Request`.
+	SetRequest(r *http.Request)
+
 	// IsTLS returns true if HTTP connection is TLS otherwise false.
 	IsTLS() bool
 

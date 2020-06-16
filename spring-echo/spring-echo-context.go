@@ -97,6 +97,11 @@ func (ctx *Context) Request() *http.Request {
 	return ctx.echoContext.Request()
 }
 
+// SetRequest sets `*http.Request`.
+func (ctx *Context) SetRequest(r *http.Request) {
+	ctx.echoContext.SetRequest(r)
+}
+
 // IsTLS returns true if HTTP connection is TLS otherwise false.
 func (ctx *Context) IsTLS() bool {
 	return ctx.echoContext.IsTLS()
