@@ -44,7 +44,7 @@ func GinContext(webCtx SpringWeb.WebContext) *gin.Context {
 // WebContext 将 *gin.Context 转换为 SpringWeb.WebContext
 func WebContext(ginCtx *gin.Context) SpringWeb.WebContext {
 	if webCtx, _ := ginCtx.Get(SpringWeb.WebContextKey); webCtx != nil {
-		return webCtx.(*Context)
+		return webCtx.(SpringWeb.WebContext)
 	}
 	return nil
 }

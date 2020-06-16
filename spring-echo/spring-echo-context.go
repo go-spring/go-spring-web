@@ -40,7 +40,7 @@ func EchoContext(webCtx SpringWeb.WebContext) echo.Context {
 // WebContext 将 echo.Context 转换为 SpringWeb.WebContext
 func WebContext(echoCtx echo.Context) SpringWeb.WebContext {
 	if webCtx := echoCtx.Get(SpringWeb.WebContextKey); webCtx != nil {
-		return webCtx.(*Context)
+		return webCtx.(SpringWeb.WebContext)
 	}
 	return nil
 }
