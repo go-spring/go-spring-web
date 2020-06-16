@@ -174,8 +174,8 @@ func TestWebContainer(t *testing.T) {
 			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
 
 			r.GetMapping("/namespaces/:namespace/pods/:pod", func(webCtx SpringWeb.WebContext) {
-				fmt.Println(webCtx.PathParam("namespace"))
-				fmt.Println(webCtx.PathParam("pod"))
+				assert.Equal(t, "default", webCtx.PathParam("namespace"))
+				assert.Equal(t, "joke", webCtx.PathParam("pod"))
 			})
 		}
 

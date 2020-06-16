@@ -30,7 +30,11 @@ import (
 type rpcHandler func(WebContext) interface{}
 
 func (r rpcHandler) Invoke(ctx WebContext) {
-	rpcInvoke(ctx, func() interface{} { return r(ctx) })
+	RpcInvoke(ctx, r.call)
+}
+
+func (r rpcHandler) call(ctx WebContext) interface{} {
+	return r(ctx)
 }
 
 func (r rpcHandler) FileLine() (file string, line int, fnName string) {
@@ -51,61 +55,65 @@ type bindHandler struct {
 }
 
 func (b *bindHandler) Invoke(ctx WebContext) {
-	rpcInvoke(ctx, func() interface{} {
+	RpcInvoke(ctx, b.call)
+}
 
-		var (
-			err     error
-			bindVal reflect.Value
-		)
+func (b *bindHandler) call(ctx WebContext) interface{} {
 
-		// 获取待绑定的值
-		if b.bindType != nil {
+	var (
+		err     error
+		bindVal reflect.Value
+	)
 
-			if b.bindType.Kind() == reflect.Ptr {
-				bindVal = reflect.New(b.bindType.Elem())
-				err = ctx.Bind(bindVal.Interface())
-			} else {
-				bindVal = reflect.New(b.bindType)
-				err = ctx.Bind(bindVal.Interface())
-				bindVal = bindVal.Elem()
-			}
+	// 获取待绑定的值
+	if b.bindType != nil {
 
-			SpringError.ERROR.Panic(err).When(err != nil)
-		}
-
-		var in []reflect.Value
-
-		// 组装请求参数
-		if b.ctxIndex == 0 {
-			// func(WebContext)Response
-			// func(WebContext,Request)Response
-			in = append(in, reflect.ValueOf(ctx))
-			if bindVal.IsValid() {
-				in = append(in, bindVal)
-			}
-		} else if b.ctxIndex == 1 {
-			// func(WebContext)Response
-			// func(Request,WebContext)Response
-			if bindVal.IsValid() {
-				in = append(in, bindVal)
-			}
-			in = append(in, reflect.ValueOf(ctx))
+		if b.bindType.Kind() == reflect.Ptr {
+			bindVal = reflect.New(b.bindType.Elem())
+			err = ctx.Bind(bindVal.Interface())
 		} else {
-			// func()Response
-			// func(Request)Response
-			if bindVal.IsValid() {
-				in = append(in, bindVal)
-			}
+			bindVal = reflect.New(b.bindType)
+			err = ctx.Bind(bindVal.Interface())
+			bindVal = bindVal.Elem()
 		}
 
-		// 执行处理函数，并返回结果
-		outVal := b.fnVal.Call(in)
+		SpringError.ERROR.Panic(err).When(err != nil)
+	}
 
-		if len(outVal) == 0 {
-			return nil
+	var in []reflect.Value
+
+	// 组装请求参数
+	if b.ctxIndex == 0 {
+		// func(WebContext)Response
+		// func(WebContext,Request)Response
+		in = append(in, reflect.ValueOf(ctx))
+		if bindVal.IsValid() {
+			in = append(in, bindVal)
 		}
-		return outVal[0].Interface()
-	})
+
+	} else if b.ctxIndex == 1 {
+		// func(WebContext)Response
+		// func(Request,WebContext)Response
+		if bindVal.IsValid() {
+			in = append(in, bindVal)
+		}
+		in = append(in, reflect.ValueOf(ctx))
+
+	} else {
+		// func()Response
+		// func(Request)Response
+		if bindVal.IsValid() {
+			in = append(in, bindVal)
+		}
+	}
+
+	// 执行处理函数，并返回结果
+	outVal := b.fnVal.Call(in)
+
+	if len(outVal) == 0 {
+		return nil
+	}
+	return outVal[0].Interface()
 }
 
 func (b *bindHandler) FileLine() (file string, line int, fnName string) {
@@ -194,7 +202,11 @@ func BIND(fn interface{}) Handler {
 	}
 }
 
-func rpcInvoke(webCtx WebContext, fn func() interface{}) {
+// RpcInvoke 可自定义的 rpc 执行函数
+var RpcInvoke = defaultRpcInvoke
+
+// defaultRpcInvoke 默认的 rpc 执行函数
+func defaultRpcInvoke(webCtx WebContext, fn func(WebContext) interface{}) {
 
 	// 目前 HTTP RPC 只能返回 json 格式的数据
 	webCtx.Header("Content-Type", "application/json")
@@ -213,6 +225,6 @@ func rpcInvoke(webCtx WebContext, fn func() interface{}) {
 		}
 	}()
 
-	result := SpringError.SUCCESS.Data(fn())
+	result := SpringError.SUCCESS.Data(fn(webCtx))
 	webCtx.JSON(http.StatusOK, result)
 }

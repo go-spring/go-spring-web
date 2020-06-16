@@ -174,12 +174,20 @@ func (ctx *Context) GetRawData() ([]byte, error) {
 	return ctx.ginContext.GetRawData()
 }
 
+// filterPathValue gin 的路由比较怪，* 路由多一个 /
+func filterPathValue(v string) string {
+	if len(v) > 0 && v[0] == '/' {
+		return v[1:]
+	}
+	return v
+}
+
 // PathParam returns path parameter by name.
 func (ctx *Context) PathParam(name string) string {
 	if name == "*" {
 		name = ctx.wildCardName
 	}
-	return ctx.ginContext.Param(name)
+	return filterPathValue(ctx.ginContext.Param(name))
 }
 
 // PathParamNames returns path parameter names.
@@ -202,7 +210,8 @@ func (ctx *Context) PathParamValues() []string {
 	if ctx.pathValues == nil {
 		ctx.pathValues = make([]string, 0)
 		for _, entry := range ctx.ginContext.Params {
-			ctx.pathValues = append(ctx.pathValues, entry.Value)
+			v := filterPathValue(entry.Value)
+			ctx.pathValues = append(ctx.pathValues, v)
 		}
 	}
 	return ctx.pathValues
