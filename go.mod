@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.6.1
 	github.com/go-openapi/spec v0.19.7
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/go-spring/go-spring-parent v1.0.4-0.20200615073626-7b9479621a25
+	github.com/go-spring/go-spring-parent v1.0.4-0.20200622083416-492db9e22f56
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/magiconair/properties v1.8.1
 	github.com/stretchr/testify v1.5.1

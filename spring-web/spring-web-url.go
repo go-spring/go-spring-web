@@ -143,6 +143,13 @@ func ToPathStyle(path string, style PathStyleEnum) (string, string) {
 	}
 
 	for _, s := range strings.Split(path, "/") {
+
+		// 尾部的 '/' 特殊处理
+		if len(s) == 0 {
+			p.addKnownPath(s)
+			continue
+		}
+
 		switch s[0] {
 		case '{':
 			if s[len(s)-1] != '}' {

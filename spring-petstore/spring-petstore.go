@@ -63,8 +63,8 @@ type Pet struct {
 	Id        int64     `json:"id,omitempty"`
 	Category  *Category `json:"category,omitempty"`
 	Name      string    `json:"name"`
-	PhotoUrls []string  `json:"photoUrls" xml:"photoUrl,wrapped"`
-	Tags      []Tag     `json:"tags,omitempty" xml:"tag,wrapped"`
+	PhotoUrls []string  `json:"photoUrls" xml:"photoUrls>photoUrl"`
+	Tags      []Tag     `json:"tags,omitempty" xml:"tags>tag"`
 	Status    string    `json:"status,omitempty"` // pet status in the store
 }
 
@@ -525,7 +525,7 @@ func setDef(m map[string]interface{}) {
 	for k, v := range m {
 		switch v0 := v.(type) {
 		case bool:
-			if v0 == false {
+			if !v0 {
 				delete(m, k)
 			}
 		case string:

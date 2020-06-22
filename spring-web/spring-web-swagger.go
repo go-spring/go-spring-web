@@ -230,7 +230,7 @@ func (s *swagger) BindDefinitionWithTags(i interface{}, attachFields map[string]
 	}
 
 	objSchema := new(spec.Schema).Typed("object", "")
-	for i := 0; i < it.NumField(); i++ {
+	for i := 0; i < it.NumField(); i++ { // TODO json 和 xml 分开解析
 		f := it.Field(i)
 
 		// 处理 XML 标签
