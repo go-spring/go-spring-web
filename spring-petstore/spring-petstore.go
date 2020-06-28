@@ -191,7 +191,10 @@ func (c *PetController) UploadFile(ctx SpringWeb.WebContext) {
 
 func main() {
 
-	SpringWeb.Swagger().
+	cfg := SpringWeb.ContainerConfig{Port: 8080}
+	c := SpringEcho.NewContainer(cfg)
+
+	c.Swagger().
 		WithDescription("This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key `special-key` to test the authorization filters.").
 		WithVersion("1.0.5").
 		WithTitle("Swagger Petstore").
@@ -244,9 +247,6 @@ func main() {
 				"read:pets":  "read your pets",
 				"write:pets": "modify pets in your account",
 			})
-
-	cfg := SpringWeb.ContainerConfig{Port: 8080}
-	c := SpringEcho.NewContainer(cfg)
 
 	r := c.Route("/v2/pet/")
 	pet := new(PetController)
@@ -507,7 +507,7 @@ func main() {
 	_ = json.Unmarshal([]byte(petstore), &m1)
 
 	var m2 map[string]interface{}
-	doc := SpringWeb.Swagger().ReadDoc()
+	doc := c.Swagger().ReadDoc()
 	_ = json.Unmarshal([]byte(doc), &m2)
 
 	setDef(m1)
@@ -515,6 +515,7 @@ func main() {
 
 	DiffMap("", m1, m2)
 
+	// TODO 验证 XML Wrapper 语法
 	fmt.Println(SpringUtils.ToJson(m1))
 	fmt.Println(SpringUtils.ToJson(m2))
 }

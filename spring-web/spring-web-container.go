@@ -91,6 +91,9 @@ type WebContainer interface {
 	// SetEnableSwagger 设置是否启用 Swagger 功能
 	SetEnableSwagger(enable bool)
 
+	// Swagger 返回和容器绑定的 Swagger 对象
+	Swagger() *Swagger
+
 	// Start 启动 Web 容器，非阻塞
 	Start()
 
@@ -102,12 +105,14 @@ type WebContainer interface {
 type BaseWebContainer struct {
 	WebMapping
 
-	config    ContainerConfig
-	filters   []Filter
-	enableSwg bool // 是否启用 Swagger 功能
+	config ContainerConfig
 
-	loggerFilter   Filter // 日志过滤器
-	recoveryFilter Filter // 恢复过滤器
+	enableSwag bool     // 是否启用 Swagger 功能
+	swagger    *Swagger // 和容器绑定的 Swagger 对象
+
+	filters        []Filter // 其他过滤器
+	loggerFilter   Filter   // 日志过滤器
+	recoveryFilter Filter   // 恢复过滤器
 }
 
 // NewBaseWebContainer BaseWebContainer 的构造函数
@@ -115,7 +120,7 @@ func NewBaseWebContainer(config ContainerConfig) *BaseWebContainer {
 	return &BaseWebContainer{
 		WebMapping:     NewDefaultWebMapping(),
 		config:         config,
-		enableSwg:      true,
+		enableSwag:     true,
 		loggerFilter:   defaultLoggerFilter,
 		recoveryFilter: defaultRecoveryFilter,
 	}
@@ -175,18 +180,26 @@ func (c *BaseWebContainer) AddRouter(router *Router) {
 
 // EnableSwagger 是否启用 Swagger 功能
 func (c *BaseWebContainer) EnableSwagger() bool {
-	return c.enableSwg
+	return c.enableSwag
 }
 
 // SetEnableSwagger 设置是否启用 Swagger 功能
 func (c *BaseWebContainer) SetEnableSwagger(enable bool) {
-	c.enableSwg = enable
+	c.enableSwag = enable
+}
+
+// Swagger 返回和容器绑定的 Swagger 对象
+func (c *BaseWebContainer) Swagger() *Swagger {
+	if c.swagger == nil {
+		c.swagger = NewSwagger()
+	}
+	return c.swagger
 }
 
 // PreStart 执行 Start 之前的准备工作
 func (c *BaseWebContainer) PreStart() {
 
-	if c.enableSwg {
+	if c.enableSwag && c.swagger != nil {
 
 		// 注册 path 的 Operation
 		for _, mapper := range c.Mappers() {
@@ -194,14 +207,22 @@ func (c *BaseWebContainer) PreStart() {
 				if err := op.parseBind(); err != nil {
 					panic(err)
 				}
-				doc.AddPath(mapper.Path(), mapper.Method(), op)
+				c.swagger.AddPath(mapper.Path(), mapper.Method(), op)
 			}
 		}
 
+		doc := c.swagger.ReadDoc()
+		hSwagger := httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
+
 		// 注册 swagger-ui 和 doc.json 接口
-		c.HandleGet("/swagger/*", HTTP(httpSwagger.Handler(
-			httpSwagger.URL("/swagger/doc.json"),
-		)))
+		c.GetMapping("/swagger/*", func(webCtx WebContext) {
+			if webCtx.PathParam("*") == "doc.json" {
+				webCtx.Header(HeaderContentType, MIMEApplicationJSONCharsetUTF8)
+				webCtx.String(http.StatusOK, doc)
+			} else {
+				hSwagger(webCtx.ResponseWriter(), webCtx.Request())
+			}
+		})
 
 		// 注册 redoc 接口
 		c.GetMapping("/redoc", ReDoc)

@@ -40,15 +40,15 @@ import (
 func TestWebContainer(t *testing.T) {
 	cfg := SpringWeb.ContainerConfig{Port: 8080}
 
-	SpringWeb.Swagger().
-		WithDescription("web container test").
-		AddDefinition("Set", new(spec.Schema).
-			Typed("object", "").
-			AddRequired("name", "age").
-			SetProperty("name", *spec.StringProperty()).
-			SetProperty("age", *spec.Int32Property()))
-
 	testRun := func(c SpringWeb.WebContainer) {
+
+		c.Swagger().
+			WithDescription("web container test").
+			AddDefinition("Set", new(spec.Schema).
+				Typed("object", "").
+				AddRequired("name", "age").
+				SetProperty("name", *spec.StringProperty()).
+				SetProperty("age", *spec.Int32Property()))
 
 		// 添加容器过滤器，这些过滤器在路由未注册时也仍会执行
 		c.AddFilter(&testcases.LogFilter{}, &testcases.GlobalInterruptFilter{})

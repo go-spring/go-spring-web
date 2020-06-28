@@ -25,29 +25,16 @@ import (
 	"time"
 
 	"github.com/go-openapi/spec"
-	"github.com/swaggo/swag"
 )
 
-// doc 全局 swagger 对象
-var doc = NewSwagger()
-
-func init() {
-	swag.Register(swag.Name, doc)
-}
-
-// Swagger 返回全局的 swagger 对象
-func Swagger() *swagger {
-	return doc
-}
-
-// swagger 封装 spec.Swagger 对象，提供流式调用
-type swagger struct {
+// Swagger 封装 spec.Swagger 对象，提供流式调用
+type Swagger struct {
 	spec.Swagger
 }
 
 // NewSwagger swagger 的构造函数
-func NewSwagger() *swagger {
-	return &swagger{
+func NewSwagger() *Swagger {
+	return &Swagger{
 		Swagger: spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
 				Swagger: "2.0",
@@ -68,7 +55,7 @@ func NewSwagger() *swagger {
 }
 
 // ReadDoc 获取应用的 Swagger 描述内容
-func (s *swagger) ReadDoc() string {
+func (s *Swagger) ReadDoc() string {
 	if b, err := s.MarshalJSON(); err == nil {
 		return string(b)
 	} else {
@@ -77,49 +64,49 @@ func (s *swagger) ReadDoc() string {
 }
 
 // WithID 设置应用 ID
-func (s *swagger) WithID(id string) *swagger {
+func (s *Swagger) WithID(id string) *Swagger {
 	s.ID = id
 	return s
 }
 
 // WithConsumes 设置消费协议
-func (s *swagger) WithConsumes(consumes ...string) *swagger {
+func (s *Swagger) WithConsumes(consumes ...string) *Swagger {
 	s.Consumes = consumes
 	return s
 }
 
 // WithProduces 设置生产协议
-func (s *swagger) WithProduces(produces ...string) *swagger {
+func (s *Swagger) WithProduces(produces ...string) *Swagger {
 	s.Produces = produces
 	return s
 }
 
 // WithSchemes 设置服务协议
-func (s *swagger) WithSchemes(schemes ...string) *swagger {
+func (s *Swagger) WithSchemes(schemes ...string) *Swagger {
 	s.Schemes = schemes
 	return s
 }
 
 // WithDescription 设置服务描述
-func (s *swagger) WithDescription(description string) *swagger {
+func (s *Swagger) WithDescription(description string) *Swagger {
 	s.Info.Description = description
 	return s
 }
 
 // WithTitle 设置服务名称
-func (s *swagger) WithTitle(title string) *swagger {
+func (s *Swagger) WithTitle(title string) *Swagger {
 	s.Info.Title = title
 	return s
 }
 
 // WithTermsOfService 设置服务条款地址
-func (s *swagger) WithTermsOfService(termsOfService string) *swagger {
+func (s *Swagger) WithTermsOfService(termsOfService string) *Swagger {
 	s.Info.TermsOfService = termsOfService
 	return s
 }
 
 // WithContact 设置作者的名字、主页地址、邮箱
-func (s *swagger) WithContact(name string, url string, email string) *swagger {
+func (s *Swagger) WithContact(name string, url string, email string) *Swagger {
 	c := new(spec.ContactInfo)
 	c.Name = name
 	c.URL = url
@@ -129,7 +116,7 @@ func (s *swagger) WithContact(name string, url string, email string) *swagger {
 }
 
 // WithLicense 设置开源协议的名称、地址
-func (s *swagger) WithLicense(name string, url string) *swagger {
+func (s *Swagger) WithLicense(name string, url string) *Swagger {
 	l := new(spec.License)
 	l.Name = name
 	l.URL = url
@@ -138,34 +125,34 @@ func (s *swagger) WithLicense(name string, url string) *swagger {
 }
 
 // WithVersion 设置 API 版本号
-func (s *swagger) WithVersion(version string) *swagger {
+func (s *Swagger) WithVersion(version string) *Swagger {
 	s.Info.Version = version
 	return s
 }
 
 // WithHost 设置可用服务器地址
-func (s *swagger) WithHost(host string) *swagger {
+func (s *Swagger) WithHost(host string) *Swagger {
 	s.Host = host
 	return s
 }
 
 // WithBasePath 设置 API 路径的前缀
-func (s *swagger) WithBasePath(basePath string) *swagger {
+func (s *Swagger) WithBasePath(basePath string) *Swagger {
 	s.BasePath = basePath
 	return s
 }
 
 // WithTags 添加标签
-func (s *swagger) WithTags(tags ...spec.Tag) *swagger {
+func (s *Swagger) WithTags(tags ...spec.Tag) *Swagger {
 	s.Swagger.Tags = tags
 	return s
 }
 
 // AddPath 添加一个路由
-func (s *swagger) AddPath(path string, method uint32, op *Operation,
-	parameters ...spec.Parameter) *swagger {
+func (s *Swagger) AddPath(path string, method uint32, op *Operation,
+	parameters ...spec.Parameter) *Swagger {
 
-	path = strings.TrimPrefix(path, doc.BasePath)
+	path = strings.TrimPrefix(path, s.BasePath)
 	path = strings.TrimRight(path, "/")
 	pathItem, ok := s.Paths.Paths[path]
 
@@ -201,7 +188,7 @@ func (s *swagger) AddPath(path string, method uint32, op *Operation,
 }
 
 // AddDefinition 添加一个定义
-func (s *swagger) AddDefinition(name string, schema *spec.Schema) *swagger {
+func (s *Swagger) AddDefinition(name string, schema *spec.Schema) *Swagger {
 	s.Definitions[name] = *schema
 	return s
 }
@@ -213,7 +200,7 @@ type DefinitionField struct {
 }
 
 // BindDefinitions 绑定一个定义
-func (s *swagger) BindDefinitions(i ...interface{}) *swagger {
+func (s *Swagger) BindDefinitions(i ...interface{}) *Swagger {
 	m := map[string]DefinitionField{}
 	for _, v := range i {
 		s.BindDefinitionWithTags(v, m)
@@ -222,7 +209,7 @@ func (s *swagger) BindDefinitions(i ...interface{}) *swagger {
 }
 
 // BindDefinitionWithTags 绑定一个定义
-func (s *swagger) BindDefinitionWithTags(i interface{}, attachFields map[string]DefinitionField) *swagger {
+func (s *Swagger) BindDefinitionWithTags(i interface{}, attachFields map[string]DefinitionField) *Swagger {
 
 	it := reflect.TypeOf(i)
 	if it.Kind() == reflect.Ptr {
@@ -354,13 +341,13 @@ func (s *swagger) BindDefinitionWithTags(i interface{}, attachFields map[string]
 }
 
 // AddBasicSecurityDefinition 添加 Basic 方式认证
-func (s *swagger) AddBasicSecurityDefinition() *swagger {
+func (s *Swagger) AddBasicSecurityDefinition() *Swagger {
 	s.Swagger.SecurityDefinitions["BasicAuth"] = spec.BasicAuth()
 	return s
 }
 
 // AddApiKeySecurityDefinition 添加 ApiKey 方式认证
-func (s *swagger) AddApiKeySecurityDefinition(name string, in string) *swagger {
+func (s *Swagger) AddApiKeySecurityDefinition(name string, in string) *Swagger {
 	if name == "" {
 		name = "ApiKeyAuth"
 	}
@@ -369,7 +356,7 @@ func (s *swagger) AddApiKeySecurityDefinition(name string, in string) *swagger {
 }
 
 // AddOauth2ApplicationSecurityDefinition 添加 OAuth2 Application 方式认证
-func (s *swagger) AddOauth2ApplicationSecurityDefinition(name string, tokenUrl string, scopes map[string]string) *swagger {
+func (s *Swagger) AddOauth2ApplicationSecurityDefinition(name string, tokenUrl string, scopes map[string]string) *Swagger {
 	if name == "" {
 		name = "OAuth2Application"
 	}
@@ -378,7 +365,7 @@ func (s *swagger) AddOauth2ApplicationSecurityDefinition(name string, tokenUrl s
 }
 
 // AddOauth2ImplicitSecurityDefinition 添加 OAuth2 Implicit 方式认证
-func (s *swagger) AddOauth2ImplicitSecurityDefinition(name string, authorizationUrl string, scopes map[string]string) *swagger {
+func (s *Swagger) AddOauth2ImplicitSecurityDefinition(name string, authorizationUrl string, scopes map[string]string) *Swagger {
 	if name == "" {
 		name = "OAuth2Implicit"
 	}
@@ -387,7 +374,7 @@ func (s *swagger) AddOauth2ImplicitSecurityDefinition(name string, authorization
 }
 
 // AddOauth2PasswordSecurityDefinition 添加 OAuth2 Password 方式认证
-func (s *swagger) AddOauth2PasswordSecurityDefinition(name string, tokenUrl string, scopes map[string]string) *swagger {
+func (s *Swagger) AddOauth2PasswordSecurityDefinition(name string, tokenUrl string, scopes map[string]string) *Swagger {
 	if name == "" {
 		name = "OAuth2Password"
 	}
@@ -396,7 +383,7 @@ func (s *swagger) AddOauth2PasswordSecurityDefinition(name string, tokenUrl stri
 }
 
 // AddOauth2AccessCodeSecurityDefinition 添加 OAuth2 AccessCode 方式认证
-func (s *swagger) AddOauth2AccessCodeSecurityDefinition(name string, authorizationUrl string, tokenUrl string, scopes map[string]string) *swagger {
+func (s *Swagger) AddOauth2AccessCodeSecurityDefinition(name string, authorizationUrl string, tokenUrl string, scopes map[string]string) *Swagger {
 	if name == "" {
 		name = "OAuth2AccessCode"
 	}
@@ -404,7 +391,7 @@ func (s *swagger) AddOauth2AccessCodeSecurityDefinition(name string, authorizati
 	return s.securitySchemeWithScopes(name, securityScheme, scopes)
 }
 
-func (s *swagger) securitySchemeWithScopes(name string, scheme *spec.SecurityScheme, scopes map[string]string) *swagger {
+func (s *Swagger) securitySchemeWithScopes(name string, scheme *spec.SecurityScheme, scopes map[string]string) *Swagger {
 	securityScheme := scheme
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
@@ -414,7 +401,7 @@ func (s *swagger) securitySchemeWithScopes(name string, scheme *spec.SecuritySch
 }
 
 // WithExternalDocs
-func (s *swagger) WithExternalDocs(externalDocs *spec.ExternalDocumentation) *swagger {
+func (s *Swagger) WithExternalDocs(externalDocs *spec.ExternalDocumentation) *Swagger {
 	s.Swagger.ExternalDocs = externalDocs
 	return s
 }
