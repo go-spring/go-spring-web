@@ -42,7 +42,7 @@ type Container struct {
 	*SpringWeb.BaseWebContainer
 	httpServer *http.Server
 	ginEngine  *gin.Engine
-	routes     map[string]route // 记录所有通过 spring echo 注册的路由
+	routes     map[string]route // 记录所有通过 spring gin 注册的路由
 }
 
 // NewContainer Container 的构造函数
