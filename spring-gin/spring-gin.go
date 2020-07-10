@@ -90,7 +90,7 @@ func (c *Container) Start() {
 		if r, ok := c.routes[key]; ok {
 			NewContext(r.fn, r.wildCardName, ginCtx)
 		} else {
-			NewContext(nil, "", ginCtx)
+			NewContext(nil, ginCtx.FullPath(), ginCtx)
 		}
 	})
 

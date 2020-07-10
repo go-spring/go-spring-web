@@ -85,7 +85,7 @@ func (c *Container) Start() {
 			if r, ok := c.routes[key]; ok {
 				NewContext(r.fn, r.wildCardName, echoCtx)
 			} else {
-				NewContext(nil, "", echoCtx)
+				NewContext(nil, echoCtx.Path(), echoCtx)
 			}
 
 			filters := append(cFilters, SpringWeb.HandlerFilter(Echo(next)))

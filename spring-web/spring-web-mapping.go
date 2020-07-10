@@ -27,16 +27,8 @@ var HandlerType = reflect.TypeOf((*Handler)(nil)).Elem()
 // FnHandlerType fnHandler 的反射类型
 var FnHandlerType = reflect.TypeOf((*fnHandler)(nil)).Elem()
 
-// WebMapping 路由表，Spring-Web 使用的路由规则和 echo 完全相同，并对 gin 做了适配。
-type WebMapping interface {
-	// Mappers 返回映射器列表
-	Mappers() map[string]*Mapper
-
-	// AddMapper 添加一个 Mapper
-	AddMapper(m *Mapper) *Mapper
-
-	// Route 返回和 Mapping 绑定的路由分组
-	Route(basePath string, filters ...Filter) *Router
+// UrlRegister 路由注册接口
+type UrlRegister interface {
 
 	// Request 注册任意 HTTP 方法处理函数
 	Request(method uint32, path string, fn interface{}, filters ...Filter) *Mapper
@@ -81,16 +73,108 @@ type WebMapping interface {
 	OPTIONS(path string, fn interface{}, filters ...Filter) *Mapper
 }
 
+// defaultUrlRegister 路由注册接口的默认实现
+type defaultUrlRegister struct {
+	request func(method uint32, path string, fn interface{}, filters []Filter) *Mapper
+}
+
+// Request 注册任意 HTTP 方法处理函数
+func (r *defaultUrlRegister) Request(method uint32, path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(method, path, fn, filters)
+}
+
+// Deprecated: 推荐使用 Get* 系列函数进行编译检查
+func (r *defaultUrlRegister) GET(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodGet, path, fn, filters)
+}
+
+// HandleGet 注册 GET 方法处理函数
+func (r *defaultUrlRegister) HandleGet(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.request(MethodGet, path, fn, filters)
+}
+
+// GetMapping 注册 GET 方法处理函数
+func (r *defaultUrlRegister) GetMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+	return r.request(MethodGet, path, FUNC(fn), filters)
+}
+
+// GetBinding 注册 GET 方法处理函数
+func (r *defaultUrlRegister) GetBinding(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodGet, path, BIND(fn), filters)
+}
+
+// Deprecated: 推荐使用 Post* 系列函数进行编译检查
+func (r *defaultUrlRegister) POST(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodPost, path, fn, filters)
+}
+
+// HandlePost 注册 POST 方法处理函数
+func (r *defaultUrlRegister) HandlePost(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.request(MethodPost, path, fn, filters)
+}
+
+// PostMapping 注册 POST 方法处理函数
+func (r *defaultUrlRegister) PostMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+	return r.request(MethodPost, path, FUNC(fn), filters)
+}
+
+// PostBinding 注册 POST 方法处理函数
+func (r *defaultUrlRegister) PostBinding(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodPost, path, BIND(fn), filters)
+}
+
+// PATCH 注册 PATCH 方法处理函数
+func (r *defaultUrlRegister) PATCH(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodPatch, path, fn, filters)
+}
+
+// PUT 注册 PUT 方法处理函数
+func (r *defaultUrlRegister) PUT(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodPut, path, fn, filters)
+}
+
+// DELETE 注册 DELETE 方法处理函数
+func (r *defaultUrlRegister) DELETE(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodDelete, path, fn, filters)
+}
+
+// HEAD 注册 HEAD 方法处理函数
+func (r *defaultUrlRegister) HEAD(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodHead, path, fn, filters)
+}
+
+// OPTIONS 注册 OPTIONS 方法处理函数
+func (r *defaultUrlRegister) OPTIONS(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodOptions, path, fn, filters)
+}
+
+// WebMapping 路由表，Spring-Web 使用的路由规则和 echo 完全相同，并对 gin 做了适配。
+type WebMapping interface {
+	UrlRegister
+
+	// Mappers 返回映射器列表
+	Mappers() map[string]*Mapper
+
+	// AddMapper 添加一个 Mapper
+	AddMapper(m *Mapper) *Mapper
+
+	// Route 返回和 Mapping 绑定的路由分组
+	Route(basePath string, filters ...Filter) *Router
+}
+
 // defaultWebMapping 路由表的默认实现
 type defaultWebMapping struct {
+	UrlRegister
+
 	mappers map[string]*Mapper
 }
 
 // NewDefaultWebMapping defaultWebMapping 的构造函数
 func NewDefaultWebMapping() *defaultWebMapping {
-	return &defaultWebMapping{
-		mappers: make(map[string]*Mapper),
-	}
+	m := &defaultWebMapping{}
+	m.mappers = make(map[string]*Mapper)
+	m.UrlRegister = &defaultUrlRegister{request: m.request}
+	return m
 }
 
 // Mappers 返回映射器列表
@@ -106,11 +190,10 @@ func (w *defaultWebMapping) AddMapper(m *Mapper) *Mapper {
 
 // Route 返回和 Mapping 绑定的路由分组
 func (w *defaultWebMapping) Route(basePath string, filters ...Filter) *Router {
-	return &Router{mapping: w, basePath: basePath, filters: filters}
+	return routerWithMapping(w, basePath, filters)
 }
 
-// Request 注册任意 HTTP 方法处理函数
-func (w *defaultWebMapping) Request(method uint32, path string, fn interface{}, filters ...Filter) *Mapper {
+func (w *defaultWebMapping) request(method uint32, path string, fn interface{}, filters []Filter) *Mapper {
 	var v reflect.Value
 
 	fnType := reflect.TypeOf(fn)
@@ -131,69 +214,4 @@ func (w *defaultWebMapping) Request(method uint32, path string, fn interface{}, 
 	m := NewMapper(method, path, h, filters)
 	w.mappers[m.Key()] = m
 	return m
-}
-
-// Deprecated: 推荐使用 Get* 系列函数进行编译检查
-func (w *defaultWebMapping) GET(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodGet, path, fn, filters...)
-}
-
-// HandleGet 注册 GET 方法处理函数
-func (w *defaultWebMapping) HandleGet(path string, fn Handler, filters ...Filter) *Mapper {
-	return w.Request(MethodGet, path, fn, filters...)
-}
-
-// GetMapping 注册 GET 方法处理函数
-func (w *defaultWebMapping) GetMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
-	return w.Request(MethodGet, path, FUNC(fn), filters...)
-}
-
-// GetBinding 注册 GET 方法处理函数
-func (w *defaultWebMapping) GetBinding(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodGet, path, BIND(fn), filters...)
-}
-
-// Deprecated: 推荐使用 Post* 系列函数进行编译检查
-func (w *defaultWebMapping) POST(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodPost, path, fn, filters...)
-}
-
-// HandlePost 注册 POST 方法处理函数
-func (w *defaultWebMapping) HandlePost(path string, fn Handler, filters ...Filter) *Mapper {
-	return w.Request(MethodPost, path, fn, filters...)
-}
-
-// PostMapping 注册 POST 方法处理函数
-func (w *defaultWebMapping) PostMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
-	return w.Request(MethodPost, path, FUNC(fn), filters...)
-}
-
-// PostBinding 注册 POST 方法处理函数
-func (w *defaultWebMapping) PostBinding(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodPost, path, BIND(fn), filters...)
-}
-
-// PATCH 注册 PATCH 方法处理函数
-func (w *defaultWebMapping) PATCH(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodPatch, path, fn, filters...)
-}
-
-// PUT 注册 PUT 方法处理函数
-func (w *defaultWebMapping) PUT(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodPut, path, fn, filters...)
-}
-
-// DELETE 注册 DELETE 方法处理函数
-func (w *defaultWebMapping) DELETE(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodDelete, path, fn, filters...)
-}
-
-// HEAD 注册 HEAD 方法处理函数
-func (w *defaultWebMapping) HEAD(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodHead, path, fn, filters...)
-}
-
-// OPTIONS 注册 OPTIONS 方法处理函数
-func (w *defaultWebMapping) OPTIONS(path string, fn interface{}, filters ...Filter) *Mapper {
-	return w.Request(MethodOptions, path, fn, filters...)
 }

@@ -64,7 +64,7 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		resp, _ = http.PostForm("http://127.0.0.1:8080/set", url.Values{
+		resp, _ = http.PostForm("http://127.0.0.1:8080/v1/set", url.Values{
 			"a": []string{"1"},
 		})
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
@@ -75,12 +75,12 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		resp, _ = http.Get("http://127.0.0.1:8080/panic")
+		resp, _ = http.Get("http://127.0.0.1:8080/v1/panic")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		resp, _ = http.PostForm("http://127.0.0.1:8080/panic", nil)
+		resp, _ = http.PostForm("http://127.0.0.1:8080/v1/panic", nil)
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
@@ -120,7 +120,7 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
-		resp, _ = http.Get("http://127.0.0.1:8080/namespaces/default/pods/joke")
+		resp, _ = http.Get("http://127.0.0.1:8080/v1/namespaces/default/pods/joke")
 		body, _ = ioutil.ReadAll(resp.Body)
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
@@ -154,7 +154,7 @@ func TestWebContainer(t *testing.T) {
 		c.GetMapping("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法
-		r := c.Route("", f2, f7)
+		r := c.Route("/v1", f2, f7)
 		{
 			r.PostMapping("/set", s.Set).Swagger("").
 				WithDescription("set").
