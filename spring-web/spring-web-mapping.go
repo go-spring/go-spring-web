@@ -63,8 +63,26 @@ type UrlRegister interface {
 	// PUT 注册 PUT 方法处理函数
 	PUT(path string, fn interface{}, filters ...Filter) *Mapper
 
+	// HandlePut 注册 PUT 方法处理函数
+	HandlePut(path string, fn Handler, filters ...Filter) *Mapper
+
+	// PutMapping 注册 PUT 方法处理函数
+	PutMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper
+
+	// PutBinding 注册 PUT 方法处理函数
+	PutBinding(path string, fn interface{}, filters ...Filter) *Mapper
+
 	// DELETE 注册 DELETE 方法处理函数
 	DELETE(path string, fn interface{}, filters ...Filter) *Mapper
+
+	// HandleDelete 注册 DELETE 方法处理函数
+	HandleDelete(path string, fn Handler, filters ...Filter) *Mapper
+
+	// DeleteMapping 注册 DELETE 方法处理函数
+	DeleteMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper
+
+	// DeleteBinding 注册 DELETE 方法处理函数
+	DeleteBinding(path string, fn interface{}, filters ...Filter) *Mapper
 
 	// HEAD 注册 HEAD 方法处理函数
 	HEAD(path string, fn interface{}, filters ...Filter) *Mapper
@@ -133,9 +151,39 @@ func (r *defaultUrlRegister) PUT(path string, fn interface{}, filters ...Filter)
 	return r.request(MethodPut, path, fn, filters)
 }
 
+// HandlePut 注册 PUT 方法处理函数
+func (r *defaultUrlRegister) HandlePut(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.request(MethodPut, path, fn, filters)
+}
+
+// PutMapping 注册 PUT 方法处理函数
+func (r *defaultUrlRegister) PutMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+	return r.request(MethodPut, path, FUNC(fn), filters)
+}
+
+// PutBinding 注册 PUT 方法处理函数
+func (r *defaultUrlRegister) PutBinding(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodPut, path, BIND(fn), filters)
+}
+
 // DELETE 注册 DELETE 方法处理函数
 func (r *defaultUrlRegister) DELETE(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.request(MethodDelete, path, fn, filters)
+}
+
+// HandleDelete 注册 DELETE 方法处理函数
+func (r *defaultUrlRegister) HandleDelete(path string, fn Handler, filters ...Filter) *Mapper {
+	return r.request(MethodDelete, path, fn, filters)
+}
+
+// DeleteMapping 注册 DELETE 方法处理函数
+func (r *defaultUrlRegister) DeleteMapping(path string, fn HandlerFunc, filters ...Filter) *Mapper {
+	return r.request(MethodDelete, path, FUNC(fn), filters)
+}
+
+// DeleteBinding 注册 DELETE 方法处理函数
+func (r *defaultUrlRegister) DeleteBinding(path string, fn interface{}, filters ...Filter) *Mapper {
+	return r.request(MethodDelete, path, BIND(fn), filters)
 }
 
 // HEAD 注册 HEAD 方法处理函数
