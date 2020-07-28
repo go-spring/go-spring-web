@@ -145,6 +145,15 @@ func (s *Service) Panic(ctx SpringWeb.WebContext) {
 	panic("this is a panic")
 }
 
+type EmptyRequest struct{}
+
+type EmptyResponse struct{}
+
+// Empty 验证 echo 和 gin 的 bind 功能，echo 的 bind 不允许空 body，spring-web 做了统一
+func (s *Service) Empty(ctx context.Context, request *EmptyRequest) *EmptyResponse {
+	return &EmptyResponse{}
+}
+
 ///////////////////// rpc service ////////////////////////
 
 type RpcService struct{}

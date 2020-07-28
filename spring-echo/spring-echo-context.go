@@ -244,6 +244,12 @@ func (ctx *Context) Cookies() []*http.Cookie {
 
 // Bind binds the request body into provided type `i`.
 func (ctx *Context) Bind(i interface{}) error {
+
+	// 这里不仅是为了和 gin 保持统一，而且也不能禁止 post 空数据，可以通过 validator 检测是否正常
+	if req := ctx.Request(); req.ContentLength == 0 && req.Method == http.MethodPost {
+		return ctx.echoContext.Validate(i)
+	}
+
 	if err := ctx.echoContext.Bind(i); err == nil {
 		return ctx.echoContext.Validate(i)
 	} else {

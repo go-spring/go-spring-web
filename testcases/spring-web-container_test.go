@@ -125,6 +125,16 @@ func TestWebContainer(t *testing.T) {
 		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 		fmt.Println()
 
+		resp, _ = http.Post("http://127.0.0.1:8080/empty", "", nil)
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
+		resp, _ = http.Get("http://127.0.0.1:8080/empty")
+		body, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+		fmt.Println()
+
 		c.Stop(context.TODO())
 
 		time.Sleep(time.Millisecond * 50)
@@ -198,6 +208,8 @@ func TestWebContainer(t *testing.T) {
 			assert.Equal(t, []string{"anything"}, webCtx.PathParamValues())
 			webCtx.JSON(http.StatusOK, webCtx.PathParam("*"))
 		})
+
+		c.Request(SpringWeb.MethodGetPost, "/empty", SpringWeb.BIND(s.Empty))
 
 		return c
 	}
