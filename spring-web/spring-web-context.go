@@ -21,16 +21,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"reflect"
 
 	"github.com/go-spring/go-spring-parent/spring-logger"
 )
 
 // WebContextKey WebContext 和 NativeContext 相互转换的 Key
 const WebContextKey = "@WebCtx"
-
-// WebContextType WebContext 的反射类型
-var WebContextType = reflect.TypeOf((*WebContext)(nil)).Elem()
 
 // WebContext 上下文接口，设计理念：为社区中优秀的 Web 服务器提供一个抽象层，
 // 使得底层可以灵活切换，因此在功能上取这些 Web 服务器功能的交集，同时提供获取

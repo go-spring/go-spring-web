@@ -40,7 +40,7 @@ func routerWithMapping(mapping WebMapping, basePath string, filters []Filter) *R
 	return r
 }
 
-func (r *Router) request(method uint32, path string, fn interface{}, filters []Filter) *Mapper {
+func (r *Router) request(method uint32, path string, fn Handler, filters []Filter) *Mapper {
 	filters = append(r.filters, filters...)
 	return r.mapping.Request(method, r.basePath+path, fn, filters...)
 }

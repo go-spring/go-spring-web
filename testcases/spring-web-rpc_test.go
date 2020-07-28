@@ -17,7 +17,6 @@
 package testcases_test
 
 import (
-	"container/list"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -26,49 +25,20 @@ import (
 	"time"
 
 	"github.com/go-spring/go-spring-web/spring-echo"
-	"github.com/go-spring/go-spring-web/spring-gin"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
 )
 
 func TestRpc(t *testing.T) {
 
-	rc := new(testcases.RpcService)
-
-	l := list.New()
-	f2 := testcases.NewNumberFilter(2, l)
-	f5 := testcases.NewNumberFilter(5, l)
-	f7 := testcases.NewNumberFilter(7, l)
+	cfg := SpringWeb.ContainerConfig{Port: 9090}
+	c2 := SpringEcho.NewContainer(cfg)
 
 	server := SpringWeb.NewWebServer()
+	server.AddContainer(c2)
 
-	// 添加第一个 web 容器
-	{
-		cfg := SpringWeb.ContainerConfig{Port: 8080}
-		c1 := SpringGin.NewContainer(cfg)
-		server.AddContainer(c1)
-
-		c1.HandleGet("/ok", SpringWeb.RPC(rc.OK), f2, f5)
-	}
-
-	// 添加第二个 web 容器
-	{
-		cfg := SpringWeb.ContainerConfig{Port: 9090}
-		c2 := SpringEcho.NewContainer(cfg)
-		server.AddContainer(c2)
-
-		r := c2.Route("", f2, f7)
-		{
-			r.HandleGet("/err", SpringWeb.RPC(rc.Err))
-			r.HandleGet("/panic", SpringWeb.RPC(rc.Panic))
-		}
-
-		c2.GetBinding("/echo", rc.Echo, f5)
-		c2.GetBinding("/ptr_echo", rc.PtrEcho, f5)
-		c2.GetBinding("/ctx_echo", rc.CtxEcho, f5)
-		c2.GetBinding("/echo_ctx", rc.EchoCtx, f5)
-		c2.GetBinding("/no_param", rc.NoParam, f5)
-	}
+	rc := new(testcases.RpcService)
+	c2.GetBinding("/echo", rc.Echo)
 
 	// 启动 web 服务器
 	server.Start()
@@ -76,40 +46,8 @@ func TestRpc(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 	fmt.Println()
 
-	resp, _ := http.Get("http://127.0.0.1:8080/ok")
+	resp, _ := http.Get("http://127.0.0.1:9090/echo?str=echo")
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body)+"\n")
-
-	resp, _ = http.Get("http://127.0.0.1:9090/err")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/panic")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/panic?panic=1")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/echo?str=echo")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/ptr_echo?str=echo")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/ctx_echo?str=echo")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/echo_ctx?str=echo")
-	body, _ = ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	resp, _ = http.Get("http://127.0.0.1:9090/no_param")
-	body, _ = ioutil.ReadAll(resp.Body)
 	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
 
 	server.Stop(context.TODO())

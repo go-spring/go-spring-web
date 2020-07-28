@@ -261,7 +261,7 @@ func main() {
 			RespondsWith(http.StatusMethodNotAllowed, SpringWeb.NewResponse("Invalid input")).
 			SecuredWith("petstore_auth", "write:pets", "read:pets")
 
-		r.PUT("", pet.UpdatePet).
+		r.PutMapping("", pet.UpdatePet).
 			Swagger("updatePet").
 			WithTags("pet").
 			WithSummary("Update an existing pet").
@@ -297,7 +297,7 @@ func main() {
 			RespondsWith(http.StatusMethodNotAllowed, SpringWeb.NewResponse("Invalid input")).
 			SecuredWith("petstore_auth", "write:pets", "read:pets")
 
-		r.DELETE("{petId}", pet.DeletePet).
+		r.DeleteMapping("{petId}", pet.DeletePet).
 			Swagger("deletePet").
 			WithTags("pet").
 			WithSummary("Deletes a pet").
@@ -375,7 +375,7 @@ func main() {
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid ID supplied")).
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("Order not found"))
 
-		r.DELETE("order/{orderId}", order.DeleteOrder).
+		r.DeleteMapping("order/{orderId}", order.DeleteOrder).
 			Swagger("deleteOrder").
 			WithTags("store").
 			WithDescription("For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors").
@@ -420,7 +420,7 @@ func main() {
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid username supplied")).
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("User not found"))
 
-		r.PUT("{username}", user.UpdateUser).
+		r.PutMapping("{username}", user.UpdateUser).
 			Swagger("updateUser").
 			WithTags("user").
 			WithDescription("This can only be done by the logged in user.").
@@ -432,7 +432,7 @@ func main() {
 			RespondsWith(http.StatusBadRequest, SpringWeb.NewResponse("Invalid user supplied")).
 			RespondsWith(http.StatusNotFound, SpringWeb.NewResponse("User not found"))
 
-		r.DELETE("{username}", user.DeleteUser).
+		r.DeleteMapping("{username}", user.DeleteUser).
 			Swagger("deleteUser").
 			WithTags("user").
 			WithDescription("This can only be done by the logged in user.").

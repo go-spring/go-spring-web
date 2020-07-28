@@ -18,12 +18,11 @@ package testcases
 
 import (
 	"container/list"
-	"errors"
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/go-spring/go-spring-parent/spring-error"
 	"github.com/go-spring/go-spring-parent/spring-utils"
 	"github.com/go-spring/go-spring-web/spring-web"
 )
@@ -159,41 +158,6 @@ type EchoResponse struct {
 }
 
 // Echo BIND 的结构体参数形式
-func (s *RpcService) Echo(request EchoRequest) *EchoResponse {
+func (s *RpcService) Echo(ctx context.Context, request *EchoRequest) *EchoResponse {
 	return &EchoResponse{"echo " + request.Str}
-}
-
-// PtrEcho BIND 的结构体指针参数形式
-func (s *RpcService) PtrEcho(request *EchoRequest) *EchoResponse {
-	return &EchoResponse{"echo " + request.Str}
-}
-
-// Echo BIND 的第一种 WebContext 形式
-func (s *RpcService) CtxEcho(ctx SpringWeb.WebContext, request *EchoRequest) *EchoResponse {
-	return &EchoResponse{"echo " + request.Str}
-}
-
-// Echo BIND 的另一种 WebContext 形式
-func (s *RpcService) EchoCtx(request EchoRequest, ctx SpringWeb.WebContext) *EchoResponse {
-	return &EchoResponse{"echo " + request.Str}
-}
-
-func (s *RpcService) OK(ctx SpringWeb.WebContext) interface{} {
-	return "123"
-}
-
-func (s *RpcService) Err(ctx SpringWeb.WebContext) interface{} {
-	panic("err")
-}
-
-func (s *RpcService) Panic(ctx SpringWeb.WebContext) interface{} {
-
-	err := errors.New("panic")
-	isPanic := ctx.QueryParam("panic") == "1"
-	SpringError.ERROR.Panic(err).When(isPanic)
-
-	return "ok"
-}
-
-func (s *RpcService) NoParam() {
 }

@@ -148,9 +148,7 @@ func TestWebContainer(t *testing.T) {
 				WithSchema(spec.StringProperty()).
 				AddExample(SpringWeb.MIMEApplicationJSON, 2))
 
-		// 等价于 c.GET("/global_interrupt", s.Get)
-		c.HandleGet("/global_interrupt", SpringWeb.METHOD(s, "Get"))
-
+		c.GetMapping("/global_interrupt", s.Get)
 		c.GetMapping("/interrupt", s.Get, f5, &testcases.InterruptFilter{})
 
 		// 障眼法
@@ -171,7 +169,7 @@ func TestWebContainer(t *testing.T) {
 				}).
 				RespondsWith(http.StatusOK, nil)
 
-			r.Request(SpringWeb.MethodGetPost, "/panic", s.Panic)
+			r.Request(SpringWeb.MethodGetPost, "/panic", SpringWeb.FUNC(s.Panic))
 
 			r.GetMapping("/namespaces/:namespace/pods/:pod", func(webCtx SpringWeb.WebContext) {
 				assert.Equal(t, "default", webCtx.PathParam("namespace"))

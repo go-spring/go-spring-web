@@ -16,25 +16,11 @@
 
 package SpringWeb
 
-import (
-	"errors"
-	"reflect"
-)
-
-// HandlerType Handler 的反射类型
-var HandlerType = reflect.TypeOf((*Handler)(nil)).Elem()
-
-// FnHandlerType fnHandler 的反射类型
-var FnHandlerType = reflect.TypeOf((*fnHandler)(nil)).Elem()
-
 // UrlRegister 路由注册接口
 type UrlRegister interface {
 
 	// Request 注册任意 HTTP 方法处理函数
-	Request(method uint32, path string, fn interface{}, filters ...Filter) *Mapper
-
-	// Deprecated: 推荐使用 Get* 系列函数进行编译检查
-	GET(path string, fn interface{}, filters ...Filter) *Mapper
+	Request(method uint32, path string, fn Handler, filters ...Filter) *Mapper
 
 	// HandleGet 注册 GET 方法处理函数
 	HandleGet(path string, fn Handler, filters ...Filter) *Mapper
@@ -45,9 +31,6 @@ type UrlRegister interface {
 	// GetBinding 注册 GET 方法处理函数
 	GetBinding(path string, fn interface{}, filters ...Filter) *Mapper
 
-	// Deprecated: 推荐使用 Post* 系列函数进行编译检查
-	POST(path string, fn interface{}, filters ...Filter) *Mapper
-
 	// HandlePost 注册 POST 方法处理函数
 	HandlePost(path string, fn Handler, filters ...Filter) *Mapper
 
@@ -56,12 +39,6 @@ type UrlRegister interface {
 
 	// PostBinding 注册 POST 方法处理函数
 	PostBinding(path string, fn interface{}, filters ...Filter) *Mapper
-
-	// PATCH 注册 PATCH 方法处理函数
-	PATCH(path string, fn interface{}, filters ...Filter) *Mapper
-
-	// PUT 注册 PUT 方法处理函数
-	PUT(path string, fn interface{}, filters ...Filter) *Mapper
 
 	// HandlePut 注册 PUT 方法处理函数
 	HandlePut(path string, fn Handler, filters ...Filter) *Mapper
@@ -72,9 +49,6 @@ type UrlRegister interface {
 	// PutBinding 注册 PUT 方法处理函数
 	PutBinding(path string, fn interface{}, filters ...Filter) *Mapper
 
-	// DELETE 注册 DELETE 方法处理函数
-	DELETE(path string, fn interface{}, filters ...Filter) *Mapper
-
 	// HandleDelete 注册 DELETE 方法处理函数
 	HandleDelete(path string, fn Handler, filters ...Filter) *Mapper
 
@@ -83,27 +57,16 @@ type UrlRegister interface {
 
 	// DeleteBinding 注册 DELETE 方法处理函数
 	DeleteBinding(path string, fn interface{}, filters ...Filter) *Mapper
-
-	// HEAD 注册 HEAD 方法处理函数
-	HEAD(path string, fn interface{}, filters ...Filter) *Mapper
-
-	// OPTIONS 注册 OPTIONS 方法处理函数
-	OPTIONS(path string, fn interface{}, filters ...Filter) *Mapper
 }
 
 // defaultUrlRegister 路由注册接口的默认实现
 type defaultUrlRegister struct {
-	request func(method uint32, path string, fn interface{}, filters []Filter) *Mapper
+	request func(method uint32, path string, fn Handler, filters []Filter) *Mapper
 }
 
 // Request 注册任意 HTTP 方法处理函数
-func (r *defaultUrlRegister) Request(method uint32, path string, fn interface{}, filters ...Filter) *Mapper {
+func (r *defaultUrlRegister) Request(method uint32, path string, fn Handler, filters ...Filter) *Mapper {
 	return r.request(method, path, fn, filters)
-}
-
-// Deprecated: 推荐使用 Get* 系列函数进行编译检查
-func (r *defaultUrlRegister) GET(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodGet, path, fn, filters)
 }
 
 // HandleGet 注册 GET 方法处理函数
@@ -121,11 +84,6 @@ func (r *defaultUrlRegister) GetBinding(path string, fn interface{}, filters ...
 	return r.request(MethodGet, path, BIND(fn), filters)
 }
 
-// Deprecated: 推荐使用 Post* 系列函数进行编译检查
-func (r *defaultUrlRegister) POST(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodPost, path, fn, filters)
-}
-
 // HandlePost 注册 POST 方法处理函数
 func (r *defaultUrlRegister) HandlePost(path string, fn Handler, filters ...Filter) *Mapper {
 	return r.request(MethodPost, path, fn, filters)
@@ -139,16 +97,6 @@ func (r *defaultUrlRegister) PostMapping(path string, fn HandlerFunc, filters ..
 // PostBinding 注册 POST 方法处理函数
 func (r *defaultUrlRegister) PostBinding(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.request(MethodPost, path, BIND(fn), filters)
-}
-
-// PATCH 注册 PATCH 方法处理函数
-func (r *defaultUrlRegister) PATCH(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodPatch, path, fn, filters)
-}
-
-// PUT 注册 PUT 方法处理函数
-func (r *defaultUrlRegister) PUT(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodPut, path, fn, filters)
 }
 
 // HandlePut 注册 PUT 方法处理函数
@@ -166,11 +114,6 @@ func (r *defaultUrlRegister) PutBinding(path string, fn interface{}, filters ...
 	return r.request(MethodPut, path, BIND(fn), filters)
 }
 
-// DELETE 注册 DELETE 方法处理函数
-func (r *defaultUrlRegister) DELETE(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodDelete, path, fn, filters)
-}
-
 // HandleDelete 注册 DELETE 方法处理函数
 func (r *defaultUrlRegister) HandleDelete(path string, fn Handler, filters ...Filter) *Mapper {
 	return r.request(MethodDelete, path, fn, filters)
@@ -184,16 +127,6 @@ func (r *defaultUrlRegister) DeleteMapping(path string, fn HandlerFunc, filters 
 // DeleteBinding 注册 DELETE 方法处理函数
 func (r *defaultUrlRegister) DeleteBinding(path string, fn interface{}, filters ...Filter) *Mapper {
 	return r.request(MethodDelete, path, BIND(fn), filters)
-}
-
-// HEAD 注册 HEAD 方法处理函数
-func (r *defaultUrlRegister) HEAD(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodHead, path, fn, filters)
-}
-
-// OPTIONS 注册 OPTIONS 方法处理函数
-func (r *defaultUrlRegister) OPTIONS(path string, fn interface{}, filters ...Filter) *Mapper {
-	return r.request(MethodOptions, path, fn, filters)
 }
 
 // WebMapping 路由表，Spring-Web 使用的路由规则和 echo 完全相同，并对 gin 做了适配。
@@ -241,25 +174,8 @@ func (w *defaultWebMapping) Route(basePath string, filters ...Filter) *Router {
 	return routerWithMapping(w, basePath, filters)
 }
 
-func (w *defaultWebMapping) request(method uint32, path string, fn interface{}, filters []Filter) *Mapper {
-	var v reflect.Value
-
-	fnType := reflect.TypeOf(fn)
-	fnValue := reflect.ValueOf(fn)
-
-	if fnType.AssignableTo(FnHandlerType) { // 标准形式
-		v = fnValue.Convert(FnHandlerType)
-		v = v.Convert(HandlerType)
-
-	} else if fnType.AssignableTo(HandlerType) {
-		v = fnValue.Convert(HandlerType)
-
-	} else {
-		panic(errors.New("error func type " + fnType.String()))
-	}
-
-	h := v.Interface().(Handler)
-	m := NewMapper(method, path, h, filters)
+func (w *defaultWebMapping) request(method uint32, path string, fn Handler, filters []Filter) *Mapper {
+	m := NewMapper(method, path, fn, filters)
 	w.mappers[m.Key()] = m
 	return m
 }
