@@ -159,7 +159,7 @@ func (s *Service) Empty(ctx context.Context, request *EmptyRequest) *EmptyRespon
 type RpcService struct{}
 
 type EchoRequest struct {
-	Str string `query:"str" validate:"required,len=4"`
+	Str string `query:"str" form:"str" validate:"required,len=4"`
 }
 
 type EchoResponse struct {

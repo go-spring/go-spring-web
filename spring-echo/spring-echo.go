@@ -112,7 +112,7 @@ func (c *Container) Start() {
 	}
 
 	// 设置参数校验器
-	c.echoServer.Validator = SpringWeb.NewBuiltInValidator()
+	c.echoServer.Validator = SpringWeb.Validator
 
 	// 启动 echo 容器
 	go func() {

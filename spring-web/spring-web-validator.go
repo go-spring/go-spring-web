@@ -23,6 +23,16 @@ import (
 	"github.com/go-spring/go-spring-parent/spring-utils"
 )
 
+// WebValidator 适配 gin 和 echo 的校验器接口
+type WebValidator interface {
+	Engine() interface{}
+	Validate(i interface{}) error
+	ValidateStruct(i interface{}) error
+}
+
+// Validator 全局参数校验器，没有啥好办法不做成全局变量
+var Validator WebValidator = NewBuiltInValidator()
+
 // BuiltInValidator 内置的参数校验器
 type BuiltInValidator struct {
 	validator *validator.Validate

@@ -25,32 +25,48 @@ import (
 	"time"
 
 	"github.com/go-spring/go-spring-web/spring-echo"
+	"github.com/go-spring/go-spring-web/spring-gin"
 	"github.com/go-spring/go-spring-web/spring-web"
 	"github.com/go-spring/go-spring-web/testcases"
 )
 
 func TestRpc(t *testing.T) {
 
+	testContainer := func(c SpringWeb.WebContainer) {
+
+		server := SpringWeb.NewWebServer()
+		server.AddContainer(c)
+
+		rc := new(testcases.RpcService)
+		c.GetBinding("/echo", rc.Echo)
+
+		// 启动 web 服务器
+		server.Start()
+
+		time.Sleep(time.Millisecond * 100)
+		fmt.Println()
+
+		for i := 0; i < 20; i++ { // 多次测试 echo 和 gin 的性能确实差不多
+			resp, _ := http.Get("http://127.0.0.1:9090/echo?str=echo")
+			body, _ := ioutil.ReadAll(resp.Body)
+			fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
+			if body[len(body)-1] != '\n' { // echo 的返回值多一个换行符
+				fmt.Println()
+			}
+		}
+
+		server.Stop(context.TODO())
+
+		time.Sleep(50 * time.Millisecond)
+	}
+
 	cfg := SpringWeb.ContainerConfig{Port: 9090}
-	c2 := SpringEcho.NewContainer(cfg)
 
-	server := SpringWeb.NewWebServer()
-	server.AddContainer(c2)
+	t.Run("echo container", func(t *testing.T) {
+		testContainer(SpringEcho.NewContainer(cfg))
+	})
 
-	rc := new(testcases.RpcService)
-	c2.GetBinding("/echo", rc.Echo)
-
-	// 启动 web 服务器
-	server.Start()
-
-	time.Sleep(time.Millisecond * 100)
-	fmt.Println()
-
-	resp, _ := http.Get("http://127.0.0.1:9090/echo?str=echo")
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("code:", resp.StatusCode, "||", "resp:", string(body))
-
-	server.Stop(context.TODO())
-
-	time.Sleep(50 * time.Millisecond)
+	t.Run("gin container", func(t *testing.T) {
+		testContainer(SpringGin.NewContainer(cfg))
+	})
 }
