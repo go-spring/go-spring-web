@@ -76,7 +76,7 @@ func (c *Container) Start() {
 	}
 
 	if f := c.GetRecoveryFilter(); f != nil {
-		cFilters = append(cFilters, f)
+		cFilters = append(cFilters, &recoveryFilterAdapter{f})
 	}
 
 	cFilters = append(cFilters, c.GetFilters()...)
@@ -170,6 +170,20 @@ func HandlerWrapper(fn SpringWeb.Handler, wildCardName string, filters []SpringW
 	})
 
 	return handlers
+}
+
+// recoveryFilterAdapter 对 gin 的恢复组件适配，增加中断过滤器列表的能力
+type recoveryFilterAdapter struct {
+	recoveryFilter SpringWeb.Filter
+}
+
+func (f *recoveryFilterAdapter) Invoke(webCtx SpringWeb.WebContext, chain SpringWeb.FilterChain) {
+	f.recoveryFilter.Invoke(webCtx, chain)
+	// 如何判断 recoveryFilter 是否执行过 recover ？看起来
+	// 不用关心这个问题，如果有数据写往网络，就表明处理已结束，中断即可。
+	if ginCtx := GinContext(webCtx); ginCtx.Writer.Written() {
+		ginCtx.Abort()
+	}
 }
 
 /////////////////// handler //////////////////////
