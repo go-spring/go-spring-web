@@ -27,11 +27,11 @@ package SpringWeb
 
 // method_override
 // echo: https://github.com/labstack/echo/blob/master/middleware/method_override.go
-// gin: 
+// gin:
 
 // redirect
 // echo: https://github.com/labstack/echo/blob/master/middleware/redirect.go
-// gin: 
+// gin:
 
 // request_id
 // echo: https://github.com/labstack/echo/blob/master/middleware/request_id.go
@@ -39,19 +39,19 @@ package SpringWeb
 
 // rewrite
 // echo: https://github.com/labstack/echo/blob/master/middleware/rewrite.go
-// gin: 
+// gin:
 
 // basic_auth
 // echo: https://github.com/labstack/echo/blob/master/middleware/basic_auth.go
-// gin: 
+// gin:
 
 // key_auth
 // echo: https://github.com/labstack/echo/blob/master/middleware/key_auth.go
-// gin: 
+// gin:
 
 // body_dump
 // echo: https://github.com/labstack/echo/blob/master/middleware/body_dump.go
-// gin: 
+// gin:
 
 // body_limit (413 - Request Entity Too Large)
 // echo: https://github.com/labstack/echo/blob/master/middleware/body_limit.go
@@ -67,7 +67,7 @@ package SpringWeb
 
 // csrf (Cross-Site Request Forgery)
 // echo: https://github.com/labstack/echo/blob/master/middleware/csrf.go
-// gin: 
+// gin:
 
 // secure (XSS)
 // echo: https://github.com/labstack/echo/blob/master/middleware/secure.go
@@ -79,11 +79,11 @@ package SpringWeb
 
 // proxy
 // echo: https://github.com/labstack/echo/blob/master/middleware/proxy.go
-// gin: 
+// gin:
 
 // slash
 // echo: https://github.com/labstack/echo/blob/master/middleware/slash.go
-// gin: 
+// gin:
 
 // static
 // echo: https://github.com/labstack/echo/blob/master/middleware/static.go

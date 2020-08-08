@@ -19,7 +19,7 @@ package SpringWeb_test
 import (
 	"testing"
 
-	"github.com/go-spring/go-spring-web/spring-web"
+	"github.com/go-spring/go-spring-web"
 	"github.com/magiconair/properties/assert"
 )
 

@@ -23,7 +23,7 @@ import (
 
 	"github.com/go-spring/go-spring-parent/spring-test"
 	"github.com/go-spring/go-spring-parent/spring-utils"
-	"github.com/go-spring/go-spring-web/spring-web"
+	"github.com/go-spring/go-spring-web"
 )
 
 func TestSwagger(t *testing.T) {

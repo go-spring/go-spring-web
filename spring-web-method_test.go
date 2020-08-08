@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/go-spring/go-spring-web/spring-web"
+	"github.com/go-spring/go-spring-web"
 )
 
 // cacheMethods

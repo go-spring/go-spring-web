@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-spring/go-spring-web/spring-web"
+	"github.com/go-spring/go-spring-web"
 )
 
 func TestMapper_Key(t *testing.T) {
