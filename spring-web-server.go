@@ -19,7 +19,7 @@ package SpringWeb
 import (
 	"context"
 
-	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-spring/go-spring-utils"
 )
 
 // WebServer 一个 WebServer 包含多个 WebContainer

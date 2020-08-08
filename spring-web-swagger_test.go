@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-spring/go-spring-parent/spring-test"
-	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-spring/go-spring-test"
+	"github.com/go-spring/go-spring-utils"
 	"github.com/go-spring/go-spring-web"
 )
 

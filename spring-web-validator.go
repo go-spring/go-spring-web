@@ -20,7 +20,7 @@ import (
 	"reflect"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-spring/go-spring-utils"
 )
 
 // WebValidator 适配 gin 和 echo 的校验器接口

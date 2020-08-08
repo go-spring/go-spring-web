@@ -23,8 +23,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/go-spring/go-spring-parent/spring-error"
-	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-spring/go-spring-error"
+	"github.com/go-spring/go-spring-utils"
 )
 
 // contextType context.Context 的反射类型

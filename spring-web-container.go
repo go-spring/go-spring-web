@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-spring/go-spring-parent/spring-logger"
-	"github.com/go-spring/go-spring-parent/spring-utils"
+	"github.com/go-spring/go-spring-logger"
+	"github.com/go-spring/go-spring-utils"
 	"github.com/swaggo/http-swagger"
 )
 

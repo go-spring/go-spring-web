@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-spring/go-spring-parent/spring-logger"
+	"github.com/go-spring/go-spring-logger"
 )
 
 // WebContextKey WebContext 和 NativeContext 相互转换的 Key
